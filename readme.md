@@ -19,6 +19,7 @@ Este plugin exibe um popup personalizável na página do carrinho para permitir 
 - Suporte AJAX: Verificação de e-mail, login, cadastro e redefinição de senha sem recarga.
 - Textos personalizáveis: Configure cabeçalhos, descrições, marcadores de formulário e rótulos de botões para todas as etapas.
 - Opções de cores e estilo: Defina cores de fundo, sobreposição, cabeçalho, texto, links e botões pelo seletor de cores do WordPress.
+- Largura do popup ajustável: Informe a largura desejada em pixels.
 - Segurança: Proteção CSRF com nonces e sanitização de entradas.
 - Logs de erro: Registra falhas nas requisições AJAX para facilitar a depuração.
 - Carregamento seletivo: Scripts e estilos são incluídos apenas na página do carrinho.
@@ -62,5 +63,17 @@ Abra uma issue no repositório GitHub ou entre em contato com o autor.
 
 == Screenshots ==
 
-1. Página de configurações exibindo opções de texto e cores.
-2. Popup de login na página do carrinho.
+1. **Página de configurações exibindo opções de texto e cores.**  
+   ![Configurações](screenshot/assets/screenshot-05.jpeg)
+
+2. **Popup de login na página do carrinho "CADASTRO / LOGIN"**  
+   ![Checkout](screenshot/assets/screenshot-01.jpeg)
+
+3. **Popup de login na página do carrinho "CASO TENHA CONTA"**  
+   ![Checkout](screenshot/assets/screenshot-02.jpeg)
+
+4. **Popup de login na página do carrinho "RECUPERAÇÃO DE SENHA"**  
+   ![Checkout](screenshot/assets/screenshot-03.jpeg)
+
+5. **Popup de login na página do carrinho "VERIFICA SE TEM CONTA, CASO CONTRÁRIO CRIAR UMA NOVA CONTA"**  
+   ![Checkout](screenshot/assets/screenshot-04.jpeg)
