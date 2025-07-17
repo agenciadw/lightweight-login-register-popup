@@ -64,16 +64,16 @@ Abra uma issue no repositório GitHub ou entre em contato com o autor.
 == Screenshots ==
 
 1. **Página de configurações exibindo opções de texto e cores.**  
-   ![Configurações](screenshot/assets/screenshot-05.jpeg)
+   ![Configurações](/assets/screenshot/screenshot-05.jpeg)
 
 2. **Popup de login na página do carrinho "CADASTRO / LOGIN"**  
-   ![Checkout](screenshot/assets/screenshot-01.jpeg)
+   ![Checkout](/assets/screenshot/screenshot-01.jpeg)
 
 3. **Popup de login na página do carrinho "CASO TENHA CONTA"**  
-   ![Checkout](screenshot/assets/screenshot-02.jpeg)
+   ![Checkout](/assets/screenshot/screenshot-02.jpeg)
 
 4. **Popup de login na página do carrinho "RECUPERAÇÃO DE SENHA"**  
-   ![Checkout](screenshot/assets/screenshot-03.jpeg)
+   ![Checkout](/assets/screenshot/screenshot-03.jpeg)
 
 5. **Popup de login na página do carrinho "VERIFICA SE TEM CONTA, CASO CONTRÁRIO CRIAR UMA NOVA CONTA"**  
-   ![Checkout](screenshot/assets/screenshot-04.jpeg)
+   ![Checkout](/assets/screenshot/screenshot-04.jpeg)
