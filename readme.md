@@ -41,6 +41,12 @@ Este plugin exibe um popup personalizável na página do carrinho para permitir 
 
 == Changelog ==
 
+= 0.1.1 =
+
+- Inclusão de Screenshots de configuração e checkout
+- Alguns ajustes no CSS
+- Correção de bugs
+
 = 0.1.0 =
 
 - Lançamento inicial com suporte a login, cadastro e redefinição de senha via popup.

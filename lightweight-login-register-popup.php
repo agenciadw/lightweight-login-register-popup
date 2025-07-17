@@ -3,10 +3,14 @@
  * Plugin Name: Lightweight Login & Register Popup
  * Plugin URI: https://github.com/agenciadw/lightweight-login-register-popup
  * Description: Popup personalizável na página do carrinho para permitir login, cadastro e recuperação de senha sem recarregar a página
- * Version: 0.1.0
+ * Version: 0.1.1
  * Author: David William da Costa
  * Author URI: https://github.com/agenciadw
- * Text Domain: llrp
+ * Requires PHP: 7.6
+ * Requires at least: 6.6
+ * Text Domain: lightweight-login-register-popup
+ * License: GPL v2 or later
+ * License URI: https://www.gnu.org/licenses/gpl-2.0.html
  */
 
 if ( ! defined( 'ABSPATH' ) ) {
