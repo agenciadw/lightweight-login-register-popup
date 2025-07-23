@@ -3,7 +3,7 @@
 Contribuidores: David William da Costa  
 Tags: login, cadastro, popup, WooCommerce  
 Requer WordPress: 6.6 ou superior  
-Testado até: WordPress 7.6  
+Testado até: WordPress 6.6  
 Requer PHP: 7.4  
 Versão estável: 0.1.1
 Licença: GPLv2 ou superior  

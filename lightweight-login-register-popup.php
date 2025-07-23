@@ -6,7 +6,7 @@
  * Version: 0.1.1
  * Author: David William da Costa
  * Author URI: https://github.com/agenciadw
- * Requires PHP: 7.6
+ * Requires PHP: 7.4 or higher
  * Requires at least: 6.6
  * Text Domain: lightweight-login-register-popup
  * License: GPL v2 or later
