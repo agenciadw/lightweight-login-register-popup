@@ -12,7 +12,7 @@ class Llrp_Ajax {
         check_ajax_referer( 'llrp_nonce', 'nonce' );
         $creds = [
             'user_login'    => sanitize_email( wp_unslash( $_POST['email'] ?? '' ) ),
-            'user_password' => $_POST['password'] ?? '',
+            'user_password' => isset( $_POST['password'] ) ? wp_unslash( $_POST['password'] ) : '',
             'remember'      => isset( $_POST['remember'] ) && $_POST['remember'] === '1',
         ];
         $user = wp_signon( $creds, is_ssl() );
@@ -25,16 +25,20 @@ class Llrp_Ajax {
     public static function ajax_register() {
         check_ajax_referer( 'llrp_nonce', 'nonce' );
         $email    = sanitize_email( wp_unslash( $_POST['email'] ?? '' ) );
-        $password = $_POST['password'] ?? '';
+        $password = isset( $_POST['password'] ) ? wp_unslash( $_POST['password'] ) : '';
+
         if ( ! is_email( $email ) ) {
             wp_send_json_error([ 'message' => __( 'E-mail inválido.', 'llrp' ) ]);
         }
         if ( email_exists( $email ) ) {
             wp_send_json_error([ 'message' => __( 'Este e-mail já está registrado.', 'llrp' ) ]);
         }
-        if ( empty( $password ) ) {
-            wp_send_json_error([ 'message' => __( 'Insira uma senha válida.', 'llrp' ) ]);
+
+        // Security: Basic password strength check
+        if ( strlen( $password ) < 8 ) {
+            wp_send_json_error([ 'message' => __( 'A senha deve ter pelo menos 8 caracteres.', 'llrp' ) ]);
         }
+
         $user_id = wc_create_new_customer( $email, '', $password );
         if ( is_wp_error( $user_id ) ) {
             wp_send_json_error([ 'message' => $user_id->get_error_message() ]);

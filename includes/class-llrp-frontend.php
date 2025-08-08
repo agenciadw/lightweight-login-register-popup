@@ -54,18 +54,18 @@ class Llrp_Frontend {
         ] );
 
         // Dynamic CSS variables
-        $bg                = sanitize_text_field( get_option( 'llrp_color_bg', '#ffffff' ) );
-        $overlay           = sanitize_text_field( get_option( 'llrp_color_overlay', 'rgba(0,0,0,0.5)' ) );
-        $header_bg         = sanitize_text_field( get_option( 'llrp_color_header_bg', '#ffffff' ) );
-        $text_col          = sanitize_text_field( get_option( 'llrp_color_text', '#1a1a1a' ) );
-        $link_col          = sanitize_text_field( get_option( 'llrp_color_link', '#791b0a' ) );
-        $link_h_col        = sanitize_text_field( get_option( 'llrp_color_link_hover', '#686868' ) );
-        $btn_bg            = sanitize_text_field( get_option( 'llrp_color_btn_bg', '#385b02' ) );
-        $btn_bg_h          = sanitize_text_field( get_option( 'llrp_color_btn_bg_hover', '#91b381' ) );
-        $btn_bd            = sanitize_text_field( get_option( 'llrp_color_btn_border', $btn_bg ) );
-        $btn_bd_h          = sanitize_text_field( get_option( 'llrp_color_btn_border_hover', $btn_bg_h ) );
-        $btn_txt           = sanitize_text_field( get_option( 'llrp_color_btn_text', '#ffffff' ) );
-        $btn_txt_h         = sanitize_text_field( get_option( 'llrp_color_btn_text_hover', $btn_txt ) );
+        $bg                = sanitize_hex_color( get_option( 'llrp_color_bg', '#ffffff' ) );
+        $overlay           = self::sanitize_rgba_or_hex( get_option( 'llrp_color_overlay', 'rgba(0,0,0,0.5)' ) );
+        $header_bg         = sanitize_hex_color( get_option( 'llrp_color_header_bg', '#ffffff' ) );
+        $text_col          = sanitize_hex_color( get_option( 'llrp_color_text', '#1a1a1a' ) );
+        $link_col          = sanitize_hex_color( get_option( 'llrp_color_link', '#791b0a' ) );
+        $link_h_col        = sanitize_hex_color( get_option( 'llrp_color_link_hover', '#686868' ) );
+        $btn_bg            = sanitize_hex_color( get_option( 'llrp_color_btn_bg', '#385b02' ) );
+        $btn_bg_h          = sanitize_hex_color( get_option( 'llrp_color_btn_bg_hover', '#91b381' ) );
+        $btn_bd            = sanitize_hex_color( get_option( 'llrp_color_btn_border', $btn_bg ) );
+        $btn_bd_h          = sanitize_hex_color( get_option( 'llrp_color_btn_border_hover', $btn_bg_h ) );
+        $btn_txt           = sanitize_hex_color( get_option( 'llrp_color_btn_text', '#ffffff' ) );
+        $btn_txt_h         = sanitize_hex_color( get_option( 'llrp_color_btn_text_hover', $btn_txt ) );
         $font_family       = sanitize_text_field( get_option( 'llrp_font_family', 'inherit' ) );
         $font_size_h2      = floatval( get_option( 'llrp_font_size_h2', '1.5' ) );
         $font_size_p       = floatval( get_option( 'llrp_font_size_p', '1' ) );
@@ -185,6 +185,36 @@ class Llrp_Frontend {
 
         </div>
         <?php
+    }
+
+    /**
+     * Sanitize RGBA or HEX color values.
+     *
+     * @param string $color The color string.
+     * @return string Sanitized color string.
+     */
+    private static function sanitize_rgba_or_hex( $color ) {
+        if ( empty( $color ) ) {
+            return '';
+        }
+        // If 'rgba' is found, check for valid format.
+        if ( strpos( trim( $color ), 'rgba' ) === 0 ) {
+            if ( preg_match( '/^rgba\(\s*(\d{1,3})\s*,\s*(\d{1,3})\s*,\s*(\d{1,3})\s*,\s*([0-9.]{1,3})\s*\)$/', $color, $matches ) ) {
+                // Check that R, G, B are between 0-255 and A is between 0-1.
+                if ( $matches[1] >= 0 && $matches[1] <= 255 && $matches[2] >= 0 && $matches[2] <= 255 && $matches[3] >= 0 && $matches[3] <= 255 && $matches[4] >= 0 && $matches[4] <= 1 ) {
+                    return $color;
+                }
+            }
+            return ''; // Return empty for invalid rgba.
+        }
+
+        // Check for hex8 format, e.g., #RRGGBBAA.
+        if ( preg_match( '/^#([a-fA-F0-9]{8})$/', $color ) ) {
+            return $color;
+        }
+
+        // Fallback to sanitize_hex_color for standard hex colors (e.g. #FFF, #FFFFFF).
+        return sanitize_hex_color( $color );
     }
 
     public static function ajax_check_email() {

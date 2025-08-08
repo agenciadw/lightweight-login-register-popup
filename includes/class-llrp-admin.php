@@ -45,19 +45,59 @@ class Llrp_Admin {
      * Register plugin settings
      */
     public static function register_settings() {
-        $settings = [
-            'popup_width',
+        // Text fields
+        $text_fields = [
             'header_email', 'text_email', 'placeholder_email', 'button_email', 'text_login', 'placeholder_password', 'text_remember', 'button_login',
             'header_register', 'text_register', 'placeholder_register', 'button_register',
-            // color settings including overlay
-            'color_bg', 'color_header_bg', 'color_text', 'color_overlay',
+        ];
+        foreach ( $text_fields as $field ) {
+            register_setting( 'llrp_options', 'llrp_' . $field, 'sanitize_text_field' );
+        }
+
+        // Color fields
+        $color_fields = [
+            'color_bg', 'color_header_bg', 'color_text',
             'color_link', 'color_link_hover',
             'color_btn_bg', 'color_btn_bg_hover', 'color_btn_border', 'color_btn_border_hover',
             'color_btn_text', 'color_btn_text_hover',
         ];
-        foreach ( $settings as $field ) {
-            register_setting( 'llrp_options', 'llrp_' . $field );
+        foreach ( $color_fields as $field ) {
+            register_setting( 'llrp_options', 'llrp_' . $field, 'sanitize_hex_color' );
         }
+
+        // Special fields
+        register_setting( 'llrp_options', 'llrp_popup_width', 'absint' );
+        register_setting( 'llrp_options', 'llrp_color_overlay', [ __CLASS__, 'sanitize_rgba_or_hex' ] );
+    }
+
+    /**
+     * Sanitize RGBA or HEX color values.
+     *
+     * @param string $color The color string.
+     * @return string Sanitized color string.
+     */
+    public static function sanitize_rgba_or_hex( $color ) {
+        if ( empty( $color ) ) {
+            return '';
+        }
+        // If 'rgba' is found, check for valid format.
+        if ( strpos( trim( $color ), 'rgba' ) === 0 ) {
+            if ( preg_match( '/^rgba\(\s*(\d{1,3})\s*,\s*(\d{1,3})\s*,\s*(\d{1,3})\s*,\s*([0-9.]{1,3})\s*\)$/', $color, $matches ) ) {
+                // Check that R, G, B are between 0-255 and A is between 0-1.
+                if ( $matches[1] >= 0 && $matches[1] <= 255 && $matches[2] >= 0 && $matches[2] <= 255 && $matches[3] >= 0 && $matches[3] <= 255 && $matches[4] >= 0 && $matches[4] <= 1 ) {
+                    return $color;
+                }
+            }
+            return ''; // Return empty for invalid rgba.
+        }
+
+        // Check for hex8 format, e.g., #RRGGBBAA.
+        if ( preg_match( '/^#([a-fA-F0-9]{8})$/', $color ) ) {
+            return $color;
+        }
+
+        // Fallback to sanitize_hex_color for standard hex colors (e.g. #FFF, #FFFFFF).
+        return sanitize_hex_color( $color );
     }
 
     /**
