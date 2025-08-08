@@ -139,6 +139,11 @@ class Llrp_Frontend {
         $t_lost   = __( 'Sem problemas. Digite seu e-mail e enviaremos instruções para redefinir sua senha.', 'llrp' );
         $ph_lost  = __( 'Insira seu e-mail', 'llrp' );
         $b_lost   = __( 'Enviar nova senha', 'llrp' );
+
+        $whatsapp_enabled = get_option( 'llrp_whatsapp_enabled' ) && get_option( 'llrp_whatsapp_sender_phone' ) && function_exists('joinotify_send_whatsapp_message_text');
+        $send_code_button_text = $whatsapp_enabled ? __( 'Receber código por WhatsApp', 'llrp' ) : __( 'Receber código por e-mail', 'llrp' );
+        $code_step_header = $whatsapp_enabled ? __( 'Verifique seu WhatsApp', 'llrp' ) : __( 'Verifique seu E-mail', 'llrp' );
+        $code_step_p = $whatsapp_enabled ? __( 'Enviamos um código de 6 dígitos para o seu WhatsApp. Insira-o abaixo para fazer login.', 'llrp' ) : __( 'Enviamos um código de 6 dígitos para o seu e-mail. Insira-o abaixo para fazer login.', 'llrp' );
         ?>
         <div id="llrp-overlay" class="llrp-overlay hidden"></div>
         <div id="llrp-popup" class="llrp-popup hidden">
@@ -165,7 +170,7 @@ class Llrp_Frontend {
                 </div>
                 <p><?php esc_html_e( 'Como você gostaria de fazer login?', 'llrp' ); ?></p>
                 <button id="llrp-show-password-login"><?php esc_html_e( 'Login com Senha', 'llrp' ); ?></button>
-                <button id="llrp-send-code"><?php esc_html_e( 'Receber código por e-mail', 'llrp' ); ?></button>
+                <button id="llrp-send-code"><?php echo esc_html( $send_code_button_text ); ?></button>
                 <div class="llrp-feedback llrp-feedback-login-options"></div>
             </div>
 
@@ -192,8 +197,8 @@ class Llrp_Frontend {
 
             <!-- Code Login Step -->
             <div class="llrp-step llrp-step-code hidden">
-                <h2><?php esc_html_e( 'Verifique seu E-mail', 'llrp' ); ?></h2>
-                <p><?php esc_html_e( 'Enviamos um código de 6 dígitos para o seu e-mail. Insira-o abaixo para fazer login.', 'llrp' ); ?></p>
+                <h2><?php echo esc_html( $code_step_header ); ?></h2>
+                <p><?php echo esc_html( $code_step_p ); ?></p>
                 <input type="text" id="llrp-code" placeholder="<?php esc_attr_e( 'Insira o código', 'llrp' ); ?>" autocomplete="one-time-code">
                 <button id="llrp-code-submit"><?php esc_html_e( 'Login', 'llrp' ); ?></button>
                 <div class="llrp-feedback llrp-feedback-code"></div>

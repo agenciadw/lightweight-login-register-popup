@@ -70,6 +70,10 @@ class Llrp_Admin {
         // Special fields
         register_setting( 'llrp_options', 'llrp_popup_width', 'absint' );
         register_setting( 'llrp_options', 'llrp_color_overlay', [ __CLASS__, 'sanitize_rgba_or_hex' ] );
+
+        // WhatsApp Settings
+        register_setting( 'llrp_options', 'llrp_whatsapp_enabled', 'absint' );
+        register_setting( 'llrp_options', 'llrp_whatsapp_sender_phone', 'sanitize_text_field' );
     }
 
     /**
@@ -117,6 +121,32 @@ class Llrp_Admin {
                         <td>
                             <input type="number" name="llrp_popup_width" value="<?php echo esc_attr( get_option( 'llrp_popup_width', 590 ) ); ?>" />
                         </td>
+                    </tr>
+                    <!-- WhatsApp Settings -->
+                    <tr>
+                        <th colspan="2" style="padding-bottom: 1em;"><h2><?php esc_html_e( 'Integração com WhatsApp (Joinotify)', 'llrp' ); ?></h2></th>
+                    </tr>
+                    <tr>
+                        <th><?php esc_html_e( 'Ativar envio por WhatsApp', 'llrp' ); ?></th>
+                        <td>
+                            <label>
+                                <input type="checkbox" name="llrp_whatsapp_enabled" value="1" <?php checked( 1, get_option( 'llrp_whatsapp_enabled' ), true ); ?> />
+                                <?php esc_html_e( 'Enviar o código de login por WhatsApp ao invés de e-mail.', 'llrp' ); ?>
+                            </label>
+                            <p class="description"><?php esc_html_e( 'Requer o plugin Joinotify instalado e ativado.', 'llrp' ); ?></p>
+                        </td>
+                    </tr>
+                    <tr>
+                        <th><?php esc_html_e( 'Telefone de envio (Instância)', 'llrp' ); ?></th>
+                        <td>
+                            <input type="text" name="llrp_whatsapp_sender_phone" value="<?php echo esc_attr( get_option( 'llrp_whatsapp_sender_phone' ) ); ?>" class="regular-text" />
+                            <p class="description"><?php esc_html_e( 'Insira o número de telefone da instância do Joinotify que enviará a mensagem (ex: 5541999998888).', 'llrp' ); ?></p>
+                        </td>
+                    </tr>
+
+                    <!-- General Color Settings -->
+                    <tr>
+                        <th colspan="2" style="padding-top: 2em; padding-bottom: 1em;"><h2><?php esc_html_e( 'Cores', 'llrp' ); ?></h2></th>
                     </tr>
                     <!-- Overlay color: allow hex8/rgba manually -->
                     <tr>
