@@ -60,6 +60,8 @@ class Llrp_Admin {
             'color_link', 'color_link_hover',
             'color_btn_bg', 'color_btn_bg_hover', 'color_btn_border', 'color_btn_border_hover',
             'color_btn_text', 'color_btn_text_hover',
+            'color_btn_code_bg', 'color_btn_code_bg_hover', 'color_btn_code_border', 'color_btn_code_border_hover',
+            'color_btn_code_text', 'color_btn_code_text_hover',
         ];
         foreach ( $color_fields as $field ) {
             register_setting( 'llrp_options', 'llrp_' . $field, 'sanitize_hex_color' );
@@ -132,14 +134,38 @@ class Llrp_Admin {
                         'color_text'             => __( 'Cor do Texto', 'llrp' ),
                         'color_link'             => __( 'Cor do Link', 'llrp' ),
                         'color_link_hover'       => __( 'Link Hover', 'llrp' ),
-                        'color_btn_bg'           => __( 'Botão (bg)', 'llrp' ),
-                        'color_btn_bg_hover'     => __( 'Botão Hover (bg)', 'llrp' ),
-                        'color_btn_border'       => __( 'Botão (borda)', 'llrp' ),
-                        'color_btn_border_hover' => __( 'Borda Hover', 'llrp' ),
-                        'color_btn_text'         => __( 'Texto do Botão', 'llrp' ),
-                        'color_btn_text_hover'   => __( 'Texto Hover', 'llrp' ),
+                        'color_btn_bg'           => __( 'Botão Padrão (bg)', 'llrp' ),
+                        'color_btn_bg_hover'     => __( 'Botão Padrão Hover (bg)', 'llrp' ),
+                        'color_btn_border'       => __( 'Botão Padrão (borda)', 'llrp' ),
+                        'color_btn_border_hover' => __( 'Borda Padrão Hover', 'llrp' ),
+                        'color_btn_text'         => __( 'Texto do Botão Padrão', 'llrp' ),
+                        'color_btn_text_hover'   => __( 'Texto Padrão Hover', 'llrp' ),
                     ];
                     foreach ( $color_fields as $field => $label ) {
+                        $value = esc_attr( get_option( 'llrp_' . $field, '' ) );
+                        ?>
+                        <tr>
+                            <th><?php echo esc_html( $label ); ?></th>
+                            <td>
+                                <input type="text" class="llrp-color-field" name="llrp_<?php echo esc_attr( $field ); ?>" value="<?php echo $value; ?>" />
+                            </td>
+                        </tr>
+                        <?php
+                    }
+                    ?>
+                    <tr>
+                        <th colspan="2" style="padding-top: 2em; padding-bottom: 1em;"><h3><?php esc_html_e( 'Botão "Receber código por e-mail"', 'llrp' ); ?></h3></th>
+                    </tr>
+                    <?php
+                    $code_button_fields = [
+                        'color_btn_code_bg'           => __( 'Botão (bg)', 'llrp' ),
+                        'color_btn_code_bg_hover'     => __( 'Botão Hover (bg)', 'llrp' ),
+                        'color_btn_code_border'       => __( 'Botão (borda)', 'llrp' ),
+                        'color_btn_code_border_hover' => __( 'Borda Hover', 'llrp' ),
+                        'color_btn_code_text'         => __( 'Texto do Botão', 'llrp' ),
+                        'color_btn_code_text_hover'   => __( 'Texto Hover', 'llrp' ),
+                    ];
+                    foreach ( $code_button_fields as $field => $label ) {
                         $value = esc_attr( get_option( 'llrp_' . $field, '' ) );
                         ?>
                         <tr>

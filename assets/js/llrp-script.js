@@ -84,18 +84,56 @@
       }).done(function (res) {
         if (res.success) {
           if (res.data.exists) {
-            $(".llrp-login-header").text(
-              "Obrigado por voltar, " + res.data.username + "!"
-            );
+            // Preenche os dados do usuário que serão mostrados em ambas as telas de login
             $(".llrp-avatar").attr("src", res.data.avatar);
             $(".llrp-user-name").text(res.data.username);
             $(".llrp-user-email").text(res.data.email);
-            showStep("login");
+            $(".llrp-login-header").text( "Olá, " + res.data.username + "!" );
+            // Mostra a tela com as opções de login
+            showStep("login-options");
           } else {
+            // Se não existe, vai para o cadastro
             showStep("register");
           }
         } else {
           showFeedback("llrp-feedback-email", res.data.message);
+        }
+      });
+    }
+
+    function handleSendCode() {
+      clearFeedback();
+      $.post(llrp_ajax.url, {
+        action: 'llrp_send_login_code',
+        email: savedEmail,
+        nonce: llrp_ajax.nonce,
+      }).done(function (res) {
+        if (res.success) {
+          showStep("code");
+          showFeedback("llrp-feedback-code", res.data.message);
+        } else {
+          showFeedback("llrp-feedback-login-options", res.data.message);
+        }
+      });
+    }
+
+    function handleCodeLoginStep() {
+      var code = $("#llrp-code").val().trim();
+      clearFeedback();
+      if (!code) {
+        showFeedback("llrp-feedback-code", "Por favor, insira o código.");
+        return;
+      }
+      $.post(llrp_ajax.url, {
+        action: 'llrp_code_login',
+        email: savedEmail,
+        code: code,
+        nonce: llrp_ajax.nonce,
+      }).done(function (res) {
+        if (res.success) {
+          window.location = res.data.redirect;
+        } else {
+          showFeedback("llrp-feedback-code", res.data.message);
         }
       });
     }
@@ -178,6 +216,7 @@
         else if ($step.hasClass("llrp-step-login")) handleLoginStep();
         else if ($step.hasClass("llrp-step-register")) handleRegisterStep();
         else if ($step.hasClass("llrp-step-lost")) handleLostStep();
+        else if ($step.hasClass("llrp-step-code")) handleCodeLoginStep();
         e.preventDefault();
       }
     });
@@ -188,6 +227,22 @@
     $("#llrp-email-submit").on("click", handleEmailStep);
     $("#llrp-password-submit").on("click", handleLoginStep);
     $("#llrp-register-submit").on("click", handleRegisterStep);
+    $("#llrp-show-password-login").on("click", function(e) {
+        e.preventDefault();
+        showStep("login");
+    });
+    $("#llrp-send-code").on("click", function(e) {
+        e.preventDefault();
+        handleSendCode();
+    });
+    $("#llrp-code-submit").on("click", function(e) {
+        e.preventDefault();
+        handleCodeLoginStep();
+    });
+    $popup.on("click", ".llrp-resend-code", function (e) {
+      e.preventDefault();
+      handleSendCode();
+    });
     $popup.on("click", ".llrp-forgot", function (e) {
       e.preventDefault();
       showStep("lost");

@@ -66,6 +66,15 @@ class Llrp_Frontend {
         $btn_bd_h          = sanitize_hex_color( get_option( 'llrp_color_btn_border_hover', $btn_bg_h ) );
         $btn_txt           = sanitize_hex_color( get_option( 'llrp_color_btn_text', '#ffffff' ) );
         $btn_txt_h         = sanitize_hex_color( get_option( 'llrp_color_btn_text_hover', $btn_txt ) );
+
+        // Colors for the "Login with Code" button
+        $btn_code_bg      = sanitize_hex_color( get_option( 'llrp_color_btn_code_bg', '#2271b1' ) );
+        $btn_code_bg_h    = sanitize_hex_color( get_option( 'llrp_color_btn_code_bg_hover', '#1e639a' ) );
+        $btn_code_bd      = sanitize_hex_color( get_option( 'llrp_color_btn_code_border', $btn_code_bg ) );
+        $btn_code_bd_h    = sanitize_hex_color( get_option( 'llrp_color_btn_code_border_hover', $btn_code_bg_h ) );
+        $btn_code_txt     = sanitize_hex_color( get_option( 'llrp_color_btn_code_text', '#ffffff' ) );
+        $btn_code_txt_h   = sanitize_hex_color( get_option( 'llrp_color_btn_code_text_hover', '#ffffff' ) );
+
         $font_family       = sanitize_text_field( get_option( 'llrp_font_family', 'inherit' ) );
         $font_size_h2      = floatval( get_option( 'llrp_font_size_h2', '1.5' ) );
         $font_size_p       = floatval( get_option( 'llrp_font_size_p', '1' ) );
@@ -93,6 +102,8 @@ class Llrp_Frontend {
         $css .= ".llrp-login-options { display: flex; justify-content: space-between !important; align-items: center !important; margin: 2em 0 !important; }";
         $css .= ".llrp-login-options label { display: inline-flex !important; align-items: center !important; white-space: nowrap !important; }";
         $css .= ".llrp-login-options label input { margin-right: 5px !important; }";
+        $css .= "#llrp-send-code { background: {$btn_code_bg} !important; color: {$btn_code_txt} !important; border: 1px solid {$btn_code_bd} !important; }";
+        $css .= "#llrp-send-code:hover { background: {$btn_code_bg_h} !important; border-color: {$btn_code_bd_h} !important; color: {$btn_code_txt_h} !important; }";
 
         wp_add_inline_style( 'llrp-frontend', $css );
     }
@@ -142,6 +153,22 @@ class Llrp_Frontend {
                 <div class="llrp-feedback llrp-feedback-email"></div>
             </div>
 
+            <!-- Login Options Step -->
+            <div class="llrp-step llrp-step-login-options hidden">
+                <div class="llrp-user-info">
+                    <img class="llrp-avatar" src="" alt="avatar" width="70" height="70">
+                    <div class="llrp-user-details">
+                        <strong class="llrp-user-name"></strong><br>
+                        <small class="llrp-user-email"></small><br>
+                        <a href="#" class="llrp-back"><?php esc_html_e( 'Não é sua conta? Voltar', 'llrp' ); ?></a>
+                    </div>
+                </div>
+                <p><?php esc_html_e( 'Como você gostaria de fazer login?', 'llrp' ); ?></p>
+                <button id="llrp-show-password-login"><?php esc_html_e( 'Login com Senha', 'llrp' ); ?></button>
+                <button id="llrp-send-code"><?php esc_html_e( 'Receber código por e-mail', 'llrp' ); ?></button>
+                <div class="llrp-feedback llrp-feedback-login-options"></div>
+            </div>
+
             <!-- Login Step -->
             <div class="llrp-step llrp-step-login hidden">
                 <h2 class="llrp-login-header"></h2>
@@ -161,6 +188,17 @@ class Llrp_Frontend {
                 </div>
                 <button id="llrp-password-submit"><?php echo esc_html( $b_login ); ?></button>
                 <div class="llrp-feedback llrp-feedback-login"></div>
+            </div>
+
+            <!-- Code Login Step -->
+            <div class="llrp-step llrp-step-code hidden">
+                <h2><?php esc_html_e( 'Verifique seu E-mail', 'llrp' ); ?></h2>
+                <p><?php esc_html_e( 'Enviamos um código de 6 dígitos para o seu e-mail. Insira-o abaixo para fazer login.', 'llrp' ); ?></p>
+                <input type="text" id="llrp-code" placeholder="<?php esc_attr_e( 'Insira o código', 'llrp' ); ?>" autocomplete="one-time-code">
+                <button id="llrp-code-submit"><?php esc_html_e( 'Login', 'llrp' ); ?></button>
+                <div class="llrp-feedback llrp-feedback-code"></div>
+                <p><a href="#" class="llrp-resend-code"><?php esc_html_e( 'Reenviar código', 'llrp' ); ?></a></p>
+                <p><a href="#" class="llrp-back">&larr; <?php esc_html_e( 'Voltar', 'llrp' ); ?></a></p>
             </div>
 
             <!-- Register Step -->
