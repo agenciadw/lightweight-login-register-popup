@@ -41,6 +41,13 @@ Este plugin exibe um popup personalizável na página do carrinho para permitir 
 
 == Changelog ==
 
+= 0.2.0 - 2025-08-08 =
+* New: Implemented a unified, passwordless-first login and registration flow.
+* New: Added option to log in or register using a one-time code.
+* New: Added option to receive the one-time code via Email or WhatsApp (requires integration with Joinotify plugin).
+* New: Added admin settings to configure the WhatsApp integration and customize button colors.
+* Security: Hardened security by adding sanitization for all settings, improving password handling, and adding a password strength check.
+
 = 0.1.1 =
 
 - Inclusão de Screenshots de configuração e checkout
