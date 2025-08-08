@@ -66,6 +66,15 @@ class Llrp_Frontend {
         $btn_bd_h          = sanitize_hex_color( get_option( 'llrp_color_btn_border_hover', $btn_bg_h ) );
         $btn_txt           = sanitize_hex_color( get_option( 'llrp_color_btn_text', '#ffffff' ) );
         $btn_txt_h         = sanitize_hex_color( get_option( 'llrp_color_btn_text_hover', $btn_txt ) );
+
+        // Colors for the "Login with Code" button
+        $btn_code_bg      = sanitize_hex_color( get_option( 'llrp_color_btn_code_bg', '#2271b1' ) );
+        $btn_code_bg_h    = sanitize_hex_color( get_option( 'llrp_color_btn_code_bg_hover', '#1e639a' ) );
+        $btn_code_bd      = sanitize_hex_color( get_option( 'llrp_color_btn_code_border', $btn_code_bg ) );
+        $btn_code_bd_h    = sanitize_hex_color( get_option( 'llrp_color_btn_code_border_hover', $btn_code_bg_h ) );
+        $btn_code_txt     = sanitize_hex_color( get_option( 'llrp_color_btn_code_text', '#ffffff' ) );
+        $btn_code_txt_h   = sanitize_hex_color( get_option( 'llrp_color_btn_code_text_hover', '#ffffff' ) );
+
         $font_family       = sanitize_text_field( get_option( 'llrp_font_family', 'inherit' ) );
         $font_size_h2      = floatval( get_option( 'llrp_font_size_h2', '1.5' ) );
         $font_size_p       = floatval( get_option( 'llrp_font_size_p', '1' ) );
@@ -93,6 +102,8 @@ class Llrp_Frontend {
         $css .= ".llrp-login-options { display: flex; justify-content: space-between !important; align-items: center !important; margin: 2em 0 !important; }";
         $css .= ".llrp-login-options label { display: inline-flex !important; align-items: center !important; white-space: nowrap !important; }";
         $css .= ".llrp-login-options label input { margin-right: 5px !important; }";
+        $css .= "#llrp-send-code { background: {$btn_code_bg} !important; color: {$btn_code_txt} !important; border: 1px solid {$btn_code_bd} !important; }";
+        $css .= "#llrp-send-code:hover { background: {$btn_code_bg_h} !important; border-color: {$btn_code_bd_h} !important; color: {$btn_code_txt_h} !important; }";
 
         wp_add_inline_style( 'llrp-frontend', $css );
     }
