@@ -83,17 +83,35 @@ class Llrp_Ajax {
         update_user_meta( $user->ID, '_llrp_login_code_hash', $hash );
         update_user_meta( $user->ID, '_llrp_login_code_expiration', $expiration );
 
-        $subject = __( 'Seu código de login', 'llrp' );
+        $whatsapp_enabled = get_option( 'llrp_whatsapp_enabled' );
         $message = sprintf(
-            __( 'Use este código para fazer login: %s. O código expira em 5 minutos.', 'llrp' ),
+            __( 'Seu código de login para %s é: %s. O código expira em 5 minutos.', 'llrp' ),
+            get_bloginfo( 'name' ),
             $code
         );
 
-        if ( ! wp_mail( $email, $subject, $message ) ) {
-            wp_send_json_error( [ 'message' => __( 'Não foi possível enviar o e-mail com o código de login.', 'llrp' ) ] );
+        // Try sending via WhatsApp first if enabled
+        if ( $whatsapp_enabled && function_exists( 'joinotify_send_whatsapp_message_text' ) ) {
+            $sender_phone = get_option( 'llrp_whatsapp_sender_phone' );
+            $receiver_phone = get_user_meta( $user->ID, 'billing_phone', true );
+
+            if ( $sender_phone && $receiver_phone ) {
+                $response = joinotify_send_whatsapp_message_text( $sender_phone, $receiver_phone, $message );
+                // Assuming a 200 response code means success
+                if ( $response === 200 ) {
+                    wp_send_json_success( [ 'message' => __( 'Enviamos o código para o seu WhatsApp.', 'llrp' ) ] );
+                    return;
+                }
+            }
         }
 
-        wp_send_json_success( [ 'message' => __( 'Um código de login foi enviado para o seu e-mail.', 'llrp' ) ] );
+        // Fallback to email
+        $subject = __( 'Seu código de login', 'llrp' );
+        if ( ! wp_mail( $email, $subject, $message ) ) {
+            wp_send_json_error( [ 'message' => __( 'Não foi possível enviar o código de login.', 'llrp' ) ] );
+        }
+
+        wp_send_json_success( [ 'message' => __( 'Enviamos o código para o seu e-mail.', 'llrp' ) ] );
     }
 
     public static function ajax_code_login() {
