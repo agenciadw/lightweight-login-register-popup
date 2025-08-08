@@ -1,280 +1,277 @@
 (function ($) {
   "use strict";
 
-  // Validação simples de formato de e-mail
-  function isValidEmail(email) {
-    var re = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    return re.test(email);
-  }
-
   $(function () {
-    var $overlay = $("#llrp-overlay"),
-      $popup = $("#llrp-popup"),
-      savedEmail = ""; // guarda o e-mail digitado na primeira etapa
+    // --- DOM Elements ---
+    var $overlay = $("#llrp-overlay");
+    var $popup = $("#llrp-popup");
 
-    // --- Dados vindos do PHP via wp_localize_script ---
-    var initialCount = parseInt(LLRP_Data.initial_cart_count, 10);
-    var isLoggedIn = parseInt(LLRP_Data.is_logged_in, 10) === 1;
+    // --- State Variables ---
+    var state = {
+      email: "",
+      phone: "",
+      userExists: false,
+      hasPhone: false,
+      avatar: "",
+      username: "",
+    };
+
+    // --- Utility Functions ---
+    function isValidEmail(email) {
+      var re = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+      return re.test(email);
+    }
+
+    function showStep(step) {
+      $popup.find(".llrp-step").addClass("hidden");
+      $popup.find(".llrp-step-" + step).removeClass("hidden");
+      var $inp = $popup.find(".llrp-step-" + step + " input:visible").first();
+      if ($inp.length) {
+        setTimeout(function () { $inp.focus(); }, 50);
+      }
+    }
+
+    function clearFeedback() {
+      $popup.find(".llrp-feedback").text("").removeClass("success error");
+    }
+
+    function showFeedback(selector, message, isSuccess) {
+      var $feedback = $popup.find("." + selector);
+      $feedback.text(message);
+      if (isSuccess) {
+        $feedback.removeClass("error").addClass("success");
+      } else {
+        $feedback.removeClass("success").addClass("error");
+      }
+    }
+
+    function resetState() {
+        state = { email: "", phone: "", userExists: false, hasPhone: false, avatar: "", username: "" };
+        $popup.find("input").val("");
+        $('#llrp-options-container').empty();
+        clearFeedback();
+    }
 
     function openPopup(e) {
       if (e) e.preventDefault();
-      resetSteps();
+      resetState();
+      showStep('initial');
       $overlay.removeClass("hidden");
       $popup.removeClass("hidden");
       $("body").addClass("llrp-no-scroll");
-      setTimeout(function () {
-        $("#llrp-email").focus();
-      }, 50);
     }
 
     function closePopup() {
       $overlay.addClass("hidden");
       $popup.addClass("hidden");
       $("body").removeClass("llrp-no-scroll");
-      resetSteps();
     }
 
-    function resetSteps() {
-      $popup.find(".llrp-step").addClass("hidden");
-      $popup.find(".llrp-step-email").removeClass("hidden");
+    // --- UI Building Functions ---
+    function displayOptions() {
+        var optionsHtml = '';
+        if(state.userExists) {
+            $('.llrp-user-info').removeClass('hidden');
+            $('.llrp-avatar').attr('src', state.avatar);
+            $('.llrp-user-name').text(state.username);
+            $('.llrp-user-email').text(state.email);
+
+            optionsHtml += '<p>Como você gostaria de fazer login?</p>';
+            optionsHtml += '<button class="llrp-button" data-action="show-password">Login com Senha</button>';
+            optionsHtml += '<p>Ou</p>';
+
+        } else {
+            $('.llrp-user-info').addClass('hidden');
+            optionsHtml += '<p>Parece que você é novo por aqui! Escolha como quer continuar:</p>';
+            optionsHtml += '<button class="llrp-button" data-action="show-password-register">Cadastrar com Senha</button>';
+            optionsHtml += '<p>Ou</p>';
+        }
+
+        // Code options
+        optionsHtml += '<div>';
+        optionsHtml += '<label><input type="radio" name="code_method" value="email" checked> E-mail</label>';
+        if (state.hasPhone) {
+            optionsHtml += '<label style="margin-left: 15px;"><input type="radio" name="code_method" value="whatsapp"> WhatsApp</label>';
+        }
+        optionsHtml += '</div>';
+        optionsHtml += '<button class="llrp-button" data-action="send-code">Receber código de acesso</button>';
+
+        $('#llrp-options-container').html(optionsHtml);
+        showStep('options');
+    }
+
+
+    // --- AJAX Handlers ---
+    function handleInitialStep() {
       clearFeedback();
-      $popup.find("input").val("");
-    }
+      state.email = $("#llrp-email").val().trim();
+      state.phone = $("#llrp-phone").val().trim();
 
-    function clearFeedback() {
-      $popup.find(".llrp-feedback").text("");
-    }
-
-    function showFeedback(selector, message) {
-      $popup.find("." + selector).text(message);
-    }
-
-    function showStep(step) {
-      $popup.find(".llrp-step").addClass("hidden");
-      $popup.find(".llrp-step-" + step).removeClass("hidden");
-      var $inp = $popup.find(".llrp-step-" + step + " input").first();
-      if ($inp.length) {
-        setTimeout(function () {
-          $inp.focus();
-        }, 50);
-      }
-    }
-
-    function handleEmailStep() {
-      var email = $("#llrp-email").val().trim();
-      clearFeedback();
-      if (!email) {
-        showFeedback("llrp-feedback-email", "Por favor, insira seu e-mail.");
+      if (!isValidEmail(state.email)) {
+        showFeedback("llrp-feedback-initial", "Por favor, insira um e-mail válido.");
         return;
       }
-      if (!isValidEmail(email)) {
-        showFeedback(
-          "llrp-feedback-email",
-          "Por favor, insira um e-mail válido."
-        );
-        return;
-      }
-
-      savedEmail = email;
 
       $.post(llrp_ajax.url, {
-        action: llrp_ajax.action_check,
-        email: email,
-        nonce: llrp_ajax.nonce,
+        action: 'llrp_check_user',
+        email: state.email,
+        phone: state.phone,
+        nonce: LLRP_Data.nonce,
       }).done(function (res) {
         if (res.success) {
-          if (res.data.exists) {
-            // Preenche os dados do usuário que serão mostrados em ambas as telas de login
-            $(".llrp-avatar").attr("src", res.data.avatar);
-            $(".llrp-user-name").text(res.data.username);
-            $(".llrp-user-email").text(res.data.email);
-            $(".llrp-login-header").text( "Olá, " + res.data.username + "!" );
-            // Mostra a tela com as opções de login
-            showStep("login-options");
-          } else {
-            // Se não existe, vai para o cadastro
-            showStep("register");
+          state.userExists = res.data.exists;
+          state.hasPhone = res.data.has_phone;
+          if(res.data.exists) {
+              state.avatar = res.data.avatar;
+              state.username = res.data.username;
           }
+          displayOptions();
         } else {
-          showFeedback("llrp-feedback-email", res.data.message);
+          showFeedback("llrp-feedback-initial", res.data.message);
         }
       });
     }
 
     function handleSendCode() {
-      clearFeedback();
-      $.post(llrp_ajax.url, {
-        action: 'llrp_send_login_code',
-        email: savedEmail,
-        nonce: llrp_ajax.nonce,
-      }).done(function (res) {
-        if (res.success) {
-          showStep("code");
-          showFeedback("llrp-feedback-code", res.data.message);
-        } else {
-          showFeedback("llrp-feedback-login-options", res.data.message);
+        clearFeedback();
+        var method = $('input[name="code_method"]:checked').val();
+        $.post(llrp_ajax.url, {
+            action: 'llrp_send_code',
+            email: state.email,
+            phone: state.phone,
+            method: method,
+            nonce: LLRP_Data.nonce,
+        }).done(function(res) {
+            if(res.success) {
+                $('#llrp-code-instructions').text(res.data.message);
+                showStep('code');
+            } else {
+                showFeedback('llrp-feedback-options', res.data.message);
+            }
+        });
+    }
+
+    function handleCodeVerification() {
+        clearFeedback();
+        var code = $('#llrp-code').val().trim();
+        if (!code) {
+            showFeedback('llrp-feedback-code', 'Por favor, insira o código.');
+            return;
         }
-      });
+        $.post(llrp_ajax.url, {
+            action: 'llrp_verify_code_and_login',
+            email: state.email,
+            phone: state.phone,
+            code: code,
+            nonce: LLRP_Data.nonce,
+        }).done(function(res) {
+            if(res.success) {
+                window.location.href = res.data.redirect;
+            } else {
+                showFeedback('llrp-feedback-code', res.data.message);
+            }
+        });
     }
 
-    function handleCodeLoginStep() {
-      var code = $("#llrp-code").val().trim();
-      clearFeedback();
-      if (!code) {
-        showFeedback("llrp-feedback-code", "Por favor, insira o código.");
-        return;
-      }
-      $.post(llrp_ajax.url, {
-        action: 'llrp_code_login',
-        email: savedEmail,
-        code: code,
-        nonce: llrp_ajax.nonce,
-      }).done(function (res) {
-        if (res.success) {
-          window.location = res.data.redirect;
-        } else {
-          showFeedback("llrp-feedback-code", res.data.message);
+    function handlePasswordLogin() {
+        clearFeedback();
+        var password = $('#llrp-password').val();
+        if (!password) {
+            showFeedback('llrp-feedback-password', 'Por favor, insira sua senha.');
+            return;
         }
-      });
+        $.post(llrp_ajax.url, {
+            action: 'llrp_login_with_password',
+            email: state.email,
+            password: password,
+            nonce: LLRP_Data.nonce,
+        }).done(function(res) {
+            if(res.success) {
+                window.location.href = res.data.redirect;
+            } else {
+                showFeedback('llrp-feedback-password', res.data.message);
+            }
+        });
     }
 
-    function handleLoginStep() {
-      var password = $("#llrp-password").val();
-      clearFeedback();
-      if (!password) {
-        showFeedback("llrp-feedback-login", "Por favor, insira sua senha.");
-        return;
-      }
-      $.post(llrp_ajax.url, {
-        action: llrp_ajax.action_login,
-        email: $("#llrp-email").val().trim(),
-        password: password,
-        remember: $("#llrp-remember").is(":checked") ? 1 : 0,
-        nonce: llrp_ajax.nonce,
-      }).done(function (res) {
-        if (res.success) {
-          window.location = res.data.redirect;
-        } else {
-          showFeedback("llrp-feedback-login", res.data.message);
+    function handlePasswordRegister() {
+        clearFeedback();
+        var password = $('#llrp-password').val();
+        if (!password) {
+            showFeedback('llrp-feedback-password', 'Por favor, crie uma senha.');
+            return;
         }
-      });
+        $.post(llrp_ajax.url, {
+            action: 'llrp_register_with_password',
+            email: state.email,
+            phone: state.phone,
+            password: password,
+            nonce: LLRP_Data.nonce,
+        }).done(function(res) {
+            if(res.success) {
+                window.location.href = res.data.redirect;
+            } else {
+                showFeedback('llrp-feedback-password', res.data.message);
+            }
+        });
     }
 
-    function handleRegisterStep() {
-      var password = $("#llrp-register-password").val();
-      clearFeedback();
-      if (!password) {
-        showFeedback("llrp-feedback-register", "Por favor, insira uma senha.");
-        return;
-      }
-      $.post(llrp_ajax.url, {
-        action: llrp_ajax.action_register,
-        email: $("#llrp-email").val().trim(),
-        password: password,
-        nonce: llrp_ajax.nonce,
-      }).done(function (res) {
-        if (res.success) {
-          window.location = res.data.redirect;
-        } else {
-          showFeedback("llrp-feedback-register", res.data.message);
+    // --- Event Binding ---
+    $('.checkout-button').on('click', openPopup);
+    $popup.on('click', '.llrp-close', closePopup);
+    $popup.on('click', '#llrp-initial-submit', handleInitialStep);
+
+    // Delegated events for dynamic content
+    $('#llrp-options-container').on('click', 'button', function(e) {
+        e.preventDefault();
+        var action = $(this).data('action');
+        if (action === 'show-password') {
+            $('#llrp-password-submit').data('action', 'login');
+            showStep('password');
+        } else if (action === 'show-password-register') {
+            $('#llrp-password-submit').data('action', 'register');
+            showStep('password');
+        } else if (action === 'send-code') {
+            handleSendCode();
         }
-      });
-    }
+    });
 
-    function handleLostStep() {
-      var email = $("#llrp-lost-email").val().trim();
-      clearFeedback();
-      if (!email) {
-        showFeedback(
-          "llrp-feedback-lost",
-          "Por favor, insira seu e-mail para recuperar a senha."
-        );
-        return;
-      }
-      if (!isValidEmail(email)) {
-        showFeedback(
-          "llrp-feedback-lost",
-          "Por favor, insira um e-mail válido."
-        );
-        return;
-      }
+    $('#llrp-password-submit').on('click', function(e) {
+        e.preventDefault();
+        var action = $(this).data('action');
+        if (action === 'login') {
+            handlePasswordLogin();
+        } else if (action === 'register') {
+            handlePasswordRegister();
+        }
+    });
 
-      $.post(llrp_ajax.url, {
-        action: llrp_ajax.action_lost,
-        email: email,
-        nonce: llrp_ajax.nonce,
-      }).done(function (res) {
-        showFeedback("llrp-feedback-lost", res.data.message);
-      });
-    }
+    $('#llrp-code-submit').on('click', function(e) {
+        e.preventDefault();
+        handleCodeVerification();
+    });
+
+    $popup.on('click', '.llrp-back', function(e) {
+        e.preventDefault();
+        resetState();
+        showStep('initial');
+    });
+
+    $popup.on('click', '.llrp-back-to-options', function(e) {
+        e.preventDefault();
+        showStep('options');
+    });
 
     // Submit on Enter
     $popup.on("keypress", "input", function (e) {
       if (e.which === 13) {
-        var $step = $(this).closest(".llrp-step");
-        if ($step.hasClass("llrp-step-email")) handleEmailStep();
-        else if ($step.hasClass("llrp-step-login")) handleLoginStep();
-        else if ($step.hasClass("llrp-step-register")) handleRegisterStep();
-        else if ($step.hasClass("llrp-step-lost")) handleLostStep();
-        else if ($step.hasClass("llrp-step-code")) handleCodeLoginStep();
         e.preventDefault();
+        var $step = $(this).closest(".llrp-step");
+        if ($step.hasClass("llrp-step-initial")) handleInitialStep();
+        else if ($step.hasClass("llrp-step-password")) $('#llrp-password-submit').trigger('click');
+        else if ($step.hasClass("llrp-step-code")) handleCodeVerification();
       }
     });
 
-    // Bind clicks
-    $(".checkout-button").on("click", openPopup);
-    $popup.find(".llrp-close").on("click", closePopup);
-    $("#llrp-email-submit").on("click", handleEmailStep);
-    $("#llrp-password-submit").on("click", handleLoginStep);
-    $("#llrp-register-submit").on("click", handleRegisterStep);
-    $("#llrp-show-password-login").on("click", function(e) {
-        e.preventDefault();
-        showStep("login");
-    });
-    $("#llrp-send-code").on("click", function(e) {
-        e.preventDefault();
-        handleSendCode();
-    });
-    $("#llrp-code-submit").on("click", function(e) {
-        e.preventDefault();
-        handleCodeLoginStep();
-    });
-    $popup.on("click", ".llrp-resend-code", function (e) {
-      e.preventDefault();
-      handleSendCode();
-    });
-    $popup.on("click", ".llrp-forgot", function (e) {
-      e.preventDefault();
-      showStep("lost");
-      $("#llrp-lost-email").val(savedEmail);
-    });
-    $popup.on("click", ".llrp-back", function (e) {
-      e.preventDefault();
-      resetSteps();
-    });
-    $popup.on("click", "#llrp-lost-submit", handleLostStep);
-
-    // --- Nova funcionalidade: abre popup no primeiro add-to-cart (com delay e só se deslogado) ---
-    //if (!isLoggedIn) {
-    // Opcional: listener para quem ainda adicionar via AJAX (caso carregue o script em outras páginas)
-    //$(document.body).on("added_to_cart", function (e, fragments) {
-    //var newCount = initialCount + 1;
-
-    //if (fragments && fragments["div.widget_shopping_cart_content"]) {
-    //var html = fragments["div.widget_shopping_cart_content"];
-    //var match = html.match(/(\d+)\s+it(?:e|ê)m/);
-    //if (match) newCount = parseInt(match[1], 10);
-    //}
-
-    //if (initialCount === 0 && newCount === 1) {
-    //setTimeout(openPopup, 900);
-    //}
-    //});
-
-    // **Auto-open**: ao carregar o carrinho *se já houver exatamente 1 item*
-    // if (initialCount === 1) {
-    ////setTimeout(openPopup, 900);
-    // }
-    // }
   });
 })(jQuery);

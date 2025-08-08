@@ -149,81 +149,48 @@ class Llrp_Frontend {
         <div id="llrp-popup" class="llrp-popup hidden">
             <button type="button" class="llrp-close">&times;</button>
 
-            <!-- Email Step -->
-            <div class="llrp-step llrp-step-email">
+            <!-- Step 1: Initial Input -->
+            <div class="llrp-step llrp-step-initial">
                 <h2><?php echo esc_html( $h_email ); ?></h2>
                 <p><?php echo esc_html( $t_email ); ?></p>
-                <input type="email" id="llrp-email" placeholder="<?php echo esc_attr( $ph_email ); ?>">
-                <button id="llrp-email-submit"><?php echo esc_html( $b_email ); ?></button>
-                <div class="llrp-feedback llrp-feedback-email"></div>
+                <input type="email" id="llrp-email" placeholder="<?php echo esc_attr( $ph_email ); ?>" required>
+                <input type="tel" id="llrp-phone" placeholder="<?php esc_attr_e( 'WhatsApp (Opcional)', 'llrp' ); ?>">
+                <button id="llrp-initial-submit"><?php echo esc_html( $b_email ); ?></button>
+                <div class="llrp-feedback llrp-feedback-initial"></div>
             </div>
 
-            <!-- Login Options Step -->
-            <div class="llrp-step llrp-step-login-options hidden">
-                <div class="llrp-user-info">
+            <!-- Step 2: Options (Login/Register) -->
+            <div class="llrp-step llrp-step-options hidden">
+                <div class="llrp-user-info hidden">
                     <img class="llrp-avatar" src="" alt="avatar" width="70" height="70">
                     <div class="llrp-user-details">
                         <strong class="llrp-user-name"></strong><br>
-                        <small class="llrp-user-email"></small><br>
-                        <a href="#" class="llrp-back"><?php esc_html_e( 'Não é sua conta? Voltar', 'llrp' ); ?></a>
+                        <small class="llrp-user-email"></small>
                     </div>
                 </div>
-                <p><?php esc_html_e( 'Como você gostaria de fazer login?', 'llrp' ); ?></p>
-                <button id="llrp-show-password-login"><?php esc_html_e( 'Login com Senha', 'llrp' ); ?></button>
-                <button id="llrp-send-code"><?php echo esc_html( $send_code_button_text ); ?></button>
-                <div class="llrp-feedback llrp-feedback-login-options"></div>
+                <div id="llrp-options-container">
+                    <!-- JS will populate this -->
+                </div>
+                <div class="llrp-feedback llrp-feedback-options"></div>
+                <p><a href="#" class="llrp-back">&larr; <?php esc_html_e( 'Voltar', 'llrp' ); ?></a></p>
             </div>
 
-            <!-- Login Step -->
-            <div class="llrp-step llrp-step-login hidden">
-                <h2 class="llrp-login-header"></h2>
-                <div class="llrp-user-info">
-                    <img class="llrp-avatar" src="" alt="avatar" width="70" height="70">
-                    <div class="llrp-user-details">
-                        <strong class="llrp-user-name"></strong><br>
-                        <small class="llrp-user-email"></small><br>
-                        <a href="#" class="llrp-back"><?php esc_html_e( 'Não é sua conta? Voltar', 'llrp' ); ?></a>
-                    </div>
-                </div>
-                <p><?php echo esc_html( $t_login ); ?></p>
+            <!-- Step 3: Enter Password -->
+            <div class="llrp-step llrp-step-password hidden">
+                 <p><?php esc_html_e( 'Digite sua senha para continuar.', 'llrp' ); ?></p>
                 <input type="password" id="llrp-password" placeholder="<?php echo esc_attr( $ph_pass ); ?>">
-                <div class="llrp-login-options">
-                    <label><input type="checkbox" id="llrp-remember"> <?php echo esc_html( $txt_rem ); ?></label>
-                    <a href="#" class="llrp-forgot"><?php esc_html_e( 'Esqueceu sua senha?', 'llrp' ); ?></a>
-                </div>
                 <button id="llrp-password-submit"><?php echo esc_html( $b_login ); ?></button>
-                <div class="llrp-feedback llrp-feedback-login"></div>
+                <div class="llrp-feedback llrp-feedback-password"></div>
+                <p><a href="#" class="llrp-back-to-options">&larr; <?php esc_html_e( 'Outras opções', 'llrp' ); ?></a></p>
             </div>
 
-            <!-- Code Login Step -->
+            <!-- Step 4: Enter Code -->
             <div class="llrp-step llrp-step-code hidden">
-                <h2><?php echo esc_html( $code_step_header ); ?></h2>
-                <p><?php echo esc_html( $code_step_p ); ?></p>
+                <p id="llrp-code-instructions"></p>
                 <input type="text" id="llrp-code" placeholder="<?php esc_attr_e( 'Insira o código', 'llrp' ); ?>" autocomplete="one-time-code">
-                <button id="llrp-code-submit"><?php esc_html_e( 'Login', 'llrp' ); ?></button>
+                <button id="llrp-code-submit"><?php esc_html_e( 'Verificar e Acessar', 'llrp' ); ?></button>
                 <div class="llrp-feedback llrp-feedback-code"></div>
-                <p><a href="#" class="llrp-resend-code"><?php esc_html_e( 'Reenviar código', 'llrp' ); ?></a></p>
-                <p><a href="#" class="llrp-back">&larr; <?php esc_html_e( 'Voltar', 'llrp' ); ?></a></p>
-            </div>
-
-            <!-- Register Step -->
-            <div class="llrp-step llrp-step-register hidden">
-                <h2><?php echo esc_html( $h_reg ); ?></h2>
-                <p><?php echo esc_html( $t_reg ); ?></p>
-                <input type="password" id="llrp-register-password" placeholder="<?php echo esc_attr( $ph_reg ); ?>">
-                <button id="llrp-register-submit"><?php echo esc_html( $b_reg ); ?></button>
-                <div class="llrp-feedback llrp-feedback-register"></div>
-                <p><a href="#" class="llrp-back">&larr; <?php esc_html_e( 'Voltar', 'llrp' ); ?></a></p>
-            </div>
-
-            <!-- Lost Password Step -->
-            <div class="llrp-step llrp-step-lost hidden">
-                <h2><?php echo esc_html( $h_lost ); ?></h2>
-                <p><?php echo esc_html( $t_lost ); ?></p>
-                <input type="email" id="llrp-lost-email" placeholder="<?php echo esc_attr( $ph_lost ); ?>">
-                <button id="llrp-lost-submit"><?php echo esc_html( $b_lost ); ?></button>
-                <div class="llrp-feedback llrp-feedback-lost"></div>
-                <p><a href="#" class="llrp-back">&larr; <?php esc_html_e( 'Voltar', 'llrp' ); ?></a></p>
+                <p><a href="#" class="llrp-back-to-options">&larr; <?php esc_html_e( 'Outras opções', 'llrp' ); ?></a></p>
             </div>
 
         </div>
