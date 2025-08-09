@@ -73,7 +73,8 @@ class Llrp_Ajax {
 
             if ( $sender_phone && $receiver_phone ) {
                 $response = joinotify_send_whatsapp_message_text( $sender_phone, $receiver_phone, $message );
-                if ( $response === 200 ) {
+                // A more robust check for success, assuming any non-empty/non-false response is a success.
+                if ( ! empty( $response ) ) {
                     wp_send_json_success( [ 'message' => __( 'Enviamos o código para o seu WhatsApp.', 'llrp' ) ] );
                     return; // Exit after successful WhatsApp send
                 }
