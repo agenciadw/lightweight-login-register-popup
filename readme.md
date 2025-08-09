@@ -13,6 +13,8 @@ License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
 Este plugin exibe um popup personalizável na página do carrinho para permitir login, cadastro e recuperação de senha sem recarregar a página. Foi desenvolvido para carregar apenas os recursos necessários, mantendo a leveza e performance.
 
+**Configure o plugin em WooCommerce > Login Popup.**
+
 == Features ==
 
 - Modal na página do carrinho: Aparece automaticamente para visitantes não autenticados.
