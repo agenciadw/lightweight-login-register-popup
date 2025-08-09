@@ -164,6 +164,10 @@
         e.preventDefault();
         handleSendCode();
     });
+    $popup.on("click", ".llrp-back-to-options", function(e) {
+        e.preventDefault();
+        showStep('login-options');
+    });
 
     $popup.on("keypress", "input", function (e) {
       if (e.which === 13) {
