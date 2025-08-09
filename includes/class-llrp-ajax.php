@@ -66,17 +66,16 @@ class Llrp_Ajax {
         update_user_meta( $user->ID, '_llrp_login_code_expiration', $expiration );
 
         $whatsapp_enabled = get_option( 'llrp_whatsapp_enabled' );
-        $whatsapp_attempted = false;
 
         if ( $whatsapp_enabled && function_exists( 'joinotify_send_whatsapp_message_text' ) ) {
             $sender_phone = get_option( 'llrp_whatsapp_sender_phone' );
             $receiver_phone = get_user_meta( $user->ID, 'billing_phone', true );
 
             if ( $sender_phone && $receiver_phone ) {
-                $whatsapp_attempted = true;
                 $response = joinotify_send_whatsapp_message_text( $sender_phone, $receiver_phone, $message );
                 if ( $response === 200 ) {
                     wp_send_json_success( [ 'message' => __( 'Enviamos o código para o seu WhatsApp.', 'llrp' ) ] );
+                    return; // Exit after successful WhatsApp send
                 }
             }
         }
@@ -87,8 +86,9 @@ class Llrp_Ajax {
             wp_send_json_error( [ 'message' => __( 'Não foi possível enviar o código de login.', 'llrp' ) ] );
         }
 
-        if ($whatsapp_attempted) {
-            wp_send_json_success( [ 'message' => __( 'Não foi possível enviar para o WhatsApp. O código foi enviado para o seu e-mail.', 'llrp' ) ] );
+        // If WhatsApp was enabled but failed, send a specific message.
+        if ($whatsapp_enabled) {
+            wp_send_json_success( [ 'message' => __( 'Não foi possível enviar para o WhatsApp. Verifique o número cadastrado. O código foi enviado para o seu e-mail.', 'llrp' ) ] );
         } else {
             wp_send_json_success( [ 'message' => __( 'Enviamos o código para o seu e-mail.', 'llrp' ) ] );
         }
