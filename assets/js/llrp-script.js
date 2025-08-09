@@ -160,13 +160,17 @@
     $popup.on("click", "#llrp-show-password-login", function() { showStep('login'); });
     $popup.on("click", "#llrp-send-code", handleSendCode);
     $popup.on("click", "#llrp-code-submit", handleCodeLogin);
-    $popup.on("click", ".llrp-resend-code", function(e) {
-        e.preventDefault();
-        handleSendCode();
+    $(document).on("click", ".llrp-resend-code", function(e) {
+        if ($(this).closest('#llrp-popup').length) {
+            e.preventDefault();
+            handleSendCode();
+        }
     });
-    $popup.on("click", ".llrp-back-to-options", function(e) {
-        e.preventDefault();
-        showStep('login-options');
+    $(document).on("click", ".llrp-back-to-options", function(e) {
+        if ($(this).closest('#llrp-popup').length) {
+            e.preventDefault();
+            showStep('login-options');
+        }
     });
 
     $popup.on("keypress", "input", function (e) {
