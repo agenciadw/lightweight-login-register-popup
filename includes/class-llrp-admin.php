@@ -143,7 +143,6 @@ class Llrp_Admin {
                             <p class="description"><?php esc_html_e( 'Insira o número de telefone da instância do Joinotify que enviará a mensagem (ex: 5541999998888).', 'llrp' ); ?></p>
                         </td>
                     </tr>
-
                     <!-- General Color Settings -->
                     <tr>
                         <th colspan="2" style="padding-top: 2em; padding-bottom: 1em;"><h2><?php esc_html_e( 'Cores', 'llrp' ); ?></h2></th>
@@ -184,7 +183,7 @@ class Llrp_Admin {
                     }
                     ?>
                     <tr>
-                        <th colspan="2" style="padding-top: 2em; padding-bottom: 1em;"><h3><?php esc_html_e( 'Botão "Receber código por e-mail"', 'llrp' ); ?></h3></th>
+                        <th colspan="2" style="padding-top: 2em; padding-bottom: 1em;"><h3><?php esc_html_e( 'Botão "Receber código"', 'llrp' ); ?></h3></th>
                     </tr>
                     <?php
                     $code_button_fields = [

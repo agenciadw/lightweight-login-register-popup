@@ -66,15 +66,12 @@ class Llrp_Frontend {
         $btn_bd_h          = sanitize_hex_color( get_option( 'llrp_color_btn_border_hover', $btn_bg_h ) );
         $btn_txt           = sanitize_hex_color( get_option( 'llrp_color_btn_text', '#ffffff' ) );
         $btn_txt_h         = sanitize_hex_color( get_option( 'llrp_color_btn_text_hover', $btn_txt ) );
-
-        // Colors for the "Login with Code" button
         $btn_code_bg      = sanitize_hex_color( get_option( 'llrp_color_btn_code_bg', '#2271b1' ) );
         $btn_code_bg_h    = sanitize_hex_color( get_option( 'llrp_color_btn_code_bg_hover', '#1e639a' ) );
         $btn_code_bd      = sanitize_hex_color( get_option( 'llrp_color_btn_code_border', $btn_code_bg ) );
         $btn_code_bd_h    = sanitize_hex_color( get_option( 'llrp_color_btn_code_border_hover', $btn_code_bg_h ) );
         $btn_code_txt     = sanitize_hex_color( get_option( 'llrp_color_btn_code_text', '#ffffff' ) );
         $btn_code_txt_h   = sanitize_hex_color( get_option( 'llrp_color_btn_code_text_hover', '#ffffff' ) );
-
         $font_family       = sanitize_text_field( get_option( 'llrp_font_family', 'inherit' ) );
         $font_size_h2      = floatval( get_option( 'llrp_font_size_h2', '1.5' ) );
         $font_size_p       = floatval( get_option( 'llrp_font_size_p', '1' ) );
@@ -139,91 +136,115 @@ class Llrp_Frontend {
         $t_lost   = __( 'Sem problemas. Digite seu e-mail e enviaremos instruções para redefinir sua senha.', 'llrp' );
         $ph_lost  = __( 'Insira seu e-mail', 'llrp' );
         $b_lost   = __( 'Enviar nova senha', 'llrp' );
-
-        $whatsapp_enabled = get_option( 'llrp_whatsapp_enabled' ) && get_option( 'llrp_whatsapp_sender_phone' ) && function_exists('joinotify_send_whatsapp_message_text');
-        $send_code_button_text = $whatsapp_enabled ? __( 'Receber código por WhatsApp', 'llrp' ) : __( 'Receber código por e-mail', 'llrp' );
-        $code_step_header = $whatsapp_enabled ? __( 'Verifique seu WhatsApp', 'llrp' ) : __( 'Verifique seu E-mail', 'llrp' );
-        $code_step_p = $whatsapp_enabled ? __( 'Enviamos um código de 6 dígitos para o seu WhatsApp. Insira-o abaixo para fazer login.', 'llrp' ) : __( 'Enviamos um código de 6 dígitos para o seu e-mail. Insira-o abaixo para fazer login.', 'llrp' );
         ?>
         <div id="llrp-overlay" class="llrp-overlay hidden"></div>
         <div id="llrp-popup" class="llrp-popup hidden">
             <button type="button" class="llrp-close">&times;</button>
 
-            <!-- Step 1: Initial Input -->
-            <div class="llrp-step llrp-step-initial">
+            <!-- Email Step -->
+            <div class="llrp-step llrp-step-email">
                 <h2><?php echo esc_html( $h_email ); ?></h2>
                 <p><?php echo esc_html( $t_email ); ?></p>
-                <input type="email" id="llrp-email" placeholder="<?php echo esc_attr( $ph_email ); ?>" required>
-                <input type="tel" id="llrp-phone" placeholder="<?php esc_attr_e( 'WhatsApp (Opcional)', 'llrp' ); ?>">
-                <button id="llrp-initial-submit"><?php echo esc_html( $b_email ); ?></button>
-                <div class="llrp-feedback llrp-feedback-initial"></div>
+                <input type="email" id="llrp-email" placeholder="<?php echo esc_attr( $ph_email ); ?>">
+                <button id="llrp-email-submit"><?php echo esc_html( $b_email ); ?></button>
+                <div class="llrp-feedback llrp-feedback-email"></div>
             </div>
 
-            <!-- Step 2: Options (Login/Register) -->
-            <div class="llrp-step llrp-step-options hidden">
-                <div class="llrp-user-info hidden">
+            <!-- Login Options Step -->
+            <div class="llrp-step llrp-step-login-options hidden">
+                <div class="llrp-user-info">
                     <img class="llrp-avatar" src="" alt="avatar" width="70" height="70">
                     <div class="llrp-user-details">
                         <strong class="llrp-user-name"></strong><br>
-                        <small class="llrp-user-email"></small>
+                        <small class="llrp-user-email"></small><br>
+                        <a href="#" class="llrp-back"><?php esc_html_e( 'Não é sua conta? Voltar', 'llrp' ); ?></a>
                     </div>
                 </div>
-                <div id="llrp-options-container">
-                    <!-- JS will populate this -->
+                <p><?php esc_html_e( 'Como você gostaria de fazer login?', 'llrp' ); ?></p>
+                <button id="llrp-show-password-login"><?php esc_html_e( 'Login com Senha', 'llrp' ); ?></button>
+                <?php
+                $whatsapp_enabled = get_option( 'llrp_whatsapp_enabled' ) && get_option( 'llrp_whatsapp_sender_phone' ) && function_exists('joinotify_send_whatsapp_message_text');
+                $send_code_button_text = $whatsapp_enabled ? __( 'Receber código por WhatsApp', 'llrp' ) : __( 'Receber código por e-mail', 'llrp' );
+                ?>
+                <button id="llrp-send-code"><?php echo esc_html( $send_code_button_text ); ?></button>
+                <div class="llrp-feedback llrp-feedback-login-options"></div>
+            </div>
+
+            <!-- Login Step -->
+            <div class="llrp-step llrp-step-login hidden">
+                <h2 class="llrp-login-header"></h2>
+                <div class="llrp-user-info">
+                    <img class="llrp-avatar" src="" alt="avatar" width="70" height="70">
+                    <div class="llrp-user-details">
+                        <strong class="llrp-user-name"></strong><br>
+                        <small class="llrp-user-email"></small><br>
+                        <a href="#" class="llrp-back"><?php esc_html_e( 'Não é sua conta? Voltar', 'llrp' ); ?></a>
+                    </div>
                 </div>
-                <div class="llrp-feedback llrp-feedback-options"></div>
+                <p><?php echo esc_html( $t_login ); ?></p>
+                <input type="password" id="llrp-password" placeholder="<?php echo esc_attr( $ph_pass ); ?>">
+                <div class="llrp-login-options">
+                    <label><input type="checkbox" id="llrp-remember"> <?php echo esc_html( $txt_rem ); ?></label>
+                    <a href="#" class="llrp-forgot"><?php esc_html_e( 'Esqueceu sua senha?', 'llrp' ); ?></a>
+                </div>
+                <button id="llrp-password-submit"><?php echo esc_html( $b_login ); ?></button>
+                <div class="llrp-feedback llrp-feedback-login"></div>
+            </div>
+
+            <!-- Register Step -->
+            <div class="llrp-step llrp-step-register hidden">
+                <h2><?php echo esc_html( $h_reg ); ?></h2>
+                <p><?php echo esc_html( $t_reg ); ?></p>
+                <input type="password" id="llrp-register-password" placeholder="<?php echo esc_attr( $ph_reg ); ?>">
+                <button id="llrp-register-submit"><?php echo esc_html( $b_reg ); ?></button>
+                <div class="llrp-feedback llrp-feedback-register"></div>
                 <p><a href="#" class="llrp-back">&larr; <?php esc_html_e( 'Voltar', 'llrp' ); ?></a></p>
             </div>
 
-            <!-- Step 3: Enter Password -->
-            <div class="llrp-step llrp-step-password hidden">
-                 <p><?php esc_html_e( 'Digite sua senha para continuar.', 'llrp' ); ?></p>
-                <input type="password" id="llrp-password" placeholder="<?php echo esc_attr( $ph_pass ); ?>">
-                <button id="llrp-password-submit"><?php echo esc_html( $b_login ); ?></button>
-                <div class="llrp-feedback llrp-feedback-password"></div>
+            <!-- Code Login Step -->
+            <div class="llrp-step llrp-step-code hidden">
+                <?php
+                $whatsapp_enabled = get_option( 'llrp_whatsapp_enabled' ) && get_option( 'llrp_whatsapp_sender_phone' ) && function_exists('joinotify_send_whatsapp_message_text');
+                $code_step_header = $whatsapp_enabled ? __( 'Verifique seu WhatsApp', 'llrp' ) : __( 'Verifique seu E-mail', 'llrp' );
+                $code_step_p = $whatsapp_enabled ? __( 'Enviamos um código de 6 dígitos para o seu WhatsApp. Insira-o abaixo para fazer login.', 'llrp' ) : __( 'Enviamos um código de 6 dígitos para o seu e-mail. Insira-o abaixo para fazer login.', 'llrp' );
+                ?>
+                <h2><?php echo esc_html( $code_step_header ); ?></h2>
+                <p><?php echo esc_html( $code_step_p ); ?></p>
+                <input type="text" id="llrp-code" placeholder="<?php esc_attr_e( 'Insira o código', 'llrp' ); ?>" autocomplete="one-time-code">
+                <button id="llrp-code-submit"><?php esc_html_e( 'Login', 'llrp' ); ?></button>
+                <div class="llrp-feedback llrp-feedback-code"></div>
                 <p><a href="#" class="llrp-back-to-options">&larr; <?php esc_html_e( 'Outras opções', 'llrp' ); ?></a></p>
             </div>
 
-            <!-- Step 4: Enter Code -->
-            <div class="llrp-step llrp-step-code hidden">
-                <p id="llrp-code-instructions"></p>
-                <input type="text" id="llrp-code" placeholder="<?php esc_attr_e( 'Insira o código', 'llrp' ); ?>" autocomplete="one-time-code">
-                <button id="llrp-code-submit"><?php esc_html_e( 'Verificar e Acessar', 'llrp' ); ?></button>
-                <div class="llrp-feedback llrp-feedback-code"></div>
-                <p><a href="#" class="llrp-back-to-options">&larr; <?php esc_html_e( 'Outras opções', 'llrp' ); ?></a></p>
+            <!-- Lost Password Step -->
+            <div class="llrp-step llrp-step-lost hidden">
+                <h2><?php echo esc_html( $h_lost ); ?></h2>
+                <p><?php echo esc_html( $t_lost ); ?></p>
+                <input type="email" id="llrp-lost-email" placeholder="<?php echo esc_attr( $ph_lost ); ?>">
+                <button id="llrp-lost-submit"><?php echo esc_html( $b_lost ); ?></button>
+                <div class="llrp-feedback llrp-feedback-lost"></div>
+                <p><a href="#" class="llrp-back">&larr; <?php esc_html_e( 'Voltar', 'llrp' ); ?></a></p>
             </div>
 
         </div>
         <?php
     }
 
-    /**
-     * Sanitize RGBA or HEX color values.
-     *
-     * @param string $color The color string.
-     * @return string Sanitized color string.
-     */
     private static function sanitize_rgba_or_hex( $color ) {
         if ( empty( $color ) ) {
             return '';
         }
-        // If 'rgba' is found, check for valid format.
         if ( strpos( trim( $color ), 'rgba' ) === 0 ) {
             if ( preg_match( '/^rgba\(\s*(\d{1,3})\s*,\s*(\d{1,3})\s*,\s*(\d{1,3})\s*,\s*([0-9.]{1,3})\s*\)$/', $color, $matches ) ) {
-                // Check that R, G, B are between 0-255 and A is between 0-1.
                 if ( $matches[1] >= 0 && $matches[1] <= 255 && $matches[2] >= 0 && $matches[2] <= 255 && $matches[3] >= 0 && $matches[3] <= 255 && $matches[4] >= 0 && $matches[4] <= 1 ) {
                     return $color;
                 }
             }
-            return ''; // Return empty for invalid rgba.
+            return '';
         }
-
-        // Check for hex8 format, e.g., #RRGGBBAA.
         if ( preg_match( '/^#([a-fA-F0-9]{8})$/', $color ) ) {
             return $color;
         }
-
-        // Fallback to sanitize_hex_color for standard hex colors (e.g. #FFF, #FFFFFF).
         return sanitize_hex_color( $color );
     }
 

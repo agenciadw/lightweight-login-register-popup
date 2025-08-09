@@ -5,9 +5,9 @@ Tags: login, cadastro, popup, WooCommerce
 Requer WordPress: 6.6 ou superior  
 Testado até: WordPress 6.6  
 Requer PHP: 7.4  
-Versão estável: 0.1.1
-Licença: GPLv2 ou superior  
-Link da licença: https://www.gnu.org/licenses/gpl-2.0.html
+Stable tag: 0.2.0
+License: GPLv2 or later
+License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
 == Description ==
 
@@ -41,11 +41,11 @@ Este plugin exibe um popup personalizável na página do carrinho para permitir 
 
 == Changelog ==
 
-= 0.2.0 - 2025-08-08 =
-* New: Implemented a unified, passwordless-first login and registration flow.
-* New: Added option to log in or register using a one-time code.
-* New: Added option to receive the one-time code via Email or WhatsApp (requires integration with Joinotify plugin).
-* New: Added admin settings to configure the WhatsApp integration and customize button colors.
+= 0.2.0 - 2025-08-09 =
+* Feature: Added a "Login with Code" option for existing users.
+* Feature: Added integration with the Joinotify plugin to send login codes via WhatsApp.
+* Feature: Added admin settings to enable WhatsApp integration and customize button colors.
+* Enhancement: Re-architected the plugin's backend and frontend logic for a more stable and maintainable codebase.
 * Security: Hardened security by adding sanitization for all settings, improving password handling, and adding a password strength check.
 
 = 0.1.1 =
