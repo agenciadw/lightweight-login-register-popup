@@ -213,6 +213,7 @@ class Llrp_Frontend {
                 <input type="text" id="llrp-code" placeholder="<?php esc_attr_e( 'Insira o código', 'llrp' ); ?>" autocomplete="one-time-code">
                 <button id="llrp-code-submit"><?php esc_html_e( 'Login', 'llrp' ); ?></button>
                 <div class="llrp-feedback llrp-feedback-code"></div>
+                <p><a href="#" class="llrp-resend-code"><?php esc_html_e( 'Reenviar código', 'llrp' ); ?></a></p>
                 <p><a href="#" class="llrp-back-to-options">&larr; <?php esc_html_e( 'Outras opções', 'llrp' ); ?></a></p>
             </div>
 

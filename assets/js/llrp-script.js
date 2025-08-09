@@ -160,6 +160,10 @@
     $popup.on("click", "#llrp-show-password-login", function() { showStep('login'); });
     $popup.on("click", "#llrp-send-code", handleSendCode);
     $popup.on("click", "#llrp-code-submit", handleCodeLogin);
+    $popup.on("click", ".llrp-resend-code", function(e) {
+        e.preventDefault();
+        handleSendCode();
+    });
 
     $popup.on("keypress", "input", function (e) {
       if (e.which === 13) {
