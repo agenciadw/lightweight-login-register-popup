@@ -41,11 +41,15 @@ class Llrp_Ajax {
         check_ajax_referer( 'llrp_nonce', 'nonce' );
 
         $email = sanitize_email( wp_unslash( $_POST['email'] ?? '' ) );
-        $phone = sanitize_text_field( wp_unslash( $_POST['phone'] ?? '' ) );
         $method = sanitize_text_field( wp_unslash( $_POST['method'] ?? 'email' ) );
 
         if ( ! is_email( $email ) ) {
             wp_send_json_error( [ 'message' => __( 'E-mail inválido.', 'llrp' ) ] );
+        }
+
+        $user = get_user_by( 'email', $email );
+        if ( ! $user ) {
+            wp_send_json_error( [ 'message' => __( 'Usuário não encontrado.', 'llrp' ) ] );
         }
 
         // Rate limiting
@@ -64,19 +68,13 @@ class Llrp_Ajax {
         $expiration = time() + ( 5 * MINUTE_IN_SECONDS );
         $message = sprintf( __( 'Seu código de login para %s é: %s. O código expira em 5 minutos.', 'llrp' ), get_bloginfo( 'name' ), $code );
 
-        $user = get_user_by( 'email', $email );
-        if ( $user ) {
-            update_user_meta( $user->ID, '_llrp_login_code_hash', $hash );
-            update_user_meta( $user->ID, '_llrp_login_code_expiration', $expiration );
-        } else {
-            set_transient( 'llrp_code_hash_' . md5($email), $hash, 5 * MINUTE_IN_SECONDS );
-            set_transient( 'llrp_code_expiration_' . md5($email), $expiration, 5 * MINUTE_IN_SECONDS );
-        }
+        update_user_meta( $user->ID, '_llrp_login_code_hash', $hash );
+        update_user_meta( $user->ID, '_llrp_login_code_expiration', $expiration );
 
         // Send the code
         if ( $method === 'whatsapp' && function_exists( 'joinotify_send_whatsapp_message_text' ) ) {
             $sender_phone = get_option( 'llrp_whatsapp_sender_phone' );
-            $receiver_phone = $user ? get_user_meta( $user->ID, 'billing_phone', true ) : $phone;
+            $receiver_phone = get_user_meta( $user->ID, 'billing_phone', true );
 
             if ( $sender_phone && $receiver_phone ) {
                 $response = joinotify_send_whatsapp_message_text( $sender_phone, $receiver_phone, $message );
@@ -99,60 +97,38 @@ class Llrp_Ajax {
 
         $email = sanitize_email( wp_unslash( $_POST['email'] ?? '' ) );
         $code  = sanitize_text_field( wp_unslash( $_POST['code'] ?? '' ) );
-        $phone = sanitize_text_field( wp_unslash( $_POST['phone'] ?? '' ) );
 
         if ( ! is_email( $email ) || empty( $code ) ) {
             wp_send_json_error( [ 'message' => __( 'E-mail ou código inválido.', 'llrp' ) ] );
         }
 
         $user = get_user_by( 'email', $email );
-
-        if ( $user ) { // Existing user
-            $hash = get_user_meta( $user->ID, '_llrp_login_code_hash', true );
-            $expiration = get_user_meta( $user->ID, '_llrp_login_code_expiration', true );
-        } else { // New user
-            $hash = get_transient( 'llrp_code_hash_' . md5($email) );
-            $expiration = get_transient( 'llrp_code_expiration_' . md5($email) );
+        if ( ! $user ) {
+            wp_send_json_error( [ 'message' => __( 'Usuário não encontrado.', 'llrp' ) ] );
         }
+
+        $hash = get_user_meta( $user->ID, '_llrp_login_code_hash', true );
+        $expiration = get_user_meta( $user->ID, '_llrp_login_code_expiration', true );
 
         if ( empty( $hash ) || empty( $expiration ) ) {
             wp_send_json_error( [ 'message' => __( 'Nenhum código de login pendente encontrado. Por favor, solicite um novo código.', 'llrp' ) ] );
         }
 
         if ( time() > $expiration ) {
-            if ($user) {
-                delete_user_meta( $user->ID, '_llrp_login_code_hash' );
-                delete_user_meta( $user->ID, '_llrp_login_code_expiration' );
-            } else {
-                delete_transient( 'llrp_code_hash_' . md5($email) );
-                delete_transient( 'llrp_code_expiration_' . md5($email) );
-            }
+            delete_user_meta( $user->ID, '_llrp_login_code_hash' );
+            delete_user_meta( $user->ID, '_llrp_login_code_expiration' );
             wp_send_json_error( [ 'message' => __( 'O código de login expirou. Por favor, solicite um novo código.', 'llrp' ) ] );
         }
 
-        $user_id_for_check = $user ? $user->ID : 0;
-        if ( ! wp_check_password( $code, $hash, $user_id_for_check ) ) {
+        if ( ! wp_check_password( $code, $hash, $user->ID ) ) {
             wp_send_json_error( [ 'message' => __( 'O código de login está incorreto.', 'llrp' ) ] );
         }
 
-        // Success!
-        if ($user) { // Log in existing user
-            delete_user_meta( $user->ID, '_llrp_login_code_hash' );
-            delete_user_meta( $user->ID, '_llrp_login_code_expiration' );
-            wp_set_current_user( $user->ID, $user->user_login );
-            wp_set_auth_cookie( $user->ID, true );
-        } else { // Register and log in new user
-            delete_transient( 'llrp_code_hash_' . md5($email) );
-            delete_transient( 'llrp_code_expiration_' . md5($email) );
-            $user_id = wc_create_new_customer( $email, '', '' ); // Create user without password
-            if ( is_wp_error( $user_id ) ) {
-                wp_send_json_error( [ 'message' => $user_id->get_error_message() ] );
-            }
-            if ( ! empty( $phone ) ) {
-                update_user_meta( $user_id, 'billing_phone', $phone );
-            }
-            wc_set_customer_auth_cookie( $user_id );
-        }
+        // Success! Log in existing user
+        delete_user_meta( $user->ID, '_llrp_login_code_hash' );
+        delete_user_meta( $user->ID, '_llrp_login_code_expiration' );
+        wp_set_current_user( $user->ID, $user->user_login );
+        wp_set_auth_cookie( $user->ID, true );
 
         wp_send_json_success( [ 'redirect' => wc_get_checkout_url() ] );
     }

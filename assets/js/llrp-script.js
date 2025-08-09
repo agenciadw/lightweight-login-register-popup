@@ -71,6 +71,7 @@
     function displayOptions() {
         var optionsHtml = '';
         if(state.userExists) {
+            // Flow for existing users
             $('.llrp-user-info').removeClass('hidden');
             $('.llrp-avatar').attr('src', state.avatar);
             $('.llrp-user-name').text(state.username);
@@ -80,24 +81,25 @@
             optionsHtml += '<button class="llrp-button" data-action="show-password">Login com Senha</button>';
             optionsHtml += '<p>Ou</p>';
 
+            // Code options
+            optionsHtml += '<div>';
+            optionsHtml += '<strong>Receber código por:</strong><br>';
+            optionsHtml += '<label><input type="radio" name="code_method" value="email" checked> E-mail</label>';
+            if (state.hasPhone) {
+                optionsHtml += '<label style="margin-left: 15px;"><input type="radio" name="code_method" value="whatsapp"> WhatsApp</label>';
+            }
+            optionsHtml += '</div>';
+            optionsHtml += '<button class="llrp-button" data-action="send-code">Enviar Código</button>';
+
+            $('#llrp-options-container').html(optionsHtml);
+            showStep('options');
+
         } else {
+            // Flow for new users: go directly to password registration
             $('.llrp-user-info').addClass('hidden');
-            optionsHtml += '<p>Parece que você é novo por aqui! Escolha como quer continuar:</p>';
-            optionsHtml += '<button class="llrp-button" data-action="show-password-register">Cadastrar com Senha</button>';
-            optionsHtml += '<p>Ou</p>';
+            $('#llrp-password-submit').data('action', 'register');
+            showStep('password');
         }
-
-        // Code options
-        optionsHtml += '<div>';
-        optionsHtml += '<label><input type="radio" name="code_method" value="email" checked> E-mail</label>';
-        if (state.hasPhone) {
-            optionsHtml += '<label style="margin-left: 15px;"><input type="radio" name="code_method" value="whatsapp"> WhatsApp</label>';
-        }
-        optionsHtml += '</div>';
-        optionsHtml += '<button class="llrp-button" data-action="send-code">Receber código de acesso</button>';
-
-        $('#llrp-options-container').html(optionsHtml);
-        showStep('options');
     }
 
 
@@ -227,9 +229,6 @@
         var action = $(this).data('action');
         if (action === 'show-password') {
             $('#llrp-password-submit').data('action', 'login');
-            showStep('password');
-        } else if (action === 'show-password-register') {
-            $('#llrp-password-submit').data('action', 'register');
             showStep('password');
         } else if (action === 'send-code') {
             handleSendCode();
