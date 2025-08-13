@@ -183,5 +183,8 @@
         else if ($step.hasClass("llrp-step-code")) handleCodeLogin();
       }
     });
+
+    // Make the checkout button visible now that the JS is ready
+    $('.checkout-button').css('visibility', 'visible');
   });
 })(jQuery);

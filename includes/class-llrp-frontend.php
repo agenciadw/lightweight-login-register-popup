@@ -83,7 +83,7 @@ class Llrp_Frontend {
         // Build and add inline CSS
         $css  = ".llrp-overlay { background: {$overlay} !important; }";
         $css .= ".llrp-popup {width: 90%;max-width: 590px;background: {$bg} !important; font-family: {$font_family} !important; color: {$text_col} !important; position: fixed !important; top: 50% !important; left: 50% !important; transform: translate(-50%, -50%) !important; padding: 20px !important; border-radius: 8px !important; box-shadow: 0 2px 10px rgba(0,0,0,0.1) !important; z-index: 9999 !important; }";
-        $css .= ".llrp-close { color: {$text_col} !important; font-size: 24px !important; background: none !important; border: none !important; cursor: pointer !important; float:right !important}";
+        $css .= ".llrp-close { color: #000 !important; font-size: 24px !important; background: none !important; border: none !important; cursor: pointer !important; float:right !important}";
         $css .= ".llrp-close:hover { color: {$btn_bd_h} !important; }";
         $css .= ".llrp-popup h2 { background: {$header_bg} !important; font-size: {$font_size_h2}rem !important; margin-bottom: .5em !important; }";
         $css .= ".llrp-popup p { font-size: {$font_size_p}rem !important; margin-bottom: 1em !important; }";
