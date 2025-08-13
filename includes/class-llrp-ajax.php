@@ -41,10 +41,22 @@ class Llrp_Ajax {
             wp_send_json_error([ 'message' => __( 'A senha deve ter pelo menos 8 caracteres.', 'llrp' ) ]);
         }
 
-        $user_id = wc_create_new_customer( $email, '', $password );
-        if ( is_wp_error( $user_id ) ) {
-            wp_send_json_error([ 'message' => $user_id->get_error_message() ]);
+        try {
+            $user_id = wc_create_new_customer( $email, '', $password );
+            if ( is_wp_error( $user_id ) ) {
+                wp_send_json_error([ 'message' => $user_id->get_error_message() ]);
+            }
+        } catch (Error $e) {
+            // Catch fatal errors from third-party plugins hooking into user creation.
+            if ( email_exists( $email ) ) {
+                // The user was likely created but the process failed.
+                wp_send_json_error([ 'message' => __( 'Seu usuário foi criado, mas um plugin de terceiros causou um erro. Por favor, tente fazer o login.', 'llrp' ) ]);
+            } else {
+                // The user was not created and something else went wrong.
+                wp_send_json_error([ 'message' => __( 'Ocorreu um erro desconhecido durante o registro.', 'llrp' ) ]);
+            }
         }
+
         wc_set_customer_auth_cookie( $user_id );
         wp_send_json_success([ 'redirect' => wc_get_checkout_url() ]);
     }
