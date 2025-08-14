@@ -228,6 +228,19 @@ class Llrp_Frontend {
             </div>
 
         </div>
+        <script type="text/javascript">
+            (function() {
+                setTimeout(function() {
+                    var btn = document.querySelector('.checkout-button');
+                    if (btn) {
+                        var style = window.getComputedStyle(btn);
+                        if (style.visibility === 'hidden') {
+                            btn.style.visibility = 'visible';
+                        }
+                    }
+                }, 2000);
+            })();
+        </script>
         <?php
     }
 
