@@ -176,7 +176,11 @@
     });
 
     function applyIdentifierMask(e) {
-        var value = e.target.value.replace(/\D/g, "");
+        var value = e.target.value;
+        if (value.includes('@')) {
+            return;
+        }
+        value = value.replace(/\D/g, "");
         if (value.length > 3) {
             if (value.length <= 11) { // CPF
                 value = value.replace(/(\d{3})(\d)/, "$1.$2");
