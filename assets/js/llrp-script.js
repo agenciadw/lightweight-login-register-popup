@@ -71,6 +71,13 @@
 
     function handleSendCode() {
         clearFeedback();
+        var identifier = $("#llrp-identifier").val().trim();
+        if (!identifier) {
+            showFeedback("llrp-feedback-login-options", "Por favor, preencha o campo de identificador.");
+            return;
+        }
+        savedIdentifier = identifier;
+
         $.post(LLRP_Data.ajax_url, {
             action: 'llrp_send_login_code',
             identifier: savedIdentifier,
