@@ -145,7 +145,7 @@ class Llrp_Frontend {
             <div class="llrp-step llrp-step-email">
                 <h2><?php echo esc_html( $h_email ); ?></h2>
                 <p><?php echo esc_html( $t_email ); ?></p>
-                <input type="email" id="llrp-email" placeholder="<?php echo esc_attr( $ph_email ); ?>">
+                <input type="text" id="llrp-identifier" placeholder="<?php esc_attr_e( 'E-mail, CPF ou CNPJ', 'llrp' ); ?>">
                 <button id="llrp-email-submit"><?php echo esc_html( $b_email ); ?></button>
                 <div class="llrp-feedback llrp-feedback-email"></div>
             </div>

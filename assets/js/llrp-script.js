@@ -1,15 +1,10 @@
 (function ($) {
   "use strict";
 
-  function isValidEmail(email) {
-    var re = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    return re.test(email);
-  }
-
   $(function () {
     var $overlay = $("#llrp-overlay");
     var $popup = $("#llrp-popup");
-    var savedEmail = "";
+    var savedIdentifier = "";
 
     function openPopup(e) {
       if (e) e.preventDefault();
@@ -46,23 +41,23 @@
       $popup.find(".llrp-step-" + step).removeClass("hidden");
     }
 
-    function handleEmailStep() {
+    function handleIdentifierStep() {
       clearFeedback();
-      savedEmail = $("#llrp-email").val().trim();
-      if (!isValidEmail(savedEmail)) {
-        showFeedback("llrp-feedback-email", "Por favor, insira um e-mail válido.");
+      savedIdentifier = $("#llrp-identifier").val().trim();
+      if (!savedIdentifier) {
+        showFeedback("llrp-feedback-email", "Por favor, preencha este campo.");
         return;
       }
 
       $.post(LLRP_Data.ajax_url, {
-        action: 'llrp_check_email',
-        email: savedEmail,
+        action: 'llrp_check_user',
+        identifier: savedIdentifier,
         nonce: LLRP_Data.nonce,
       }).done(function (res) {
         if (res.success) {
           if (res.data.exists) {
             $(".llrp-user-name").text(res.data.username);
-            $(".llrp-user-email").text(savedEmail);
+            $(".llrp-user-email").text(res.data.email);
             $(".llrp-avatar").attr("src", res.data.avatar);
             showStep("login-options");
           } else {
@@ -78,7 +73,7 @@
         clearFeedback();
         $.post(LLRP_Data.ajax_url, {
             action: 'llrp_send_login_code',
-            email: savedEmail,
+            identifier: savedIdentifier,
             nonce: LLRP_Data.nonce,
         }).done(function(res) {
             if(res.success) {
@@ -98,7 +93,7 @@
         }
         $.post(LLRP_Data.ajax_url, {
             action: 'llrp_code_login',
-            email: savedEmail,
+            identifier: savedIdentifier,
             code: code,
             nonce: LLRP_Data.nonce,
         }).done(function(res) {
@@ -117,8 +112,8 @@
         return;
       }
       $.post(LLRP_Data.ajax_url, {
-        action: 'llrp_login',
-        email: savedEmail,
+        action: 'llrp_login_with_password',
+        identifier: savedIdentifier,
         password: password,
         nonce: LLRP_Data.nonce,
       }).done(function (res) {
@@ -138,7 +133,7 @@
       }
       $.post(LLRP_Data.ajax_url, {
         action: 'llrp_register',
-        email: savedEmail,
+        identifier: savedIdentifier,
         password: password,
         nonce: LLRP_Data.nonce,
       }).done(function (res) {
@@ -154,7 +149,7 @@
     $(".checkout-button").on("click", openPopup);
     $popup.on("click", ".llrp-close", closePopup);
     $popup.on("click", ".llrp-back", resetSteps);
-    $popup.on("click", "#llrp-email-submit", handleEmailStep);
+    $popup.on("click", "#llrp-email-submit", handleIdentifierStep);
     $popup.on("click", "#llrp-password-submit", handleLoginStep);
     $popup.on("click", "#llrp-register-submit", handleRegisterStep);
     $popup.on("click", "#llrp-show-password-login", function() { showStep('login'); });
@@ -177,7 +172,7 @@
       if (e.which === 13) {
         e.preventDefault();
         var $step = $(this).closest(".llrp-step");
-        if ($step.hasClass("llrp-step-email")) handleEmailStep();
+        if ($step.hasClass("llrp-step-email")) handleIdentifierStep();
         else if ($step.hasClass("llrp-step-login")) handleLoginStep();
         else if ($step.hasClass("llrp-step-register")) handleRegisterStep();
         else if ($step.hasClass("llrp-step-code")) handleCodeLogin();
