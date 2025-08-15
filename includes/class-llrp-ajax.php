@@ -162,8 +162,10 @@ class Llrp_Ajax {
         $user_query = new WP_User_Query( [
             'meta_query' => [
                 'relation' => 'OR',
-                [ 'key' => 'billing_cpf', 'value' => $sanitized_identifier ],
-                [ 'key' => 'billing_cnpj', 'value' => $sanitized_identifier ],
+                [ 'key' => 'billing_cpf', 'value' => $sanitized_identifier, 'compare' => 'LIKE' ],
+                [ 'key' => 'billing_cnpj', 'value' => $sanitized_identifier, 'compare' => 'LIKE' ],
+                [ 'key' => 'billing_cpf', 'value' => $identifier, 'compare' => 'LIKE' ],
+                [ 'key' => 'billing_cnpj', 'value' => $identifier, 'compare' => 'LIKE' ],
             ],
             'number' => 1,
         ] );
