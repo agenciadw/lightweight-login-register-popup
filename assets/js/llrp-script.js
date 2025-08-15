@@ -61,10 +61,40 @@
             $(".llrp-avatar").attr("src", res.data.avatar);
             showStep("login-options");
           } else {
-            showStep("register");
+            if (res.data.needs_email) {
+              showStep("register-email");
+            } else {
+              showStep("register");
+            }
           }
         } else {
           showFeedback("llrp-feedback-email", res.data.message);
+        }
+      });
+    }
+
+    function handleRegisterCpfStep() {
+      var email = $("#llrp-register-email").val().trim();
+      var password = $("#llrp-register-password-cpf").val();
+      if (!email) {
+        showFeedback("llrp-feedback-register-email", "Por favor, insira seu e-mail.");
+        return;
+      }
+      if (!password) {
+        showFeedback("llrp-feedback-register-email", "Por favor, insira uma senha.");
+        return;
+      }
+      $.post(LLRP_Data.ajax_url, {
+        action: 'llrp_register',
+        identifier: savedIdentifier,
+        email: email,
+        password: password,
+        nonce: LLRP_Data.nonce,
+      }).done(function (res) {
+        if (res.success) {
+          window.location = res.data.redirect;
+        } else {
+          showFeedback("llrp-feedback-register-email", res.data.message);
         }
       });
     }
@@ -159,6 +189,7 @@
     $popup.on("click", "#llrp-email-submit", handleIdentifierStep);
     $popup.on("click", "#llrp-password-submit", handleLoginStep);
     $popup.on("click", "#llrp-register-submit", handleRegisterStep);
+    $popup.on("click", "#llrp-register-cpf-submit", handleRegisterCpfStep);
     $popup.on("click", "#llrp-show-password-login", function() { showStep('login'); });
     $popup.on("click", "#llrp-send-code", handleSendCode);
     $popup.on("click", "#llrp-code-submit", handleCodeLogin);

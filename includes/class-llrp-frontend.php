@@ -201,6 +201,17 @@ class Llrp_Frontend {
                 <p><a href="#" class="llrp-back">&larr; <?php esc_html_e( 'Voltar', 'llrp' ); ?></a></p>
             </div>
 
+            <!-- Email for Registration Step -->
+            <div class="llrp-step llrp-step-register-email hidden">
+                <h2><?php esc_html_e( 'Qual é o seu e-mail?', 'llrp' ); ?></h2>
+                <p><?php esc_html_e( 'Para finalizar seu cadastro, precisamos do seu e-mail.', 'llrp' ); ?></p>
+                <input type="email" id="llrp-register-email" placeholder="<?php esc_attr_e( 'Insira seu e-mail', 'llrp' ); ?>">
+                <input type="password" id="llrp-register-password-cpf" placeholder="<?php echo esc_attr( $ph_reg ); ?>">
+                <button id="llrp-register-cpf-submit"><?php echo esc_html( $b_reg ); ?></button>
+                <div class="llrp-feedback llrp-feedback-register-email"></div>
+                <p><a href="#" class="llrp-back">&larr; <?php esc_html_e( 'Voltar', 'llrp' ); ?></a></p>
+            </div>
+
             <!-- Code Login Step -->
             <div class="llrp-step llrp-step-code hidden">
                 <?php

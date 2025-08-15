@@ -29,7 +29,12 @@ class Llrp_Ajax {
                 'has_phone' => !empty(get_user_meta($user->ID, 'billing_phone', true)),
             ] );
         } else {
-            wp_send_json_success( [ 'exists' => false, 'email' => is_email($identifier) ? $identifier : '' ] );
+            $is_email = is_email($identifier);
+            wp_send_json_success( [
+                'exists'      => false,
+                'email'       => $is_email ? $identifier : '',
+                'needs_email' => !$is_email,
+            ] );
         }
     }
 
@@ -121,8 +126,13 @@ class Llrp_Ajax {
 
     public static function ajax_register() {
         check_ajax_referer( 'llrp_nonce', 'nonce' );
-        $email = sanitize_email( wp_unslash( $_POST['identifier'] ?? '' ) );
+        $identifier = sanitize_text_field( wp_unslash( $_POST['identifier'] ?? '' ) );
+        $email = sanitize_email( wp_unslash( $_POST['email'] ?? '' ) );
         $password = isset( $_POST['password'] ) ? wp_unslash( $_POST['password'] ) : '';
+
+        if ( empty( $email ) ) {
+            $email = $identifier;
+        }
 
         if ( ! is_email( $email ) ) {
             wp_send_json_error([ 'message' => __( 'Para se cadastrar, por favor, use um e-mail válido.', 'llrp' ) ]);
@@ -138,6 +148,15 @@ class Llrp_Ajax {
             $user_id = wc_create_new_customer( $email, '', $password );
             if ( is_wp_error( $user_id ) ) {
                 wp_send_json_error([ 'message' => $user_id->get_error_message() ]);
+            }
+
+            if ( ! is_email( $identifier ) ) {
+                $sanitized_identifier = preg_replace( '/[^0-9]/', '', $identifier );
+                if ( strlen( $sanitized_identifier ) === 11 ) {
+                    update_user_meta( $user_id, 'billing_cpf', $sanitized_identifier );
+                } elseif ( strlen( $sanitized_identifier ) === 14 ) {
+                    update_user_meta( $user_id, 'billing_cnpj', $sanitized_identifier );
+                }
             }
         } catch (Error $e) {
             if ( email_exists( $email ) ) {
