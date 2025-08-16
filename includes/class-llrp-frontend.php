@@ -39,6 +39,8 @@ class Llrp_Frontend {
         'nonce'              => wp_create_nonce( 'llrp_nonce' ),
         'initial_cart_count' => (int) WC()->cart->get_cart_contents_count(),
         'is_logged_in'       => 0,
+        'cpf_login_enabled'  => get_option( 'llrp_cpf_login_enabled' ),
+        'cnpj_login_enabled' => get_option( 'llrp_cnpj_login_enabled' ),
     ] );
 
         // Enqueue frontend styles and scripts

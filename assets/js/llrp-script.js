@@ -205,6 +205,18 @@
             return;
         }
         value = value.replace(/\D/g, "");
+
+        var maxLength = 0;
+        if (LLRP_Data.cnpj_login_enabled) {
+            maxLength = 14;
+        } else if (LLRP_Data.cpf_login_enabled) {
+            maxLength = 11;
+        }
+
+        if (maxLength > 0 && value.length > maxLength) {
+            value = value.slice(0, maxLength);
+        }
+
         if (value.length > 3) {
             if (value.length <= 11) { // CPF
                 value = value.replace(/(\d{3})(\d)/, "$1.$2");
