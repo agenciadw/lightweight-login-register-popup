@@ -5,7 +5,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 class Llrp_Ajax {
     public static function init() {
         add_action( 'wp_ajax_nopriv_llrp_check_user', [ __CLASS__, 'ajax_check_user' ] );
-        add_action( 'wp_ajax_nopriv_llrp_send_code', [ __CLASS__, 'ajax_send_code' ] );
+        add_action( 'wp_ajax_nopriv_llrp_send_login_code', [ __CLASS__, 'ajax_send_login_code' ] );
         add_action( 'wp_ajax_nopriv_llrp_code_login', [ __CLASS__, 'ajax_code_login' ] );
         add_action( 'wp_ajax_nopriv_llrp_login_with_password', [ __CLASS__, 'ajax_login_with_password' ] );
         add_action( 'wp_ajax_nopriv_llrp_register', [ __CLASS__, 'ajax_register' ] );

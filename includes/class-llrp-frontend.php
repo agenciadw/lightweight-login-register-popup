@@ -54,24 +54,18 @@ class Llrp_Frontend {
         ] );
 
         // Dynamic CSS variables
-        $bg                = sanitize_hex_color( get_option( 'llrp_color_bg', '#ffffff' ) );
-        $overlay           = self::sanitize_rgba_or_hex( get_option( 'llrp_color_overlay', 'rgba(0,0,0,0.5)' ) );
-        $header_bg         = sanitize_hex_color( get_option( 'llrp_color_header_bg', '#ffffff' ) );
-        $text_col          = sanitize_hex_color( get_option( 'llrp_color_text', '#1a1a1a' ) );
-        $link_col          = sanitize_hex_color( get_option( 'llrp_color_link', '#791b0a' ) );
-        $link_h_col        = sanitize_hex_color( get_option( 'llrp_color_link_hover', '#686868' ) );
-        $btn_bg            = sanitize_hex_color( get_option( 'llrp_color_btn_bg', '#385b02' ) );
-        $btn_bg_h          = sanitize_hex_color( get_option( 'llrp_color_btn_bg_hover', '#91b381' ) );
-        $btn_bd            = sanitize_hex_color( get_option( 'llrp_color_btn_border', $btn_bg ) );
-        $btn_bd_h          = sanitize_hex_color( get_option( 'llrp_color_btn_border_hover', $btn_bg_h ) );
-        $btn_txt           = sanitize_hex_color( get_option( 'llrp_color_btn_text', '#ffffff' ) );
-        $btn_txt_h         = sanitize_hex_color( get_option( 'llrp_color_btn_text_hover', $btn_txt ) );
-        $btn_code_bg      = sanitize_hex_color( get_option( 'llrp_color_btn_code_bg', '#2271b1' ) );
-        $btn_code_bg_h    = sanitize_hex_color( get_option( 'llrp_color_btn_code_bg_hover', '#1e639a' ) );
-        $btn_code_bd      = sanitize_hex_color( get_option( 'llrp_color_btn_code_border', $btn_code_bg ) );
-        $btn_code_bd_h    = sanitize_hex_color( get_option( 'llrp_color_btn_code_border_hover', $btn_code_bg_h ) );
-        $btn_code_txt     = sanitize_hex_color( get_option( 'llrp_color_btn_code_text', '#ffffff' ) );
-        $btn_code_txt_h   = sanitize_hex_color( get_option( 'llrp_color_btn_code_text_hover', '#ffffff' ) );
+        $bg                = sanitize_text_field( get_option( 'llrp_color_bg', '#ffffff' ) );
+        $overlay           = sanitize_text_field( get_option( 'llrp_color_overlay', 'rgba(0,0,0,0.5)' ) );
+        $header_bg         = sanitize_text_field( get_option( 'llrp_color_header_bg', '#ffffff' ) );
+        $text_col          = sanitize_text_field( get_option( 'llrp_color_text', '#1a1a1a' ) );
+        $link_col          = sanitize_text_field( get_option( 'llrp_color_link', '#791b0a' ) );
+        $link_h_col        = sanitize_text_field( get_option( 'llrp_color_link_hover', '#686868' ) );
+        $btn_bg            = sanitize_text_field( get_option( 'llrp_color_btn_bg', '#385b02' ) );
+        $btn_bg_h          = sanitize_text_field( get_option( 'llrp_color_btn_bg_hover', '#91b381' ) );
+        $btn_bd            = sanitize_text_field( get_option( 'llrp_color_btn_border', $btn_bg ) );
+        $btn_bd_h          = sanitize_text_field( get_option( 'llrp_color_btn_border_hover', $btn_bg_h ) );
+        $btn_txt           = sanitize_text_field( get_option( 'llrp_color_btn_text', '#ffffff' ) );
+        $btn_txt_h         = sanitize_text_field( get_option( 'llrp_color_btn_text_hover', $btn_txt ) );
         $font_family       = sanitize_text_field( get_option( 'llrp_font_family', 'inherit' ) );
         $font_size_h2      = floatval( get_option( 'llrp_font_size_h2', '1.5' ) );
         $font_size_p       = floatval( get_option( 'llrp_font_size_p', '1' ) );
@@ -83,7 +77,7 @@ class Llrp_Frontend {
         // Build and add inline CSS
         $css  = ".llrp-overlay { background: {$overlay} !important; }";
         $css .= ".llrp-popup {width: 90%;max-width: 590px;background: {$bg} !important; font-family: {$font_family} !important; color: {$text_col} !important; position: fixed !important; top: 50% !important; left: 50% !important; transform: translate(-50%, -50%) !important; padding: 20px !important; border-radius: 8px !important; box-shadow: 0 2px 10px rgba(0,0,0,0.1) !important; z-index: 9999 !important; }";
-        $css .= ".llrp-close { color: #000 !important; font-size: 24px !important; background: none !important; border: none !important; cursor: pointer !important; float:right !important}";
+        $css .= ".llrp-close { color: {$text_col} !important; font-size: 24px !important; background: none !important; border: none !important; cursor: pointer !important; float:right !important}";
         $css .= ".llrp-close:hover { color: {$btn_bd_h} !important; }";
         $css .= ".llrp-popup h2 { background: {$header_bg} !important; font-size: {$font_size_h2}rem !important; margin-bottom: .5em !important; }";
         $css .= ".llrp-popup p { font-size: {$font_size_p}rem !important; margin-bottom: 1em !important; }";
@@ -214,13 +208,8 @@ class Llrp_Frontend {
 
             <!-- Code Login Step -->
             <div class="llrp-step llrp-step-code hidden">
-                <?php
-                $whatsapp_enabled = get_option( 'llrp_whatsapp_enabled' ) && get_option( 'llrp_whatsapp_sender_phone' ) && function_exists('joinotify_send_whatsapp_message_text');
-                $code_step_header = $whatsapp_enabled ? __( 'Verifique seu WhatsApp', 'llrp' ) : __( 'Verifique seu E-mail', 'llrp' );
-                $code_step_p = $whatsapp_enabled ? __( 'Enviamos um código de 6 dígitos para o seu WhatsApp. Insira-o abaixo para fazer login.', 'llrp' ) : __( 'Enviamos um código de 6 dígitos para o seu e-mail. Insira-o abaixo para fazer login.', 'llrp' );
-                ?>
-                <h2><?php echo esc_html( $code_step_header ); ?></h2>
-                <p><?php echo esc_html( $code_step_p ); ?></p>
+                <h2><?php esc_html_e( 'Verifique seu E-mail', 'llrp' ); ?></h2>
+                <p><?php esc_html_e( 'Enviamos um código de 6 dígitos para o seu e-mail. Insira-o abaixo para fazer login.', 'llrp' ); ?></p>
                 <input type="text" id="llrp-code" placeholder="<?php esc_attr_e( 'Insira o código', 'llrp' ); ?>" autocomplete="one-time-code">
                 <button id="llrp-code-submit"><?php esc_html_e( 'Login', 'llrp' ); ?></button>
                 <div class="llrp-feedback llrp-feedback-code"></div>
@@ -239,38 +228,7 @@ class Llrp_Frontend {
             </div>
 
         </div>
-        <script type="text/javascript">
-            (function() {
-                setTimeout(function() {
-                    var btn = document.querySelector('.checkout-button');
-                    if (btn) {
-                        var style = window.getComputedStyle(btn);
-                        if (style.visibility === 'hidden') {
-                            btn.style.visibility = 'visible';
-                        }
-                    }
-                }, 2000);
-            })();
-        </script>
         <?php
-    }
-
-    private static function sanitize_rgba_or_hex( $color ) {
-        if ( empty( $color ) ) {
-            return '';
-        }
-        if ( strpos( trim( $color ), 'rgba' ) === 0 ) {
-            if ( preg_match( '/^rgba\(\s*(\d{1,3})\s*,\s*(\d{1,3})\s*,\s*(\d{1,3})\s*,\s*([0-9.]{1,3})\s*\)$/', $color, $matches ) ) {
-                if ( $matches[1] >= 0 && $matches[1] <= 255 && $matches[2] >= 0 && $matches[2] <= 255 && $matches[3] >= 0 && $matches[3] <= 255 && $matches[4] >= 0 && $matches[4] <= 1 ) {
-                    return $color;
-                }
-            }
-            return '';
-        }
-        if ( preg_match( '/^#([a-fA-F0-9]{8})$/', $color ) ) {
-            return $color;
-        }
-        return sanitize_hex_color( $color );
     }
 
     public static function ajax_check_email() {
