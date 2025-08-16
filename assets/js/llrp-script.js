@@ -207,9 +207,9 @@
         value = value.replace(/\D/g, "");
 
         var maxLength = 0;
-        if (LLRP_Data.cnpj_login_enabled) {
+        if (LLRP_Data.cnpj_login_enabled === '1') {
             maxLength = 14;
-        } else if (LLRP_Data.cpf_login_enabled) {
+        } else if (LLRP_Data.cpf_login_enabled === '1') {
             maxLength = 11;
         }
 
