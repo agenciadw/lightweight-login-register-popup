@@ -210,6 +210,32 @@
         }
     });
 
+    $popup.on("click", ".llrp-forgot", function (e) {
+      e.preventDefault();
+      showStep("lost");
+    });
+
+    $popup.on("click", "#llrp-lost-submit", handleLostStep);
+
+    function handleLostStep() {
+        var email = $("#llrp-lost-email").val().trim();
+        if (!email) {
+            showFeedback("llrp-feedback-lost", "Por favor, insira seu e-mail.");
+            return;
+        }
+        $.post(LLRP_Data.ajax_url, {
+            action: 'llrp_lostpassword',
+            email: email,
+            nonce: LLRP_Data.nonce,
+        }).done(function (res) {
+            if (res.success) {
+                showFeedback("llrp-feedback-lost", res.data.message, true);
+            } else {
+                showFeedback("llrp-feedback-lost", res.data.message);
+            }
+        });
+    }
+
     function applyIdentifierMask(e) {
         var value = e.target.value;
         if (/[a-zA-Z]/.test(value)) {
@@ -249,10 +275,17 @@
       if (e.which === 13) {
         e.preventDefault();
         var $step = $(this).closest(".llrp-step");
-        if ($step.hasClass("llrp-step-email")) handleIdentifierStep();
-        else if ($step.hasClass("llrp-step-login")) handleLoginStep();
-        else if ($step.hasClass("llrp-step-register")) handleRegisterStep();
-        else if ($step.hasClass("llrp-step-code")) handleCodeLogin();
+        if ($step.hasClass("llrp-step-email")) {
+            handleIdentifierStep();
+        } else if ($step.hasClass("llrp-step-login")) {
+            handleLoginStep();
+        } else if ($step.hasClass("llrp-step-register")) {
+            handleRegisterStep();
+        } else if ($step.hasClass("llrp-step-code")) {
+            handleCodeLogin();
+        } else if ($step.hasClass("llrp-step-register-email")) {
+            handleRegisterCpfStep();
+        }
       }
     });
 
