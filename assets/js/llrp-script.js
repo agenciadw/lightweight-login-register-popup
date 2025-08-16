@@ -101,13 +101,6 @@
 
     function handleSendCode() {
         clearFeedback();
-        var identifier = $("#llrp-identifier").val().trim();
-        if (!identifier) {
-            showFeedback("llrp-feedback-login-options", "Por favor, preencha o campo de identificador.");
-            return;
-        }
-        savedIdentifier = identifier;
-
         $.post(LLRP_Data.ajax_url, {
             action: 'llrp_send_login_code',
             identifier: savedIdentifier,
@@ -206,6 +199,28 @@
         }
     });
 
+    function applyIdentifierMask(e) {
+        var value = e.target.value;
+        if (value.includes('@')) {
+            return;
+        }
+        value = value.replace(/\D/g, "");
+        if (value.length > 3) {
+            if (value.length <= 11) { // CPF
+                value = value.replace(/(\d{3})(\d)/, "$1.$2");
+                value = value.replace(/(\d{3})(\d)/, "$1.$2");
+                value = value.replace(/(\d{3})(\d{1,2})$/, "$1-$2");
+            } else { // CNPJ
+                value = value.replace(/^(\d{2})(\d)/, "$1.$2");
+                value = value.replace(/^(\d{2})\.(\d{3})(\d)/, "$1.$2.$3");
+                value = value.replace(/\.(\d{3})(\d)/, ".$1/$2");
+                value = value.replace(/(\d{4})(\d)/, "$1-$2");
+            }
+        }
+        e.target.value = value;
+    }
+
+    $popup.on("input", "#llrp-identifier", applyIdentifierMask);
 
     $popup.on("keypress", "input", function (e) {
       if (e.which === 13) {
