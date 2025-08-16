@@ -79,6 +79,8 @@ class Llrp_Admin {
             'color_btn_code_border_hover' => 'sanitize_hex_color',
             'color_btn_code_text'       => 'sanitize_hex_color',
             'color_btn_code_text_hover' => 'sanitize_hex_color',
+            'cpf_login_enabled'         => 'absint',
+            'cnpj_login_enabled'        => 'absint',
         ];
 
         foreach ( $settings as $field => $sanitize_callback ) {
@@ -145,6 +147,18 @@ class Llrp_Admin {
                         <th><?php esc_html_e( 'Sender Phone Number', 'llrp' ); ?></th>
                         <td>
                             <input type="text" name="llrp_whatsapp_sender_phone" value="<?php echo esc_attr( get_option( 'llrp_whatsapp_sender_phone' ) ); ?>" />
+                        </td>
+                    </tr>
+                    <tr>
+                        <th><?php esc_html_e( 'Enable Login with CPF', 'llrp' ); ?></th>
+                        <td>
+                            <input type="checkbox" name="llrp_cpf_login_enabled" value="1" <?php checked( get_option( 'llrp_cpf_login_enabled' ), 1 ); ?> />
+                        </td>
+                    </tr>
+                    <tr>
+                        <th><?php esc_html_e( 'Enable Login with CNPJ', 'llrp' ); ?></th>
+                        <td>
+                            <input type="checkbox" name="llrp_cnpj_login_enabled" value="1" <?php checked( get_option( 'llrp_cnpj_login_enabled' ), 1 ); ?> />
                         </td>
                     </tr>
                     <?php

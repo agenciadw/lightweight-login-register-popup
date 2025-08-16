@@ -139,7 +139,19 @@ class Llrp_Frontend {
             <div class="llrp-step llrp-step-email">
                 <h2><?php echo esc_html( $h_email ); ?></h2>
                 <p><?php echo esc_html( $t_email ); ?></p>
-                <input type="text" id="llrp-identifier" placeholder="<?php esc_attr_e( 'E-mail, CPF ou CNPJ', 'llrp' ); ?>">
+                <?php
+                $cpf_enabled = get_option( 'llrp_cpf_login_enabled' );
+                $cnpj_enabled = get_option( 'llrp_cnpj_login_enabled' );
+                $placeholder_parts = [ __( 'E-mail', 'llrp' ) ];
+                if ( $cpf_enabled ) {
+                    $placeholder_parts[] = __( 'CPF', 'llrp' );
+                }
+                if ( $cnpj_enabled ) {
+                    $placeholder_parts[] = __( 'CNPJ', 'llrp' );
+                }
+                $placeholder = implode( ', ', $placeholder_parts );
+                ?>
+                <input type="text" id="llrp-identifier" placeholder="<?php echo esc_attr( $placeholder ); ?>">
                 <button id="llrp-email-submit"><?php echo esc_html( $b_email ); ?></button>
                 <div class="llrp-feedback llrp-feedback-email"></div>
             </div>

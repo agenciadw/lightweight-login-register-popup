@@ -178,14 +178,25 @@ class Llrp_Ajax {
         if (empty($sanitized_identifier)) {
             return null;
         }
+        $meta_query = [ 'relation' => 'OR' ];
+        $cpf_enabled = get_option( 'llrp_cpf_login_enabled' );
+        $cnpj_enabled = get_option( 'llrp_cnpj_login_enabled' );
+
+        if ( $cpf_enabled ) {
+            $meta_query[] = [ 'key' => 'billing_cpf', 'value' => $sanitized_identifier, 'compare' => 'LIKE' ];
+            $meta_query[] = [ 'key' => 'billing_cpf', 'value' => $identifier, 'compare' => 'LIKE' ];
+        }
+        if ( $cnpj_enabled ) {
+            $meta_query[] = [ 'key' => 'billing_cnpj', 'value' => $sanitized_identifier, 'compare' => 'LIKE' ];
+            $meta_query[] = [ 'key' => 'billing_cnpj', 'value' => $identifier, 'compare' => 'LIKE' ];
+        }
+
+        if ( count( $meta_query ) === 1 ) {
+            return null;
+        }
+
         $user_query = new WP_User_Query( [
-            'meta_query' => [
-                'relation' => 'OR',
-                [ 'key' => 'billing_cpf', 'value' => $sanitized_identifier, 'compare' => 'LIKE' ],
-                [ 'key' => 'billing_cnpj', 'value' => $sanitized_identifier, 'compare' => 'LIKE' ],
-                [ 'key' => 'billing_cpf', 'value' => $identifier, 'compare' => 'LIKE' ],
-                [ 'key' => 'billing_cnpj', 'value' => $identifier, 'compare' => 'LIKE' ],
-            ],
+            'meta_query' => $meta_query,
             'number' => 1,
         ] );
         $users = $user_query->get_results();
