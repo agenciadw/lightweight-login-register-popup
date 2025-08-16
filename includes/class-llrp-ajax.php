@@ -220,42 +220,33 @@ class Llrp_Ajax {
     }
 
     public static function ajax_lostpassword() {
-       check_ajax_referer( 'llrp_nonce', 'nonce' );
-
-    // Sanitiza e valida e-mail
-    $email = isset( $_POST['email'] )
-           ? sanitize_email( wp_unslash( $_POST['email'] ) )
-           : '';
-    if ( ! is_email( $email ) ) {
-        wp_send_json_error( [ 'message' => __( 'E-mail inválido.', 'llrp' ) ] );
-    }
-
-    // Busca usuário
-    $user = get_user_by( 'email', $email );
-    if ( ! $user ) {
-        wp_send_json_error( [ 'message' => __( 'Nenhuma conta encontrada para esse e-mail.', 'llrp' ) ] );
-    }
-
-    // Gera (ou recupera) a chave de reset do WP
-    $reset_key = get_password_reset_key( $user );
-    if ( is_wp_error( $reset_key ) ) {
-        wp_send_json_error( [ 'message' => $reset_key->get_error_message() ] );
-    }
-
-    // Dispara o e-mail com o template do WooCommerce
-    if ( class_exists( 'WooCommerce' ) && method_exists( WC(), 'mailer' ) ) {
-        $mailer = WC()->mailer();
-        $emails = $mailer->get_emails();
-
-        if ( ! empty( $emails['WC_Email_Customer_Reset_Password'] ) ) {
-            /** @var WC_Email_Customer_Reset_Password $reset_email */
-            $reset_email = $emails['WC_Email_Customer_Reset_Password'];
-            $reset_email->trigger( $user->user_login, $reset_key );
+        check_ajax_referer( 'llrp_nonce', 'nonce' );
+        $identifier = sanitize_text_field( wp_unslash( $_POST['identifier'] ?? '' ) );
+        if ( empty( $identifier ) ) {
+            wp_send_json_error( [ 'message' => __( 'Identificador inválido.', 'llrp' ) ] );
         }
-    }
 
-    // Resposta AJAX
-    wp_send_json_success( [ 'message' => __( 'Se você tiver uma conta, enviamos um link de redefinição para o seu e-mail.', 'llrp' ) ] );
+        $user = self::get_user_by_identifier( $identifier );
+        if ( ! $user ) {
+            wp_send_json_success( [ 'message' => __( 'Se você tiver uma conta, enviamos um link de redefinição para o seu e-mail.', 'llrp' ) ] );
+            return;
+        }
+
+        $reset_key = get_password_reset_key( $user );
+        if ( is_wp_error( $reset_key ) ) {
+            wp_send_json_error( [ 'message' => $reset_key->get_error_message() ] );
+        }
+
+        if ( class_exists( 'WooCommerce' ) && method_exists( WC(), 'mailer' ) ) {
+            $mailer = WC()->mailer();
+            $emails = $mailer->get_emails();
+            if ( ! empty( $emails['WC_Email_Customer_Reset_Password'] ) ) {
+                $reset_email = $emails['WC_Email_Customer_Reset_Password'];
+                $reset_email->trigger( $user->user_login, $reset_key );
+            }
+        }
+
+        wp_send_json_success( [ 'message' => __( 'Se você tiver uma conta, enviamos um link de redefinição para o seu e-mail.', 'llrp' ) ] );
     }
 
     private static function is_cpf_valid( $cpf ) {

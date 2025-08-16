@@ -219,14 +219,9 @@
     $popup.on("click", "#llrp-lost-submit", handleLostStep);
 
     function handleLostStep() {
-        var email = $("#llrp-lost-email").val().trim();
-        if (!email) {
-            showFeedback("llrp-feedback-lost", "Por favor, insira seu e-mail.");
-            return;
-        }
         $.post(LLRP_Data.ajax_url, {
             action: 'llrp_lostpassword',
-            email: email,
+            identifier: savedIdentifier,
             nonce: LLRP_Data.nonce,
         }).done(function (res) {
             if (res.success) {
