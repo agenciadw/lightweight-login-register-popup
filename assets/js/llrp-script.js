@@ -212,6 +212,7 @@
 
     $popup.on("click", ".llrp-forgot", function (e) {
       e.preventDefault();
+      $("#llrp-lost-email").val(savedIdentifier);
       showStep("lost");
     });
 
