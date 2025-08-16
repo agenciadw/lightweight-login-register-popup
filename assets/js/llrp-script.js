@@ -46,8 +46,6 @@
                 $popup.find('.llrp-step-code h2').text('Verifique seu E-mail');
                 $popup.find('.llrp-step-code p').first().text('Enviamos um código de 6 dígitos para o seu e-mail. Insira-o abaixo para fazer login.');
             }
-        } else if (step === 'lost') {
-            $("#llrp-lost-email").val($(".llrp-user-email").text());
         }
         $popup.find(".llrp-step").addClass("hidden");
         $popup.find(".llrp-step-" + step).removeClass("hidden");
