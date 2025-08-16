@@ -241,6 +241,7 @@ class Llrp_Frontend {
             <div class="llrp-step llrp-step-lost hidden">
                 <h2><?php echo esc_html( $h_lost ); ?></h2>
                 <p><?php echo esc_html( $t_lost ); ?></p>
+                <input type="email" id="llrp-lost-email" placeholder="<?php echo esc_attr( $ph_lost ); ?>">
                 <button id="llrp-lost-submit"><?php echo esc_html( $b_lost ); ?></button>
                 <div class="llrp-feedback llrp-feedback-lost"></div>
                 <p><a href="#" class="llrp-back">&larr; <?php esc_html_e( 'Voltar', 'llrp' ); ?></a></p>
