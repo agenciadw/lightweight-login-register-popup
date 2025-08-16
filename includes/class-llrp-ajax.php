@@ -228,6 +228,7 @@ class Llrp_Ajax {
 
         $user = self::get_user_by_identifier( $identifier );
         if ( ! $user ) {
+            // To prevent user enumeration, always show a success message.
             wp_send_json_success( [ 'message' => __( 'Se você tiver uma conta, enviamos um link de redefinição para o seu e-mail.', 'llrp' ) ] );
             return;
         }
