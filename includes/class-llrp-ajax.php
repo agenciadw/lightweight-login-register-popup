@@ -150,6 +150,15 @@ class Llrp_Ajax {
             wp_send_json_error([ 'message' => __( 'A senha deve ter pelo menos 8 caracteres.', 'llrp' ) ]);
         }
 
+        if ( ! is_email( $identifier ) ) {
+            $sanitized_identifier = preg_replace( '/[^0-9]/', '', $identifier );
+            if ( strlen( $sanitized_identifier ) === 11 && ! self::is_cpf_valid( $sanitized_identifier ) ) {
+                wp_send_json_error( [ 'message' => __( 'CPF inválido.', 'llrp' ) ] );
+            } elseif ( strlen( $sanitized_identifier ) === 14 && ! self::is_cnpj_valid( $sanitized_identifier ) ) {
+                wp_send_json_error( [ 'message' => __( 'CNPJ inválido.', 'llrp' ) ] );
+            }
+        }
+
         try {
             $user_id = wc_create_new_customer( $email, '', $password );
             if ( is_wp_error( $user_id ) ) {
@@ -207,6 +216,50 @@ class Llrp_Ajax {
         ] );
         $users = $user_query->get_results();
         return ! empty( $users ) ? $users[0] : null;
+    }
+
+    private static function is_cpf_valid( $cpf ) {
+        $cpf = preg_replace( '/[^0-9]/is', '', $cpf );
+        if ( strlen( $cpf ) != 11 ) {
+            return false;
+        }
+        if ( preg_match( '/(\d)\1{10}/', $cpf ) ) {
+            return false;
+        }
+        for ( $t = 9; $t < 11; $t++ ) {
+            for ( $d = 0, $c = 0; $c < $t; $c++ ) {
+                $d += $cpf[$c] * ( ( $t + 1 ) - $c );
+            }
+            $d = ( ( 10 * $d ) % 11 ) % 10;
+            if ( $cpf[$c] != $d ) {
+                return false;
+            }
+        }
+        return true;
+    }
+
+    private static function is_cnpj_valid( $cnpj ) {
+        $cnpj = preg_replace( '/[^0-9]/', '', $cnpj );
+        if ( strlen( $cnpj ) != 14 ) {
+            return false;
+        }
+        if ( preg_match( '/(\d)\1{13}/', $cnpj ) ) {
+            return false;
+        }
+        for ( $i = 0, $j = 5, $soma = 0; $i < 12; $i++ ) {
+            $soma += $cnpj[$i] * $j;
+            $j = ( $j == 2 ) ? 9 : $j - 1;
+        }
+        $resto = $soma % 11;
+        if ( $cnpj[12] != ( $resto < 2 ? 0 : 11 - $resto ) ) {
+            return false;
+        }
+        for ( $i = 0, $j = 6, $soma = 0; $i < 13; $i++ ) {
+            $soma += $cnpj[$i] * $j;
+            $j = ( $j == 2 ) ? 9 : $j - 1;
+        }
+        $resto = $soma % 11;
+        return $cnpj[13] == ( $resto < 2 ? 0 : 11 - $resto );
     }
 }
 Llrp_Ajax::init();
