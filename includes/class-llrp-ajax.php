@@ -62,14 +62,20 @@ class Llrp_Ajax {
             if ( $sender_phone && $receiver_phone ) {
                 $response = joinotify_send_whatsapp_message_text( $sender_phone, $receiver_phone, $message );
                 if ( $response === 201 ) {
-                    wp_send_json_success( [ 'message' => __( 'Enviamos o código para o seu WhatsApp.', 'llrp' ) ] );
+                    wp_send_json_success( [
+                        'message' => __( 'Enviamos o código para o seu WhatsApp.', 'llrp' ),
+                        'delivery_method' => 'whatsapp',
+                    ] );
                     return;
                 }
             }
         }
 
         wp_mail( $user->user_email, 'Seu código de login', $message );
-        wp_send_json_success( [ 'message' => __( 'Enviamos o código para o seu e-mail.', 'llrp' ) ] );
+        wp_send_json_success( [
+            'message' => __( 'Enviamos o código para o seu e-mail.', 'llrp' ),
+            'delivery_method' => 'email',
+        ] );
     }
 
     public static function ajax_code_login() {

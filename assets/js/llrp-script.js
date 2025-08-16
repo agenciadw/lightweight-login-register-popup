@@ -5,6 +5,7 @@
     var $overlay = $("#llrp-overlay");
     var $popup = $("#llrp-popup");
     var savedIdentifier = "";
+    var deliveryMethod = "email";
 
     function openPopup(e) {
       if (e) e.preventDefault();
@@ -37,8 +38,17 @@
     }
 
     function showStep(step) {
-      $popup.find(".llrp-step").addClass("hidden");
-      $popup.find(".llrp-step-" + step).removeClass("hidden");
+        if (step === 'code') {
+            if (deliveryMethod === 'whatsapp') {
+                $popup.find('.llrp-step-code h2').text('Verifique seu WhatsApp');
+                $popup.find('.llrp-step-code p').first().text('Enviamos um código de 6 dígitos para o seu WhatsApp. Insira-o abaixo para fazer login.');
+            } else {
+                $popup.find('.llrp-step-code h2').text('Verifique seu E-mail');
+                $popup.find('.llrp-step-code p').first().text('Enviamos um código de 6 dígitos para o seu e-mail. Insira-o abaixo para fazer login.');
+            }
+        }
+        $popup.find(".llrp-step").addClass("hidden");
+        $popup.find(".llrp-step-" + step).removeClass("hidden");
     }
 
     function handleIdentifierStep() {
@@ -107,6 +117,7 @@
             nonce: LLRP_Data.nonce,
         }).done(function(res) {
             if(res.success) {
+                deliveryMethod = res.data.delivery_method;
                 showFeedback('llrp-feedback-code', res.data.message, true);
                 showStep('code');
             } else {
