@@ -201,7 +201,7 @@
 
     function applyIdentifierMask(e) {
         var value = e.target.value;
-        if (value.includes('@')) {
+        if (/[a-zA-Z]/.test(value)) {
             return;
         }
         value = value.replace(/\D/g, "");
