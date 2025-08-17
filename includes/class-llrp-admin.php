@@ -45,65 +45,49 @@ class Llrp_Admin {
      * Register plugin settings
      */
     public static function register_settings() {
-        // Text fields
-        $text_fields = [
-            'header_email', 'text_email', 'placeholder_email', 'button_email', 'text_login', 'placeholder_password', 'text_remember', 'button_login',
-            'header_register', 'text_register', 'placeholder_register', 'button_register',
+        $settings = [
+            'popup_width'               => 'absint',
+            'header_email'              => 'sanitize_text_field',
+            'text_email'                => 'sanitize_text_field',
+            'placeholder_email'         => 'sanitize_text_field',
+            'button_email'              => 'sanitize_text_field',
+            'text_login'                => 'sanitize_text_field',
+            'placeholder_password'      => 'sanitize_text_field',
+            'text_remember'             => 'sanitize_text_field',
+            'button_login'              => 'sanitize_text_field',
+            'header_register'           => 'sanitize_text_field',
+            'text_register'             => 'sanitize_text_field',
+            'placeholder_register'      => 'sanitize_text_field',
+            'button_register'           => 'sanitize_text_field',
+            'color_bg'                  => 'sanitize_hex_color',
+            'color_header_bg'           => 'sanitize_hex_color',
+            'color_text'                => 'sanitize_hex_color',
+            'color_overlay'             => [ __CLASS__, 'sanitize_rgba_or_hex' ],
+            'color_link'                => 'sanitize_hex_color',
+            'color_link_hover'          => 'sanitize_hex_color',
+            'color_btn_bg'              => 'sanitize_hex_color',
+            'color_btn_bg_hover'        => 'sanitize_hex_color',
+            'color_btn_border'          => 'sanitize_hex_color',
+            'color_btn_border_hover'    => 'sanitize_hex_color',
+            'color_btn_text'            => 'sanitize_hex_color',
+            'color_btn_text_hover'      => 'sanitize_hex_color',
+            'whatsapp_enabled'          => 'absint',
+            'whatsapp_sender_phone'     => 'sanitize_text_field',
+            'color_btn_code_bg'         => 'sanitize_hex_color',
+            'color_btn_code_bg_hover'   => 'sanitize_hex_color',
+            'color_btn_code_border'     => 'sanitize_hex_color',
+            'color_btn_code_border_hover' => 'sanitize_hex_color',
+            'color_btn_code_text'       => 'sanitize_hex_color',
+            'color_btn_code_text_hover' => 'sanitize_hex_color',
+            'cpf_login_enabled'         => 'absint',
+            'cnpj_login_enabled'        => 'absint',
         ];
-        foreach ( $text_fields as $field ) {
-            register_setting( 'llrp_options', 'llrp_' . $field, 'sanitize_text_field' );
+
+        foreach ( $settings as $field => $sanitize_callback ) {
+            register_setting( 'llrp_options', 'llrp_' . $field, [
+                'sanitize_callback' => $sanitize_callback,
+            ] );
         }
-
-        // Color fields
-        $color_fields = [
-            'color_bg', 'color_header_bg', 'color_text',
-            'color_link', 'color_link_hover',
-            'color_btn_bg', 'color_btn_bg_hover', 'color_btn_border', 'color_btn_border_hover',
-            'color_btn_text', 'color_btn_text_hover',
-            'color_btn_code_bg', 'color_btn_code_bg_hover', 'color_btn_code_border', 'color_btn_code_border_hover',
-            'color_btn_code_text', 'color_btn_code_text_hover',
-        ];
-        foreach ( $color_fields as $field ) {
-            register_setting( 'llrp_options', 'llrp_' . $field, 'sanitize_hex_color' );
-        }
-
-        // Special fields
-        register_setting( 'llrp_options', 'llrp_popup_width', 'absint' );
-        register_setting( 'llrp_options', 'llrp_color_overlay', [ __CLASS__, 'sanitize_rgba_or_hex' ] );
-
-        // WhatsApp Settings
-        register_setting( 'llrp_options', 'llrp_whatsapp_enabled', 'absint' );
-        register_setting( 'llrp_options', 'llrp_whatsapp_sender_phone', 'sanitize_text_field' );
-    }
-
-    /**
-     * Sanitize RGBA or HEX color values.
-     *
-     * @param string $color The color string.
-     * @return string Sanitized color string.
-     */
-    public static function sanitize_rgba_or_hex( $color ) {
-        if ( empty( $color ) ) {
-            return '';
-        }
-        // If 'rgba' is found, check for valid format.
-        if ( strpos( trim( $color ), 'rgba' ) === 0 ) {
-            if ( preg_match( '/^rgba\(\s*(\d{1,3})\s*,\s*(\d{1,3})\s*,\s*(\d{1,3})\s*,\s*([0-9.]{1,3})\s*\)$/', $color, $matches ) ) {
-                // Check that R, G, B are between 0-255 and A is between 0-1.
-                if ( $matches[1] >= 0 && $matches[1] <= 255 && $matches[2] >= 0 && $matches[2] <= 255 && $matches[3] >= 0 && $matches[3] <= 255 && $matches[4] >= 0 && $matches[4] <= 1 ) {
-                    return $color;
-                }
-            }
-            return ''; // Return empty for invalid rgba.
-        }
-
-        // Check for hex8 format, e.g., #RRGGBBAA.
-        if ( preg_match( '/^#([a-fA-F0-9]{8})$/', $color ) ) {
-            return $color;
-        }
-
-        // Fallback to sanitize_hex_color for standard hex colors (e.g. #FFF, #FFFFFF).
-        return sanitize_hex_color( $color );
     }
 
     /**
@@ -122,31 +106,6 @@ class Llrp_Admin {
                             <input type="number" name="llrp_popup_width" value="<?php echo esc_attr( get_option( 'llrp_popup_width', 590 ) ); ?>" />
                         </td>
                     </tr>
-                    <!-- WhatsApp Settings -->
-                    <tr>
-                        <th colspan="2" style="padding-bottom: 1em;"><h2><?php esc_html_e( 'Integração com WhatsApp (Joinotify)', 'llrp' ); ?></h2></th>
-                    </tr>
-                    <tr>
-                        <th><?php esc_html_e( 'Ativar envio por WhatsApp', 'llrp' ); ?></th>
-                        <td>
-                            <label>
-                                <input type="checkbox" name="llrp_whatsapp_enabled" value="1" <?php checked( 1, get_option( 'llrp_whatsapp_enabled' ), true ); ?> />
-                                <?php esc_html_e( 'Enviar o código de login por WhatsApp ao invés de e-mail.', 'llrp' ); ?>
-                            </label>
-                            <p class="description"><?php esc_html_e( 'Requer o plugin Joinotify instalado e ativado.', 'llrp' ); ?></p>
-                        </td>
-                    </tr>
-                    <tr>
-                        <th><?php esc_html_e( 'Telefone de envio (Instância)', 'llrp' ); ?></th>
-                        <td>
-                            <input type="text" name="llrp_whatsapp_sender_phone" value="<?php echo esc_attr( get_option( 'llrp_whatsapp_sender_phone' ) ); ?>" class="regular-text" />
-                            <p class="description"><?php esc_html_e( 'Insira o número de telefone da instância do Joinotify que enviará a mensagem (ex: 5541999998888).', 'llrp' ); ?></p>
-                        </td>
-                    </tr>
-                    <!-- General Color Settings -->
-                    <tr>
-                        <th colspan="2" style="padding-top: 2em; padding-bottom: 1em;"><h2><?php esc_html_e( 'Cores', 'llrp' ); ?></h2></th>
-                    </tr>
                     <!-- Overlay color: allow hex8/rgba manually -->
                     <tr>
                         <th><?php esc_html_e( 'Cor do Overlay', 'llrp' ); ?></th>
@@ -163,38 +122,47 @@ class Llrp_Admin {
                         'color_text'             => __( 'Cor do Texto', 'llrp' ),
                         'color_link'             => __( 'Cor do Link', 'llrp' ),
                         'color_link_hover'       => __( 'Link Hover', 'llrp' ),
-                        'color_btn_bg'           => __( 'Botão Padrão (bg)', 'llrp' ),
-                        'color_btn_bg_hover'     => __( 'Botão Padrão Hover (bg)', 'llrp' ),
-                        'color_btn_border'       => __( 'Botão Padrão (borda)', 'llrp' ),
-                        'color_btn_border_hover' => __( 'Borda Padrão Hover', 'llrp' ),
-                        'color_btn_text'         => __( 'Texto do Botão Padrão', 'llrp' ),
-                        'color_btn_text_hover'   => __( 'Texto Padrão Hover', 'llrp' ),
+                        'color_btn_bg'           => __( 'Botão (bg)', 'llrp' ),
+                        'color_btn_bg_hover'     => __( 'Botão Hover (bg)', 'llrp' ),
+                        'color_btn_border'       => __( 'Botão (borda)', 'llrp' ),
+                        'color_btn_border_hover' => __( 'Borda Hover', 'llrp' ),
+                        'color_btn_text'         => __( 'Texto do Botão', 'llrp' ),
+                        'color_btn_text_hover'   => __( 'Texto Hover', 'llrp' ),
+                        'color_btn_code_bg'      => __( 'Botão Código (bg)', 'llrp' ),
+                        'color_btn_code_bg_hover'=> __( 'Botão Código Hover (bg)', 'llrp' ),
+                        'color_btn_code_border'  => __( 'Botão Código (borda)', 'llrp' ),
+                        'color_btn_code_border_hover' => __( 'Borda Código Hover', 'llrp' ),
+                        'color_btn_code_text'    => __( 'Texto do Botão Código', 'llrp' ),
+                        'color_btn_code_text_hover'   => __( 'Texto Código Hover', 'llrp' ),
                     ];
-                    foreach ( $color_fields as $field => $label ) {
-                        $value = esc_attr( get_option( 'llrp_' . $field, '' ) );
-                        ?>
-                        <tr>
-                            <th><?php echo esc_html( $label ); ?></th>
-                            <td>
-                                <input type="text" class="llrp-color-field" name="llrp_<?php echo esc_attr( $field ); ?>" value="<?php echo $value; ?>" />
-                            </td>
-                        </tr>
-                        <?php
-                    }
                     ?>
                     <tr>
-                        <th colspan="2" style="padding-top: 2em; padding-bottom: 1em;"><h3><?php esc_html_e( 'Botão "Receber código"', 'llrp' ); ?></h3></th>
+                        <th><?php esc_html_e( 'Enable WhatsApp', 'llrp' ); ?></th>
+                        <td>
+                            <input type="checkbox" name="llrp_whatsapp_enabled" value="1" <?php checked( get_option( 'llrp_whatsapp_enabled' ), 1 ); ?> />
+                            <p class="description"><?php esc_html_e( 'Requer o plugin Joinotify instalado e ativado.', 'llrp' ); ?></p>
+                        </td>
+                    </tr>
+                    <tr>
+                        <th><?php esc_html_e( 'Sender Phone Number', 'llrp' ); ?></th>
+                        <td>
+                            <input type="text" name="llrp_whatsapp_sender_phone" value="<?php echo esc_attr( get_option( 'llrp_whatsapp_sender_phone' ) ); ?>" />
+                        </td>
+                    </tr>
+                    <tr>
+                        <th><?php esc_html_e( 'Enable Login with CPF', 'llrp' ); ?></th>
+                        <td>
+                            <input type="checkbox" name="llrp_cpf_login_enabled" value="1" <?php checked( get_option( 'llrp_cpf_login_enabled' ), 1 ); ?> />
+                        </td>
+                    </tr>
+                    <tr>
+                        <th><?php esc_html_e( 'Enable Login with CNPJ', 'llrp' ); ?></th>
+                        <td>
+                            <input type="checkbox" name="llrp_cnpj_login_enabled" value="1" <?php checked( get_option( 'llrp_cnpj_login_enabled' ), 1 ); ?> />
+                        </td>
                     </tr>
                     <?php
-                    $code_button_fields = [
-                        'color_btn_code_bg'           => __( 'Botão (bg)', 'llrp' ),
-                        'color_btn_code_bg_hover'     => __( 'Botão Hover (bg)', 'llrp' ),
-                        'color_btn_code_border'       => __( 'Botão (borda)', 'llrp' ),
-                        'color_btn_code_border_hover' => __( 'Borda Hover', 'llrp' ),
-                        'color_btn_code_text'         => __( 'Texto do Botão', 'llrp' ),
-                        'color_btn_code_text_hover'   => __( 'Texto Hover', 'llrp' ),
-                    ];
-                    foreach ( $code_button_fields as $field => $label ) {
+                    foreach ( $color_fields as $field => $label ) {
                         $value = esc_attr( get_option( 'llrp_' . $field, '' ) );
                         ?>
                         <tr>
@@ -211,6 +179,23 @@ class Llrp_Admin {
             </form>
         </div>
         <?php
+    }
+    public static function sanitize_rgba_or_hex( $color ) {
+        if ( empty( $color ) ) {
+            return '';
+        }
+        if ( strpos( trim( $color ), 'rgba' ) === 0 ) {
+            if ( preg_match( '/^rgba\(\s*(\d{1,3})\s*,\s*(\d{1,3})\s*,\s*(\d{1,3})\s*,\s*([0-9.]{1,3})\s*\)$/', $color, $matches ) ) {
+                if ( $matches[1] >= 0 && $matches[1] <= 255 && $matches[2] >= 0 && $matches[2] <= 255 && $matches[3] >= 0 && $matches[3] <= 255 && $matches[4] >= 0 && $matches[4] <= 1 ) {
+                    return $color;
+                }
+            }
+            return '';
+        }
+        if ( preg_match( '/^#([a-fA-F0-9]{8})$/', $color ) ) {
+            return $color;
+        }
+        return sanitize_hex_color( $color );
     }
 }
 
