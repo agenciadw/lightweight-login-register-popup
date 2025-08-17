@@ -46,6 +46,8 @@
                 $popup.find('.llrp-step-code h2').text('Verifique seu E-mail');
                 $popup.find('.llrp-step-code p').first().text('Enviamos um código de 6 dígitos para o seu e-mail. Insira-o abaixo para fazer login.');
             }
+        } else if (step === 'lost') {
+            $("#llrp-lost-email").val($(".llrp-user-email").text());
         }
         $popup.find(".llrp-step").addClass("hidden");
         $popup.find(".llrp-step-" + step).removeClass("hidden");
@@ -218,9 +220,14 @@
     $popup.on("click", "#llrp-lost-submit", handleLostStep);
 
     function handleLostStep() {
+        var email = $("#llrp-lost-email").val().trim();
+        if (!email) {
+            showFeedback("llrp-feedback-lost", "Por favor, insira seu e-mail.");
+            return;
+        }
         $.post(LLRP_Data.ajax_url, {
             action: 'llrp_lostpassword',
-            identifier: savedIdentifier,
+            email: email,
             nonce: LLRP_Data.nonce,
         }).done(function (res) {
             if (res.success) {
