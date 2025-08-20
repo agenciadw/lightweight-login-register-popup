@@ -108,6 +108,10 @@
   margin-top: 0.25em;
 }
 
+#llrp-send-code {
+  margin-top: 5px;
+}
+
 /* Placeholder dos inputs */
 .llrp-popup input::placeholder {
   font-size: 1rem;
