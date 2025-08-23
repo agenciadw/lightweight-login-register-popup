@@ -51,7 +51,23 @@ class Llrp_Ajax {
         $code = (string) wp_rand( 100000, 999999 );
         $hash = wp_hash_password( $code );
         $expiration = time() + ( 5 * MINUTE_IN_SECONDS );
-        $message = sprintf( 'Seu código de login para %s é: %s', get_bloginfo('name'), $code );
+        
+        // Mensagem para e-mail (padrão)
+        $email_message = sprintf( 'Seu código de login para %s é: %s', get_bloginfo('name'), $code );
+        
+        // Mensagem para WhatsApp com instruções de cópia
+        $whatsapp_message = sprintf( 
+            "🔐 *Código de Login*\n\n" .
+            "Seu código de login para *%s* é:\n" .
+            "`%s`\n\n" .
+            "📋 *Para copiar o código:*\n" .
+            "1. Toque e segure o código acima\n" .
+            "2. Selecione 'Copiar'\n" .
+            "3. Cole no campo do site\n\n" .
+            "⏰ *Válido por 5 minutos*",
+            get_bloginfo('name'),
+            $code
+        );
 
         update_user_meta( $user->ID, '_llrp_login_code_hash', $hash );
         update_user_meta( $user->ID, '_llrp_login_code_expiration', $expiration );
@@ -61,19 +77,18 @@ class Llrp_Ajax {
             $sender_phone = get_option( 'llrp_whatsapp_sender_phone' );
             $receiver_phone = get_user_meta( $user->ID, 'billing_phone', true );
             if ( $sender_phone && $receiver_phone ) {
-                $response = joinotify_send_whatsapp_message_text( $sender_phone, $receiver_phone, $message );
+                $response = joinotify_send_whatsapp_message_text( $sender_phone, $receiver_phone, $whatsapp_message );
                 if ( $response === 201 ) {
                     wp_send_json_success( [
                         'message' => __( 'Enviamos o código para o seu WhatsApp.', 'llrp' ),
                         'delivery_method' => 'whatsapp',
-                        'code' => $code, // Retorna o código para copiar
                     ] );
                     return;
                 }
             }
         }
 
-        wp_mail( $user->user_email, 'Seu código de login', $message );
+        wp_mail( $user->user_email, 'Seu código de login', $email_message );
         wp_send_json_success( [
             'message' => __( 'Enviamos o código para o seu e-mail.', 'llrp' ),
             'delivery_method' => 'email',

@@ -24,12 +24,11 @@ Use a tela WooCommerce > Popup de Login para configurar o plugin.
 
 = 0.2.1 - 17/08/2025 =
 
-- **NOVA FUNCIONALIDADE**: Adicionado botão "Copiar Código" quando o código de login é enviado via WhatsApp
-- **NOVA FUNCIONALIDADE**: Cópia automática do código para a área de transferência do usuário
-- **NOVA FUNCIONALIDADE**: Feedback visual quando o código é copiado com sucesso
-- **NOVA FUNCIONALIDADE**: Suporte a navegadores modernos (API Clipboard) e antigos (document.execCommand)
-- **MELHORIA**: Adicionadas opções de personalização para cores do botão de copiar no painel administrativo
-- **MELHORIA**: Interface mais intuitiva para usuários que recebem códigos via WhatsApp
+- **NOVA FUNCIONALIDADE**: Mensagem do WhatsApp aprimorada com instruções de como copiar o código
+- **NOVA FUNCIONALIDADE**: Formatação especial do código no WhatsApp para facilitar a cópia
+- **MELHORIA**: Instruções passo a passo na mensagem do WhatsApp para copiar o código
+- **MELHORIA**: Mensagem mais clara e organizada com emojis e formatação
+- **MELHORIA**: Informação sobre validade do código (5 minutos) na mensagem
 
 = 0.2.0 - 17/08/2025 =
 

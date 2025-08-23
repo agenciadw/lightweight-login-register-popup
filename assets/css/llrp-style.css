@@ -112,47 +112,6 @@
   margin-top: 5px;
 }
 
-/* Botão de copiar código */
-.llrp-copy-code-btn {
-  width: 100% !important;
-  padding: 8px 12px !important;
-  margin: 10px 0 !important;
-  background: #25d366 !important;
-  color: white !important;
-  border: none !important;
-  border-radius: 4px !important;
-  cursor: pointer !important;
-  font-size: 0.9rem !important;
-  transition: all 0.3s ease !important;
-  display: flex !important;
-  align-items: center !important;
-  justify-content: center !important;
-  gap: 5px !important;
-}
-
-.llrp-copy-code-btn:hover {
-  background: #128c7e !important;
-  transform: translateY(-1px) !important;
-}
-
-.llrp-copy-code-btn:active {
-  transform: translateY(0) !important;
-}
-
-.llrp-copy-code-btn.copied {
-  background: #28a745 !important;
-}
-
-.llrp-copy-code-btn.error {
-  background: #dc3545 !important;
-}
-
-.llrp-copy-code-btn:disabled {
-  background: #6c757d !important;
-  cursor: not-allowed !important;
-  transform: none !important;
-}
-
 /* Placeholder dos inputs */
 .llrp-popup input::placeholder {
   font-size: 1rem;

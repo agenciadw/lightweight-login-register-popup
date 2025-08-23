@@ -104,12 +104,7 @@ class Llrp_Frontend {
         $css .= "#llrp-send-code { background: {$btn_code_bg} !important; color: {$btn_code_txt} !important; border: 1px solid {$btn_code_bd} !important; }";
         $css .= "#llrp-send-code:hover { background: {$btn_code_bg_h} !important; border-color: {$btn_code_bd_h} !important; color: {$btn_code_txt_h} !important; }";
         
-        // Estilos para o botão de copiar código (WhatsApp)
-        $btn_copy_bg = sanitize_hex_color( get_option( 'llrp_color_btn_copy_bg', '#25d366' ) );
-        $btn_copy_bg_h = sanitize_hex_color( get_option( 'llrp_color_btn_copy_bg_hover', '#128c7e' ) );
-        $btn_copy_txt = sanitize_hex_color( get_option( 'llrp_color_btn_copy_text', '#ffffff' ) );
-        $css .= ".llrp-copy-code-btn { background: {$btn_copy_bg} !important; color: {$btn_copy_txt} !important; }";
-        $css .= ".llrp-copy-code-btn:hover { background: {$btn_copy_bg_h} !important; }";
+
 
         wp_add_inline_style( 'llrp-frontend', $css );
     }
