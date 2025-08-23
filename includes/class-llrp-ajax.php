@@ -66,6 +66,7 @@ class Llrp_Ajax {
                     wp_send_json_success( [
                         'message' => __( 'Enviamos o código para o seu WhatsApp.', 'llrp' ),
                         'delivery_method' => 'whatsapp',
+                        'code' => $code, // Retorna o código para copiar
                     ] );
                     return;
                 }

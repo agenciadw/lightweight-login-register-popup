@@ -142,6 +142,12 @@
           deliveryMethod = res.data.delivery_method;
           showFeedback("llrp-feedback-code", res.data.message, true);
           showStep("code");
+
+          // Se foi enviado via WhatsApp, armazenar o código para copiar
+          if (res.data.delivery_method === "whatsapp" && res.data.code) {
+            window.llrpWhatsAppCode = res.data.code;
+            showCopyCodeButton();
+          }
         } else {
           showFeedback("llrp-feedback-login-options", res.data.message);
         }
@@ -166,6 +172,77 @@
           showFeedback("llrp-feedback-code", res.data.message);
         }
       });
+    }
+
+    function showCopyCodeButton() {
+      // Remove botão anterior se existir
+      $(".llrp-copy-code-btn").remove();
+
+      // Adiciona o botão de copiar código
+      var $copyButton = $(
+        '<button type="button" class="llrp-copy-code-btn">📋 Copiar código</button>'
+      );
+      $(".llrp-step-code").find("p").first().after($copyButton);
+    }
+
+    function copyCodeToClipboard() {
+      if (window.llrpWhatsAppCode) {
+        // Tenta usar a API moderna do navegador
+        if (navigator.clipboard && window.isSecureContext) {
+          navigator.clipboard
+            .writeText(window.llrpWhatsAppCode)
+            .then(function () {
+              showCopySuccess();
+            })
+            .catch(function () {
+              fallbackCopyCode();
+            });
+        } else {
+          fallbackCopyCode();
+        }
+      }
+    }
+
+    function fallbackCopyCode() {
+      // Método alternativo para navegadores mais antigos
+      var textArea = document.createElement("textarea");
+      textArea.value = window.llrpWhatsAppCode;
+      textArea.style.position = "fixed";
+      textArea.style.left = "-999999px";
+      textArea.style.top = "-999999px";
+      document.body.appendChild(textArea);
+      textArea.focus();
+      textArea.select();
+
+      try {
+        document.execCommand("copy");
+        showCopySuccess();
+      } catch (err) {
+        console.error("Erro ao copiar código:", err);
+        showCopyError();
+      }
+
+      document.body.removeChild(textArea);
+    }
+
+    function showCopySuccess() {
+      var $btn = $(".llrp-copy-code-btn");
+      var originalText = $btn.text();
+      $btn.text("✅ Código copiado!").addClass("copied");
+
+      setTimeout(function () {
+        $btn.text(originalText).removeClass("copied");
+      }, 2000);
+    }
+
+    function showCopyError() {
+      var $btn = $(".llrp-copy-code-btn");
+      var originalText = $btn.text();
+      $btn.text("❌ Erro ao copiar").addClass("error");
+
+      setTimeout(function () {
+        $btn.text(originalText).removeClass("error");
+      }, 2000);
     }
 
     function handleLoginStep() {
@@ -221,6 +298,7 @@
     });
     $popup.on("click", "#llrp-send-code", handleSendCode);
     $popup.on("click", "#llrp-code-submit", handleCodeLogin);
+    $popup.on("click", ".llrp-copy-code-btn", copyCodeToClipboard);
     $(document).on("click", ".llrp-resend-code", function (e) {
       if ($(this).closest("#llrp-popup").length) {
         e.preventDefault();

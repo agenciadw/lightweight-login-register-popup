@@ -4,7 +4,7 @@ Tags: woocommerce, login, register, popup
 Requires at least: 6.6
 Tested up to: 6.6
 Requires PHP: 7.4
-Stable tag: 0.2.0
+Stable tag: 0.2.1
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -21,6 +21,15 @@ Ative o plugin através da tela 'Plugins' no WordPress.
 Use a tela WooCommerce > Popup de Login para configurar o plugin.
 
 == Registro de Alterações ==
+
+= 0.2.1 - 17/08/2025 =
+
+- **NOVA FUNCIONALIDADE**: Adicionado botão "Copiar Código" quando o código de login é enviado via WhatsApp
+- **NOVA FUNCIONALIDADE**: Cópia automática do código para a área de transferência do usuário
+- **NOVA FUNCIONALIDADE**: Feedback visual quando o código é copiado com sucesso
+- **NOVA FUNCIONALIDADE**: Suporte a navegadores modernos (API Clipboard) e antigos (document.execCommand)
+- **MELHORIA**: Adicionadas opções de personalização para cores do botão de copiar no painel administrativo
+- **MELHORIA**: Interface mais intuitiva para usuários que recebem códigos via WhatsApp
 
 = 0.2.0 - 17/08/2025 =
 

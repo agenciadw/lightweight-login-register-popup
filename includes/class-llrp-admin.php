@@ -79,6 +79,9 @@ class Llrp_Admin {
             'color_btn_code_border_hover' => 'sanitize_hex_color',
             'color_btn_code_text'       => 'sanitize_hex_color',
             'color_btn_code_text_hover' => 'sanitize_hex_color',
+            'color_btn_copy_bg'         => 'sanitize_hex_color',
+            'color_btn_copy_bg_hover'   => 'sanitize_hex_color',
+            'color_btn_copy_text'       => 'sanitize_hex_color',
             'cpf_login_enabled'         => 'absint',
             'cnpj_login_enabled'        => 'absint',
         ];
@@ -134,6 +137,9 @@ class Llrp_Admin {
                         'color_btn_code_border_hover' => __( 'Borda Código Hover', 'llrp' ),
                         'color_btn_code_text'    => __( 'Texto do Botão Código', 'llrp' ),
                         'color_btn_code_text_hover'   => __( 'Texto Código Hover', 'llrp' ),
+                        'color_btn_copy_bg'      => __( 'Botão Copiar (bg)', 'llrp' ),
+                        'color_btn_copy_bg_hover'=> __( 'Botão Copiar Hover (bg)', 'llrp' ),
+                        'color_btn_copy_text'    => __( 'Texto do Botão Copiar', 'llrp' ),
                     ];
                     ?>
                     <tr>
