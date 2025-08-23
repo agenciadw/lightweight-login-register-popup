@@ -24,9 +24,11 @@ Use a tela WooCommerce > Popup de Login para configurar o plugin.
 
 = 0.2.1 - 17/08/2025 =
 
-- **NOVA FUNCIONALIDADE**: Mensagem do WhatsApp aprimorada com instruções de como copiar o código
-- **NOVA FUNCIONALIDADE**: Formatação especial do código no WhatsApp para facilitar a cópia
-- **MELHORIA**: Instruções passo a passo na mensagem do WhatsApp para copiar o código
+- **NOVA FUNCIONALIDADE**: Suporte a botões interativos do WhatsApp (botão "Copiar código")
+- **NOVA FUNCIONALIDADE**: Mensagem do WhatsApp aprimorada com formatação especial
+- **NOVA FUNCIONALIDADE**: Opção no painel administrativo para ativar/desativar botões interativos
+- **MELHORIA**: Integração com API de botões do WhatsApp Business
+- **MELHORIA**: Fallback automático para mensagem normal se botões não estiverem disponíveis
 - **MELHORIA**: Mensagem mais clara e organizada com emojis e formatação
 - **MELHORIA**: Informação sobre validade do código (5 minutos) na mensagem
 

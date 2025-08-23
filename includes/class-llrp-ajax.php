@@ -55,15 +55,11 @@ class Llrp_Ajax {
         // Mensagem para e-mail (padrão)
         $email_message = sprintf( 'Seu código de login para %s é: %s', get_bloginfo('name'), $code );
         
-        // Mensagem para WhatsApp com instruções de cópia
+        // Mensagem para WhatsApp com botão de copiar
         $whatsapp_message = sprintf( 
             "🔐 *Código de Login*\n\n" .
             "Seu código de login para *%s* é:\n" .
             "`%s`\n\n" .
-            "📋 *Para copiar o código:*\n" .
-            "1. Toque e segure o código acima\n" .
-            "2. Selecione 'Copiar'\n" .
-            "3. Cole no campo do site\n\n" .
             "⏰ *Válido por 5 minutos*",
             get_bloginfo('name'),
             $code
@@ -73,10 +69,56 @@ class Llrp_Ajax {
         update_user_meta( $user->ID, '_llrp_login_code_expiration', $expiration );
 
         $whatsapp_enabled = get_option( 'llrp_whatsapp_enabled' );
+        $whatsapp_interactive = get_option( 'llrp_whatsapp_interactive_buttons' );
         if ( $whatsapp_enabled && function_exists( 'joinotify_send_whatsapp_message_text' ) ) {
             $sender_phone = get_option( 'llrp_whatsapp_sender_phone' );
             $receiver_phone = get_user_meta( $user->ID, 'billing_phone', true );
             if ( $sender_phone && $receiver_phone ) {
+                // Tenta enviar com botão de copiar código
+                if ( $whatsapp_interactive && function_exists( 'joinotify_send_whatsapp_copy_code' ) ) {
+                    $response = joinotify_send_whatsapp_copy_code( 
+                        $sender_phone, 
+                        $receiver_phone, 
+                        $whatsapp_message,
+                        $code
+                    );
+                    
+                    if ( $response === 201 ) {
+                        wp_send_json_success( [
+                            'message' => __( 'Enviamos o código para o seu WhatsApp.', 'llrp' ),
+                            'delivery_method' => 'whatsapp',
+                        ] );
+                        return;
+                    }
+                }
+                
+                // Tenta enviar com botão interativo genérico
+                if ( $whatsapp_interactive && function_exists( 'joinotify_send_whatsapp_interactive_message' ) ) {
+                    $buttons = [
+                        [
+                            'type' => 'copy_code',
+                            'text' => 'Copiar código',
+                            'code' => $code
+                        ]
+                    ];
+                    
+                    $response = joinotify_send_whatsapp_interactive_message( 
+                        $sender_phone, 
+                        $receiver_phone, 
+                        $whatsapp_message,
+                        $buttons
+                    );
+                    
+                    if ( $response === 201 ) {
+                        wp_send_json_success( [
+                            'message' => __( 'Enviamos o código para o seu WhatsApp.', 'llrp' ),
+                            'delivery_method' => 'whatsapp',
+                        ] );
+                        return;
+                    }
+                }
+                
+                // Fallback para mensagem normal se botões não estiverem disponíveis
                 $response = joinotify_send_whatsapp_message_text( $sender_phone, $receiver_phone, $whatsapp_message );
                 if ( $response === 201 ) {
                     wp_send_json_success( [

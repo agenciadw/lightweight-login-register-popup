@@ -73,6 +73,7 @@ class Llrp_Admin {
             'color_btn_text_hover'      => 'sanitize_hex_color',
             'whatsapp_enabled'          => 'absint',
             'whatsapp_sender_phone'     => 'sanitize_text_field',
+            'whatsapp_interactive_buttons' => 'absint',
             'color_btn_code_bg'         => 'sanitize_hex_color',
             'color_btn_code_bg_hover'   => 'sanitize_hex_color',
             'color_btn_code_border'     => 'sanitize_hex_color',
@@ -147,6 +148,13 @@ class Llrp_Admin {
                         <th><?php esc_html_e( 'Sender Phone Number', 'llrp' ); ?></th>
                         <td>
                             <input type="text" name="llrp_whatsapp_sender_phone" value="<?php echo esc_attr( get_option( 'llrp_whatsapp_sender_phone' ) ); ?>" />
+                        </td>
+                    </tr>
+                    <tr>
+                        <th><?php esc_html_e( 'Enable Interactive Buttons', 'llrp' ); ?></th>
+                        <td>
+                            <input type="checkbox" name="llrp_whatsapp_interactive_buttons" value="1" <?php checked( get_option( 'llrp_whatsapp_interactive_buttons' ), 1 ); ?> />
+                            <p class="description"><?php esc_html_e( 'Ativa botões interativos como "Copiar código" na mensagem do WhatsApp. Requer suporte do plugin Joinotify.', 'llrp' ); ?></p>
                         </td>
                     </tr>
                     <tr>
