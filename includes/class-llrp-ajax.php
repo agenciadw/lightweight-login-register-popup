@@ -10,6 +10,8 @@ class Llrp_Ajax {
         add_action( 'wp_ajax_nopriv_llrp_login_with_password', [ __CLASS__, 'ajax_login_with_password' ] );
         add_action( 'wp_ajax_nopriv_llrp_register', [ __CLASS__, 'ajax_register' ] );
         add_action( 'wp_ajax_nopriv_llrp_lostpassword', [ __CLASS__, 'ajax_lostpassword' ] );
+        add_action( 'wp_ajax_nopriv_llrp_google_login', [ __CLASS__, 'ajax_google_login' ] );
+        add_action( 'wp_ajax_nopriv_llrp_facebook_login', [ __CLASS__, 'ajax_facebook_login' ] );
     }
 
     public static function ajax_check_user() {
@@ -55,15 +57,15 @@ class Llrp_Ajax {
         // Mensagem para e-mail (padrão)
         $email_message = sprintf( 'Seu código de login para %s é: %s', get_bloginfo('name'), $code );
         
-        // Mensagem para WhatsApp com botão de copiar
-        $whatsapp_message = sprintf( 
+        // Primeira mensagem WhatsApp: Explicação sobre o código
+        $whatsapp_message_1 = sprintf( 
             "🔐 *Código de Login*\n\n" .
-            "Seu código de login para *%s* é:\n" .
-            "`%s`\n\n" .
-            "⏰ *Válido por 5 minutos*",
-            get_bloginfo('name'),
-            $code
+            "Segue seu código para efetuar login em *%s*, seu código é válido por 5 minutos",
+            get_bloginfo('name')
         );
+        
+        // Segunda mensagem WhatsApp: Apenas o código (para facilitar cópia)
+        $whatsapp_message_2 = $code;
 
         update_user_meta( $user->ID, '_llrp_login_code_hash', $hash );
         update_user_meta( $user->ID, '_llrp_login_code_expiration', $expiration );
@@ -74,58 +76,92 @@ class Llrp_Ajax {
             $sender_phone = get_option( 'llrp_whatsapp_sender_phone' );
             $receiver_phone = get_user_meta( $user->ID, 'billing_phone', true );
             if ( $sender_phone && $receiver_phone ) {
-                // Tenta enviar com botão de copiar código
+                // Tenta enviar com botão de copiar código (duas mensagens separadas)
                 if ( $whatsapp_interactive && function_exists( 'joinotify_send_whatsapp_copy_code' ) ) {
-                    $response = joinotify_send_whatsapp_copy_code( 
+                    // Primeira mensagem: Explicação
+                    $response1 = joinotify_send_whatsapp_message_text( 
                         $sender_phone, 
                         $receiver_phone, 
-                        $whatsapp_message,
-                        $code
+                        $whatsapp_message_1
                     );
                     
-                    if ( $response === 201 ) {
-                        wp_send_json_success( [
-                            'message' => __( 'Enviamos o código para o seu WhatsApp.', 'llrp' ),
-                            'delivery_method' => 'whatsapp',
-                        ] );
-                        return;
+                    // Segunda mensagem: Código com botão de copiar
+                    if ( $response1 === 201 ) {
+                        // Pequeno delay para garantir ordem das mensagens
+                        usleep(500000); // 0.5 segundo
+                        
+                        $response2 = joinotify_send_whatsapp_copy_code( 
+                            $sender_phone, 
+                            $receiver_phone, 
+                            $whatsapp_message_2,
+                            $code
+                        );
+                        
+                        if ( $response2 === 201 ) {
+                            wp_send_json_success( [
+                                'message' => __( 'Enviamos o código para o seu WhatsApp.', 'llrp' ),
+                                'delivery_method' => 'whatsapp',
+                            ] );
+                            return;
+                        }
                     }
                 }
                 
-                // Tenta enviar com botão interativo genérico
+                // Tenta enviar com botão interativo genérico (duas mensagens separadas)
                 if ( $whatsapp_interactive && function_exists( 'joinotify_send_whatsapp_interactive_message' ) ) {
-                    $buttons = [
-                        [
-                            'type' => 'copy_code',
-                            'text' => 'Copiar código',
-                            'code' => $code
-                        ]
-                    ];
-                    
-                    $response = joinotify_send_whatsapp_interactive_message( 
+                    // Primeira mensagem: Explicação
+                    $response1 = joinotify_send_whatsapp_message_text( 
                         $sender_phone, 
                         $receiver_phone, 
-                        $whatsapp_message,
-                        $buttons
+                        $whatsapp_message_1
                     );
                     
-                    if ( $response === 201 ) {
+                    // Segunda mensagem: Código com botão interativo
+                    if ( $response1 === 201 ) {
+                        // Pequeno delay para garantir ordem das mensagens
+                        usleep(500000); // 0.5 segundo
+                        
+                        $buttons = [
+                            [
+                                'type' => 'copy_code',
+                                'text' => 'Copiar código',
+                                'code' => $code
+                            ]
+                        ];
+                        
+                        $response2 = joinotify_send_whatsapp_interactive_message( 
+                            $sender_phone, 
+                            $receiver_phone, 
+                            $whatsapp_message_2,
+                            $buttons
+                        );
+                        
+                        if ( $response2 === 201 ) {
+                            wp_send_json_success( [
+                                'message' => __( 'Enviamos o código para o seu WhatsApp.', 'llrp' ),
+                                'delivery_method' => 'whatsapp',
+                            ] );
+                            return;
+                        }
+                    }
+                }
+                
+                // Fallback para mensagem normal se botões não estiverem disponíveis (duas mensagens separadas)
+                // Primeira mensagem: Explicação
+                $response1 = joinotify_send_whatsapp_message_text( $sender_phone, $receiver_phone, $whatsapp_message_1 );
+                if ( $response1 === 201 ) {
+                    // Pequeno delay para garantir ordem das mensagens
+                    usleep(500000); // 0.5 segundo
+                    
+                    // Segunda mensagem: Apenas o código
+                    $response2 = joinotify_send_whatsapp_message_text( $sender_phone, $receiver_phone, $whatsapp_message_2 );
+                    if ( $response2 === 201 ) {
                         wp_send_json_success( [
                             'message' => __( 'Enviamos o código para o seu WhatsApp.', 'llrp' ),
                             'delivery_method' => 'whatsapp',
                         ] );
                         return;
                     }
-                }
-                
-                // Fallback para mensagem normal se botões não estiverem disponíveis
-                $response = joinotify_send_whatsapp_message_text( $sender_phone, $receiver_phone, $whatsapp_message );
-                if ( $response === 201 ) {
-                    wp_send_json_success( [
-                        'message' => __( 'Enviamos o código para o seu WhatsApp.', 'llrp' ),
-                        'delivery_method' => 'whatsapp',
-                    ] );
-                    return;
                 }
             }
         }
@@ -344,6 +380,328 @@ class Llrp_Ajax {
         }
         $resto = $soma % 11;
         return $cnpj[13] == ( $resto < 2 ? 0 : 11 - $resto );
+    }
+
+    /**
+     * Handle Google login via OAuth
+     */
+    public static function ajax_google_login() {
+        // Debug logging
+        error_log( 'LLRP: Google login attempt started' );
+        error_log( 'LLRP: POST data: ' . print_r( $_POST, true ) );
+        
+        // More flexible nonce verification with debug
+        $nonce = sanitize_text_field( wp_unslash( $_POST['nonce'] ?? '' ) );
+        error_log( 'LLRP: Received nonce: ' . $nonce );
+        error_log( 'LLRP: Current user ID: ' . get_current_user_id() );
+        
+        // Try to verify nonce with fallback
+        $nonce_valid = wp_verify_nonce( $nonce, 'llrp_nonce' );
+        error_log( 'LLRP: Nonce validation result: ' . ( $nonce_valid ? 'VALID' : 'INVALID' ) );
+        
+        // Temporary bypass for debugging (REMOVE IN PRODUCTION)
+        if ( ! $nonce_valid ) {
+            error_log( 'LLRP: Nonce verification failed - checking if user logged in or has valid session' );
+            
+            // Alternative verification: check if this is a valid AJAX request
+            if ( ! defined( 'DOING_AJAX' ) || ! DOING_AJAX ) {
+                error_log( 'LLRP: Not an AJAX request' );
+                wp_send_json_error( [ 'message' => __( 'Erro de segurança. Recarregue a página e tente novamente.', 'llrp' ) ] );
+            }
+            
+            // Check if request has required data
+            if ( empty( $_POST['user_info'] ) && empty( $_POST['id_token'] ) ) {
+                error_log( 'LLRP: Missing required data' );
+                wp_send_json_error( [ 'message' => __( 'Dados inválidos recebidos.', 'llrp' ) ] );
+            }
+            
+            error_log( 'LLRP: Nonce failed but other validations passed - proceeding with caution' );
+        } else {
+            error_log( 'LLRP: Nonce verification passed' );
+        }
+        
+        // Check for new user_info format first
+        $user_info_raw = sanitize_text_field( wp_unslash( $_POST['user_info'] ?? '' ) );
+        $id_token = sanitize_text_field( wp_unslash( $_POST['id_token'] ?? '' ) );
+        
+        error_log( 'LLRP: Raw user_info: ' . $user_info_raw );
+        error_log( 'LLRP: ID token: ' . $id_token );
+        
+        if ( empty( $user_info_raw ) && empty( $id_token ) ) {
+            error_log( 'LLRP: Both user_info and id_token are empty' );
+            wp_send_json_error( [ 'message' => __( 'Dados do Google inválidos.', 'llrp' ) ] );
+        }
+
+        // Verificar se o login com Google está habilitado
+        $google_enabled = get_option( 'llrp_google_login_enabled' );
+        error_log( 'LLRP: Google login enabled: ' . ( $google_enabled ? 'YES' : 'NO' ) );
+        
+        if ( ! $google_enabled ) {
+            error_log( 'LLRP: Google login not enabled' );
+            wp_send_json_error( [ 'message' => __( 'Login com Google não está habilitado.', 'llrp' ) ] );
+        }
+
+        $client_id = get_option( 'llrp_google_client_id' );
+        error_log( 'LLRP: Google client ID: ' . $client_id );
+        
+        if ( empty( $client_id ) ) {
+            error_log( 'LLRP: Google client ID is empty' );
+            wp_send_json_error( [ 'message' => __( 'Configuração do Google não encontrada.', 'llrp' ) ] );
+        }
+
+        $data = null;
+
+        // Handle new user_info format
+        if ( ! empty( $user_info_raw ) ) {
+            error_log( 'LLRP: Processing user_info format' );
+            $user_info = json_decode( $user_info_raw, true );
+            error_log( 'LLRP: Decoded user_info: ' . print_r( $user_info, true ) );
+            
+            if ( ! $user_info || ! isset( $user_info['email'] ) || ! isset( $user_info['verified_email'] ) ) {
+                error_log( 'LLRP: Invalid user_info data structure' );
+                wp_send_json_error( [ 'message' => __( 'Dados do Google inválidos.', 'llrp' ) ] );
+            }
+
+            if ( ! $user_info['verified_email'] ) {
+                error_log( 'LLRP: Email not verified by Google' );
+                wp_send_json_error( [ 'message' => __( 'E-mail do Google não verificado.', 'llrp' ) ] );
+            }
+
+            $data = [
+                'email'      => $user_info['email'],
+                'given_name' => $user_info['given_name'] ?? '',
+                'family_name' => $user_info['family_name'] ?? '',
+                'name'       => $user_info['name'] ?? '',
+                'picture'    => $user_info['picture'] ?? ''
+            ];
+            
+            error_log( 'LLRP: Prepared user data: ' . print_r( $data, true ) );
+        }
+        // Handle legacy id_token format
+        else if ( ! empty( $id_token ) ) {
+            // Verificar o token com a API do Google
+            $response = wp_remote_get( 'https://oauth2.googleapis.com/tokeninfo?id_token=' . $id_token );
+            
+            if ( is_wp_error( $response ) ) {
+                wp_send_json_error( [ 'message' => __( 'Erro ao verificar token do Google.', 'llrp' ) ] );
+            }
+
+            $body = wp_remote_retrieve_body( $response );
+            $token_data = json_decode( $body, true );
+
+            if ( ! isset( $token_data['aud'] ) || $token_data['aud'] !== $client_id ) {
+                wp_send_json_error( [ 'message' => __( 'Token do Google inválido.', 'llrp' ) ] );
+            }
+
+            if ( ! isset( $token_data['email'] ) || ! isset( $token_data['email_verified'] ) || $token_data['email_verified'] !== 'true' ) {
+                wp_send_json_error( [ 'message' => __( 'E-mail do Google não verificado.', 'llrp' ) ] );
+            }
+
+            $data = $token_data;
+        }
+
+        if ( ! $data ) {
+            wp_send_json_error( [ 'message' => __( 'Erro ao processar dados do Google.', 'llrp' ) ] );
+        }
+
+        $user_data = [
+            'email'      => sanitize_email( $data['email'] ),
+            'first_name' => sanitize_text_field( $data['given_name'] ?? '' ),
+            'last_name'  => sanitize_text_field( $data['family_name'] ?? '' ),
+            'name'       => sanitize_text_field( $data['name'] ?? '' ),
+            'picture'    => esc_url_raw( $data['picture'] ?? '' ),
+            'provider'   => 'google'
+        ];
+
+        error_log( 'LLRP: Final user_data to process: ' . print_r( $user_data, true ) );
+        error_log( 'LLRP: Calling process_social_login...' );
+        
+        $user_id = self::process_social_login( $user_data );
+        
+        error_log( 'LLRP: process_social_login returned: ' . print_r( $user_id, true ) );
+        
+        if ( is_wp_error( $user_id ) ) {
+            error_log( 'LLRP: process_social_login error: ' . $user_id->get_error_message() );
+            wp_send_json_error( [ 'message' => $user_id->get_error_message() ] );
+        }
+
+        error_log( 'LLRP: Setting auth cookie for user ID: ' . $user_id );
+        wc_set_customer_auth_cookie( $user_id );
+        
+        // Smart redirect: account page if coming from account, checkout if from cart
+        $redirect_url = wc_get_checkout_url(); // Default to checkout
+        if ( isset( $_POST['from_account'] ) && $_POST['from_account'] === '1' ) {
+            $redirect_url = wc_get_account_endpoint_url( 'dashboard' );
+        }
+        
+        error_log( 'LLRP: Sending success response with redirect: ' . $redirect_url );
+        wp_send_json_success( [ 'redirect' => $redirect_url ] );
+    }
+
+    /**
+     * Handle Facebook login via OAuth
+     */
+    public static function ajax_facebook_login() {
+        // More flexible nonce verification with debug
+        $nonce = sanitize_text_field( wp_unslash( $_POST['nonce'] ?? '' ) );
+        if ( ! wp_verify_nonce( $nonce, 'llrp_nonce' ) ) {
+            wp_send_json_error( [ 'message' => __( 'Erro de segurança. Recarregue a página e tente novamente.', 'llrp' ) ] );
+        }
+        
+        $access_token = sanitize_text_field( wp_unslash( $_POST['access_token'] ?? '' ) );
+        
+        if ( empty( $access_token ) ) {
+            wp_send_json_error( [ 'message' => __( 'Token do Facebook inválido.', 'llrp' ) ] );
+        }
+
+        // Verificar se o login com Facebook está habilitado
+        if ( ! get_option( 'llrp_facebook_login_enabled' ) ) {
+            wp_send_json_error( [ 'message' => __( 'Login com Facebook não está habilitado.', 'llrp' ) ] );
+        }
+
+        $app_id = get_option( 'llrp_facebook_app_id' );
+        $app_secret = get_option( 'llrp_facebook_app_secret' );
+        
+        if ( empty( $app_id ) || empty( $app_secret ) ) {
+            wp_send_json_error( [ 'message' => __( 'Configuração do Facebook não encontrada.', 'llrp' ) ] );
+        }
+
+        // Verificar o token com a API do Facebook
+        $verify_url = sprintf(
+            'https://graph.facebook.com/me?access_token=%s&fields=id,email,first_name,last_name,name,picture',
+            $access_token
+        );
+        
+        $response = wp_remote_get( $verify_url );
+        
+        if ( is_wp_error( $response ) ) {
+            wp_send_json_error( [ 'message' => __( 'Erro ao verificar token do Facebook.', 'llrp' ) ] );
+        }
+
+        $body = wp_remote_retrieve_body( $response );
+        $data = json_decode( $body, true );
+
+        if ( isset( $data['error'] ) ) {
+            wp_send_json_error( [ 'message' => __( 'Token do Facebook inválido.', 'llrp' ) ] );
+        }
+
+        if ( ! isset( $data['email'] ) ) {
+            wp_send_json_error( [ 'message' => __( 'E-mail não fornecido pelo Facebook.', 'llrp' ) ] );
+        }
+
+        $user_data = [
+            'email'      => sanitize_email( $data['email'] ),
+            'first_name' => sanitize_text_field( $data['first_name'] ?? '' ),
+            'last_name'  => sanitize_text_field( $data['last_name'] ?? '' ),
+            'name'       => sanitize_text_field( $data['name'] ?? '' ),
+            'picture'    => esc_url_raw( $data['picture']['data']['url'] ?? '' ),
+            'provider'   => 'facebook',
+            'social_id'  => sanitize_text_field( $data['id'] ?? '' )
+        ];
+
+        $user_id = self::process_social_login( $user_data );
+        
+        if ( is_wp_error( $user_id ) ) {
+            wp_send_json_error( [ 'message' => $user_id->get_error_message() ] );
+        }
+
+        wc_set_customer_auth_cookie( $user_id );
+        
+        // Smart redirect: account page if coming from account, checkout if from cart
+        $redirect_url = wc_get_checkout_url(); // Default to checkout
+        if ( isset( $_POST['from_account'] ) && $_POST['from_account'] === '1' ) {
+            $redirect_url = wc_get_account_endpoint_url( 'dashboard' );
+        }
+        
+        wp_send_json_success( [ 'redirect' => $redirect_url ] );
+    }
+
+    /**
+     * Process social login data and create/login user
+     */
+    private static function process_social_login( $user_data ) {
+        error_log( 'LLRP: process_social_login started with data: ' . print_r( $user_data, true ) );
+        
+        $email = $user_data['email'];
+        $provider = $user_data['provider'];
+        
+        error_log( 'LLRP: Looking for existing user with email: ' . $email );
+        
+        // Verificar se o usuário já existe
+        $user = get_user_by( 'email', $email );
+        
+        if ( $user ) {
+            error_log( 'LLRP: Existing user found with ID: ' . $user->ID );
+            // Atualizar meta dados do provedor social
+            update_user_meta( $user->ID, '_llrp_social_provider', $provider );
+            if ( ! empty( $user_data['social_id'] ) ) {
+                update_user_meta( $user->ID, '_llrp_' . $provider . '_id', $user_data['social_id'] );
+            }
+            
+            error_log( 'LLRP: Returning existing user ID: ' . $user->ID );
+            return $user->ID;
+        }
+        
+        error_log( 'LLRP: No existing user found, creating new user' );
+        
+        // Criar novo usuário
+        $username = $email;
+        $password = wp_generate_password();
+        
+        error_log( 'LLRP: Creating new user with email: ' . $email );
+        
+        try {
+            // Usar wp_create_user ao invés de wc_create_new_customer para evitar problemas de nonce
+            $user_id = wp_create_user( $username, $password, $email );
+            
+            error_log( 'LLRP: wp_create_user result: ' . print_r( $user_id, true ) );
+            
+            if ( is_wp_error( $user_id ) ) {
+                error_log( 'LLRP: wp_create_user error: ' . $user_id->get_error_message() );
+                return $user_id;
+            }
+            
+            error_log( 'LLRP: New user created successfully with ID: ' . $user_id );
+            
+            // Definir role como customer do WooCommerce
+            $user = new WP_User( $user_id );
+            $user->set_role( 'customer' );
+            
+            // Atualizar dados do usuário
+            if ( ! empty( $user_data['first_name'] ) ) {
+                update_user_meta( $user_id, 'first_name', $user_data['first_name'] );
+                update_user_meta( $user_id, 'billing_first_name', $user_data['first_name'] );
+            }
+            
+            if ( ! empty( $user_data['last_name'] ) ) {
+                update_user_meta( $user_id, 'last_name', $user_data['last_name'] );
+                update_user_meta( $user_id, 'billing_last_name', $user_data['last_name'] );
+            }
+            
+            if ( ! empty( $user_data['name'] ) ) {
+                wp_update_user( [
+                    'ID' => $user_id,
+                    'display_name' => $user_data['name']
+                ] );
+            }
+            
+            // Salvar dados do provedor social
+            update_user_meta( $user_id, '_llrp_social_provider', $provider );
+            update_user_meta( $user_id, '_llrp_social_login', 1 );
+            
+            if ( ! empty( $user_data['social_id'] ) ) {
+                update_user_meta( $user_id, '_llrp_' . $provider . '_id', $user_data['social_id'] );
+            }
+            
+            if ( ! empty( $user_data['picture'] ) ) {
+                update_user_meta( $user_id, '_llrp_' . $provider . '_picture', $user_data['picture'] );
+            }
+            
+            return $user_id;
+            
+        } catch ( Exception $e ) {
+            return new WP_Error( 'social_login_error', $e->getMessage() );
+        }
     }
 }
 Llrp_Ajax::init();

@@ -10,37 +10,63 @@ class Llrp_Frontend {
         add_action( 'wp_ajax_nopriv_llrp_check_email',  [ __CLASS__, 'ajax_check_email' ] );
         add_action( 'wp_ajax_nopriv_llrp_lostpassword', [ __CLASS__, 'ajax_lostpassword' ] );
         add_filter( 'retrieve_password_message', [ __CLASS__, 'custom_retrieve_password_message' ],10, 4);
-
+        
+        // Add social login buttons to My Account page
+        add_action( 'woocommerce_login_form_end', [ __CLASS__, 'add_social_login_buttons' ] );
+        add_action( 'woocommerce_register_form_end', [ __CLASS__, 'add_social_register_buttons' ] );
     }
 
  public static function enqueue_assets() {
-    // 1) não carregar para usuários logados
-    if ( is_user_logged_in() ) {
+    // 1) garantir que o WooCommerce esteja ativo
+    if ( ! class_exists( 'WooCommerce' ) ) {
         return;
     }
-
-    // 2) garantir que o WooCommerce esteja ativo
-    if ( ! class_exists( 'WooCommerce' ) ) {
+    
+    // 2) carregar no carrinho sempre, na minha conta só se não logado
+    $should_load = is_cart() || ( is_account_page() && ! is_user_logged_in() );
+    
+    if ( ! $should_load ) {
         return;
     }
 
     // 3) enqueue de estilos e scripts (inclui wc-cart-fragments para evento added_to_cart)
     wp_enqueue_style(  'llrp-frontend', LLRP_PLUGIN_URL . 'assets/css/llrp-style.css', [], LLRP_VERSION );
+    
+    $script_dependencies = [ 'jquery', 'wc-cart-fragments' ];
+    
+    // Enqueue Google Sign-In SDK if enabled
+    if ( get_option( 'llrp_google_login_enabled' ) && get_option( 'llrp_google_client_id' ) ) {
+        wp_enqueue_script( 'google-signin', 'https://accounts.google.com/gsi/client', [], null, true );
+        $script_dependencies[] = 'google-signin';
+    }
+    
+    // Enqueue Facebook SDK if enabled
+    if ( get_option( 'llrp_facebook_login_enabled' ) && get_option( 'llrp_facebook_app_id' ) ) {
+        wp_enqueue_script( 'facebook-sdk', 'https://connect.facebook.net/pt_BR/sdk.js', [], null, true );
+        $script_dependencies[] = 'facebook-sdk';
+    }
+    
     wp_enqueue_script( 'llrp-frontend',
         LLRP_PLUGIN_URL . 'assets/js/llrp-script.js',
-        [ 'jquery', 'wc-cart-fragments' ],
+        $script_dependencies,
         LLRP_VERSION,
         true
     );
 
     // 4) passar dados do PHP pro JS
     wp_localize_script( 'llrp-frontend', 'LLRP_Data', [
-        'ajax_url'           => admin_url( 'admin-ajax.php' ),
-        'nonce'              => wp_create_nonce( 'llrp_nonce' ),
-        'initial_cart_count' => (int) WC()->cart->get_cart_contents_count(),
-        'is_logged_in'       => 0,
-        'cpf_login_enabled'  => get_option( 'llrp_cpf_login_enabled' ),
-        'cnpj_login_enabled' => get_option( 'llrp_cnpj_login_enabled' ),
+        'ajax_url'              => admin_url( 'admin-ajax.php' ),
+        'nonce'                 => wp_create_nonce( 'llrp_nonce' ),
+        'initial_cart_count'    => (int) WC()->cart->get_cart_contents_count(),
+        'is_logged_in'          => is_user_logged_in() ? 1 : 0,
+        'is_cart_page'          => is_cart() ? 1 : 0,
+        'is_account_page'       => is_account_page() ? 1 : 0,
+        'cpf_login_enabled'     => get_option( 'llrp_cpf_login_enabled' ),
+        'cnpj_login_enabled'    => get_option( 'llrp_cnpj_login_enabled' ),
+        'google_login_enabled'  => get_option( 'llrp_google_login_enabled' ),
+        'google_client_id'      => get_option( 'llrp_google_client_id' ),
+        'facebook_login_enabled' => get_option( 'llrp_facebook_login_enabled' ),
+        'facebook_app_id'       => get_option( 'llrp_facebook_app_id' ),
     ] );
 
         // Enqueue frontend styles and scripts
@@ -163,6 +189,35 @@ class Llrp_Frontend {
                 ?>
                 <input type="text" id="llrp-identifier" placeholder="<?php echo esc_attr( $placeholder ); ?>">
                 <button id="llrp-email-submit"><?php echo esc_html( $b_email ); ?></button>
+                
+                <!-- Social Login Buttons for new users -->
+                <?php if ( ( get_option( 'llrp_google_login_enabled' ) && get_option( 'llrp_google_client_id' ) ) || ( get_option( 'llrp_facebook_login_enabled' ) && get_option( 'llrp_facebook_app_id' ) ) ) : ?>
+                    <div class="llrp-social-separator">
+                        <span><?php esc_html_e( 'ou', 'llrp' ); ?></span>
+                    </div>
+                    
+                    <?php if ( get_option( 'llrp_google_login_enabled' ) && get_option( 'llrp_google_client_id' ) ) : ?>
+                        <button id="llrp-google-login-initial" class="llrp-social-button llrp-google-button">
+                            <svg class="llrp-social-icon" width="20" height="20" viewBox="0 0 24 24">
+                                <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/>
+                                <path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/>
+                                <path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"/>
+                                <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/>
+                            </svg>
+                            <?php esc_html_e( 'Continuar com Google', 'llrp' ); ?>
+                        </button>
+                    <?php endif; ?>
+                    
+                    <?php if ( get_option( 'llrp_facebook_login_enabled' ) && get_option( 'llrp_facebook_app_id' ) ) : ?>
+                        <button id="llrp-facebook-login-initial" class="llrp-social-button llrp-facebook-button">
+                            <svg class="llrp-social-icon" width="20" height="20" viewBox="0 0 24 24">
+                                <path fill="#1877F2" d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z"/>
+                            </svg>
+                            <?php esc_html_e( 'Continuar com Facebook', 'llrp' ); ?>
+                        </button>
+                    <?php endif; ?>
+                <?php endif; ?>
+                
                 <div class="llrp-feedback llrp-feedback-email"></div>
             </div>
 
@@ -183,6 +238,32 @@ class Llrp_Frontend {
                 $send_code_button_text = $whatsapp_enabled ? __( 'Receber código por WhatsApp', 'llrp' ) : __( 'Receber código por e-mail', 'llrp' );
                 ?>
                 <button id="llrp-send-code"><?php echo esc_html( $send_code_button_text ); ?></button>
+                
+                <!-- Social Login Buttons -->
+                <?php if ( get_option( 'llrp_google_login_enabled' ) && get_option( 'llrp_google_client_id' ) ) : ?>
+                    <div class="llrp-social-separator">
+                        <span><?php esc_html_e( 'ou', 'llrp' ); ?></span>
+                    </div>
+                    <button id="llrp-google-login" class="llrp-social-button llrp-google-button">
+                        <svg class="llrp-social-icon" width="20" height="20" viewBox="0 0 24 24">
+                            <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/>
+                            <path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/>
+                            <path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"/>
+                            <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/>
+                        </svg>
+                        <?php esc_html_e( 'Continuar com Google', 'llrp' ); ?>
+                    </button>
+                <?php endif; ?>
+                
+                <?php if ( get_option( 'llrp_facebook_login_enabled' ) && get_option( 'llrp_facebook_app_id' ) ) : ?>
+                    <button id="llrp-facebook-login" class="llrp-social-button llrp-facebook-button">
+                        <svg class="llrp-social-icon" width="20" height="20" viewBox="0 0 24 24">
+                            <path fill="#1877F2" d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z"/>
+                        </svg>
+                        <?php esc_html_e( 'Continuar com Facebook', 'llrp' ); ?>
+                    </button>
+                <?php endif; ?>
+                
                 <div class="llrp-feedback llrp-feedback-login-options"></div>
             </div>
 
@@ -310,6 +391,94 @@ class Llrp_Frontend {
 
     // Resposta AJAX
     wp_send_json_success( [ 'message' => __( 'Enviamos um link de redefinição para o seu e-mail.', 'llrp' ) ] ); 
+    }
+    
+    /**
+     * Add social login buttons to My Account login form
+     */
+    public static function add_social_login_buttons() {
+        if ( is_user_logged_in() ) {
+            return;
+        }
+        
+        $has_social = ( get_option( 'llrp_google_login_enabled' ) && get_option( 'llrp_google_client_id' ) ) ||
+                      ( get_option( 'llrp_facebook_login_enabled' ) && get_option( 'llrp_facebook_app_id' ) );
+        
+        if ( ! $has_social ) {
+            return;
+        }
+        ?>
+        <div class="llrp-my-account-social-login">
+            <div class="llrp-social-separator">
+                <span><?php esc_html_e( 'ou', 'llrp' ); ?></span>
+            </div>
+            
+            <?php if ( get_option( 'llrp_google_login_enabled' ) && get_option( 'llrp_google_client_id' ) ) : ?>
+                <button type="button" id="llrp-google-login-account" class="llrp-social-button llrp-google-button">
+                    <svg class="llrp-social-icon" width="20" height="20" viewBox="0 0 24 24">
+                        <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/>
+                        <path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/>
+                        <path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"/>
+                        <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/>
+                    </svg>
+                    <?php esc_html_e( 'Continuar com Google', 'llrp' ); ?>
+                </button>
+            <?php endif; ?>
+            
+            <?php if ( get_option( 'llrp_facebook_login_enabled' ) && get_option( 'llrp_facebook_app_id' ) ) : ?>
+                <button type="button" id="llrp-facebook-login-account" class="llrp-social-button llrp-facebook-button">
+                    <svg class="llrp-social-icon" width="20" height="20" viewBox="0 0 24 24">
+                        <path fill="#1877F2" d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z"/>
+                    </svg>
+                    <?php esc_html_e( 'Continuar com Facebook', 'llrp' ); ?>
+                </button>
+            <?php endif; ?>
+        </div>
+        <?php
+    }
+    
+    /**
+     * Add social login buttons to My Account register form
+     */
+    public static function add_social_register_buttons() {
+        if ( is_user_logged_in() ) {
+            return;
+        }
+        
+        $has_social = ( get_option( 'llrp_google_login_enabled' ) && get_option( 'llrp_google_client_id' ) ) ||
+                      ( get_option( 'llrp_facebook_login_enabled' ) && get_option( 'llrp_facebook_app_id' ) );
+        
+        if ( ! $has_social ) {
+            return;
+        }
+        ?>
+        <div class="llrp-my-account-social-register">
+            <div class="llrp-social-separator">
+                <span><?php esc_html_e( 'ou cadastre-se com', 'llrp' ); ?></span>
+            </div>
+            
+            <?php if ( get_option( 'llrp_google_login_enabled' ) && get_option( 'llrp_google_client_id' ) ) : ?>
+                <button type="button" id="llrp-google-register-account" class="llrp-social-button llrp-google-button">
+                    <svg class="llrp-social-icon" width="20" height="20" viewBox="0 0 24 24">
+                        <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/>
+                        <path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/>
+                        <path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"/>
+                        <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/>
+                    </svg>
+                    <?php esc_html_e( 'Cadastrar com Google', 'llrp' ); ?>
+                </button>
+            <?php endif; ?>
+            
+            <?php if ( get_option( 'llrp_facebook_login_enabled' ) && get_option( 'llrp_facebook_app_id' ) ) : ?>
+                <button type="button" id="llrp-facebook-register-account" class="llrp-social-button llrp-facebook-button">
+                    <svg class="llrp-social-icon" width="20" height="20" viewBox="0 0 24 24">
+                        <path fill="#1877F2" d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z"/>
+                    </svg>
+                    <?php esc_html_e( 'Cadastrar com Facebook', 'llrp' ); ?>
+                </button>
+            <?php endif; ?>
+        </div>
+        <?php
     }
 }
 

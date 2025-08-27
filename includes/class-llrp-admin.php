@@ -82,6 +82,12 @@ class Llrp_Admin {
             'color_btn_code_text_hover' => 'sanitize_hex_color',
             'cpf_login_enabled'         => 'absint',
             'cnpj_login_enabled'        => 'absint',
+            'google_login_enabled'      => 'absint',
+            'google_client_id'          => 'sanitize_text_field',
+            'google_client_secret'      => 'sanitize_text_field',
+            'facebook_login_enabled'    => 'absint',
+            'facebook_app_id'           => 'sanitize_text_field',
+            'facebook_app_secret'       => 'sanitize_text_field',
         ];
 
         foreach ( $settings as $field => $sanitize_callback ) {
@@ -167,6 +173,55 @@ class Llrp_Admin {
                         <th><?php esc_html_e( 'Enable Login with CNPJ', 'llrp' ); ?></th>
                         <td>
                             <input type="checkbox" name="llrp_cnpj_login_enabled" value="1" <?php checked( get_option( 'llrp_cnpj_login_enabled' ), 1 ); ?> />
+                        </td>
+                    </tr>
+                    
+                    <!-- Login Social Settings -->
+                    <tr>
+                        <th colspan="2" style="background: #f0f0f1; padding: 10px; font-weight: bold;"><?php esc_html_e( 'Configurações de Login Social', 'llrp' ); ?></th>
+                    </tr>
+                    
+                    <!-- Google Login -->
+                    <tr>
+                        <th><?php esc_html_e( 'Ativar Login com Google', 'llrp' ); ?></th>
+                        <td>
+                            <input type="checkbox" name="llrp_google_login_enabled" value="1" <?php checked( get_option( 'llrp_google_login_enabled' ), 1 ); ?> />
+                        </td>
+                    </tr>
+                    <tr>
+                        <th><?php esc_html_e( 'Google Client ID', 'llrp' ); ?></th>
+                        <td>
+                            <input type="text" name="llrp_google_client_id" value="<?php echo esc_attr( get_option( 'llrp_google_client_id' ) ); ?>" style="width: 100%; max-width: 500px;" />
+                            <p class="description"><?php esc_html_e( 'Obtenha em: https://console.cloud.google.com/apis/credentials', 'llrp' ); ?></p>
+                        </td>
+                    </tr>
+                    <tr>
+                        <th><?php esc_html_e( 'Google Client Secret', 'llrp' ); ?></th>
+                        <td>
+                            <input type="password" name="llrp_google_client_secret" value="<?php echo esc_attr( get_option( 'llrp_google_client_secret' ) ); ?>" style="width: 100%; max-width: 500px;" />
+                            <p class="description"><?php esc_html_e( 'Mantenha em segurança. Obtido junto com o Client ID.', 'llrp' ); ?></p>
+                        </td>
+                    </tr>
+                    
+                    <!-- Facebook Login -->
+                    <tr>
+                        <th><?php esc_html_e( 'Ativar Login com Facebook', 'llrp' ); ?></th>
+                        <td>
+                            <input type="checkbox" name="llrp_facebook_login_enabled" value="1" <?php checked( get_option( 'llrp_facebook_login_enabled' ), 1 ); ?> />
+                        </td>
+                    </tr>
+                    <tr>
+                        <th><?php esc_html_e( 'Facebook App ID', 'llrp' ); ?></th>
+                        <td>
+                            <input type="text" name="llrp_facebook_app_id" value="<?php echo esc_attr( get_option( 'llrp_facebook_app_id' ) ); ?>" style="width: 100%; max-width: 500px;" />
+                            <p class="description"><?php esc_html_e( 'Obtenha em: https://developers.facebook.com/apps/', 'llrp' ); ?></p>
+                        </td>
+                    </tr>
+                    <tr>
+                        <th><?php esc_html_e( 'Facebook App Secret', 'llrp' ); ?></th>
+                        <td>
+                            <input type="password" name="llrp_facebook_app_secret" value="<?php echo esc_attr( get_option( 'llrp_facebook_app_secret' ) ); ?>" style="width: 100%; max-width: 500px;" />
+                            <p class="description"><?php esc_html_e( 'Mantenha em segurança. Obtido junto com o App ID.', 'llrp' ); ?></p>
                         </td>
                     </tr>
                     <?php

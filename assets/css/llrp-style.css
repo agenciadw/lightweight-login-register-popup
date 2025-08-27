@@ -123,3 +123,241 @@
     display: block !important;
   }
 }
+
+/* === Social Login Styles === */
+
+/* Social separator */
+.llrp-social-separator {
+  margin: 20px 0 15px 0;
+  text-align: center;
+  position: relative;
+}
+
+.llrp-social-separator::before {
+  content: "";
+  position: absolute;
+  top: 50%;
+  left: 0;
+  right: 0;
+  height: 1px;
+  background: #e0e0e0;
+  z-index: 1;
+}
+
+.llrp-social-separator span {
+  background: #fff;
+  padding: 0 15px;
+  color: #666;
+  font-size: 0.9rem;
+  position: relative;
+  z-index: 2;
+}
+
+/* Social buttons */
+.llrp-social-button {
+  width: 100% !important;
+  padding: 12px 16px !important;
+  margin-bottom: 10px !important;
+  border: 1px solid #ddd !important;
+  border-radius: 6px !important;
+  background: #fff !important;
+  color: #333 !important;
+  cursor: pointer !important;
+  font-size: 14px !important;
+  font-weight: 500 !important;
+  text-align: center !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  gap: 12px !important;
+  transition: all 0.2s ease !important;
+  text-decoration: none !important;
+  box-sizing: border-box !important;
+}
+
+.llrp-social-button:hover {
+  border-color: #ccc !important;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1) !important;
+  transform: translateY(-1px) !important;
+}
+
+.llrp-social-button:active {
+  transform: translateY(0) !important;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.1) !important;
+}
+
+/* Google button */
+.llrp-google-button {
+  border-color: #dadce0 !important;
+}
+
+.llrp-google-button:hover {
+  background: #f8f9fa !important;
+  border-color: #dadce0 !important;
+}
+
+.llrp-google-button:focus {
+  border-color: #4285f4 !important;
+  outline: none !important;
+}
+
+/* Facebook button */
+.llrp-facebook-button {
+  background: #fff !important;
+  border-color: #1877f2 !important;
+  color: #1877f2 !important;
+}
+
+.llrp-facebook-button:hover {
+  background: #f0f4ff !important;
+  border-color: #1877f2 !important;
+  color: #1877f2 !important;
+}
+
+.llrp-facebook-button:focus {
+  border-color: #1565c0 !important;
+  background: #fff !important;
+  color: #1565c0 !important;
+  outline: none !important;
+}
+
+/* Social icons */
+.llrp-social-icon {
+  width: 20px !important;
+  height: 20px !important;
+  flex-shrink: 0 !important;
+}
+
+/* Responsive adjustments */
+@media (max-width: 480px) {
+  .llrp-social-button {
+    padding: 14px 16px !important;
+    font-size: 16px !important;
+  }
+
+  .llrp-social-separator {
+    margin: 15px 0 12px 0;
+  }
+}
+
+/* Loading state for social buttons */
+.llrp-social-button:disabled {
+  opacity: 0.6 !important;
+  cursor: not-allowed !important;
+  transform: none !important;
+}
+
+.llrp-social-button:disabled:hover {
+  transform: none !important;
+  box-shadow: none !important;
+}
+
+/* Error feedback styling improvements */
+.llrp-feedback.error {
+  color: #d32f2f !important;
+  background: #ffebee !important;
+  padding: 8px 12px !important;
+  border-radius: 4px !important;
+  border-left: 3px solid #d32f2f !important;
+  margin-top: 10px !important;
+}
+
+.llrp-feedback.success {
+  color: #2e7d32 !important;
+  background: #e8f5e8 !important;
+  padding: 8px 12px !important;
+  border-radius: 4px !important;
+  border-left: 3px solid #2e7d32 !important;
+  margin-top: 10px !important;
+}
+
+/* === My Account Page Social Login Styles === */
+
+.llrp-my-account-social-login,
+.llrp-my-account-social-register {
+  margin-top: 20px;
+}
+
+.llrp-my-account-social-login .llrp-social-button,
+.llrp-my-account-social-register .llrp-social-button {
+  width: 100%;
+  margin-bottom: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 12px 16px;
+  font-size: 14px;
+  font-weight: 500;
+  text-decoration: none !important;
+  border-radius: 4px;
+  transition: all 0.2s ease;
+  cursor: pointer;
+  background: none;
+  box-sizing: border-box;
+}
+
+.llrp-my-account-social-login .llrp-social-separator,
+.llrp-my-account-social-register .llrp-social-separator {
+  margin: 15px 0;
+}
+
+/* Ensure Facebook button styling is consistent in My Account */
+.llrp-my-account-social-login .llrp-facebook-button,
+.llrp-my-account-social-register .llrp-facebook-button {
+  background: #fff !important;
+  border: 1px solid #1877f2 !important;
+  color: #1877f2 !important;
+}
+
+.llrp-my-account-social-login .llrp-facebook-button:hover,
+.llrp-my-account-social-register .llrp-facebook-button:hover {
+  background: #f0f4ff !important;
+  border-color: #1877f2 !important;
+  color: #1877f2 !important;
+}
+
+/* Ensure Google button styling is consistent in My Account */
+.llrp-my-account-social-login .llrp-google-button,
+.llrp-my-account-social-register .llrp-google-button {
+  background: #fff !important;
+  border: 1px solid #dadce0 !important;
+  color: #333 !important;
+}
+
+.llrp-my-account-social-login .llrp-google-button:hover,
+.llrp-my-account-social-register .llrp-google-button:hover {
+  background: #f8f9fa !important;
+  border-color: #dadce0 !important;
+}
+
+/* WooCommerce notice styles for My Account */
+.llrp-my-account-social-login .woocommerce-error,
+.llrp-my-account-social-register .woocommerce-error {
+  margin-bottom: 15px;
+  padding: 10px 15px;
+  border: 1px solid #e74c3c;
+  background: #fdf2f2;
+  color: #721c24;
+  border-radius: 4px;
+  list-style: none;
+}
+
+.llrp-my-account-social-login .woocommerce-message,
+.llrp-my-account-social-register .woocommerce-message {
+  margin-bottom: 15px;
+  padding: 10px 15px;
+  border: 1px solid #27ae60;
+  background: #f0f9ff;
+  color: #155724;
+  border-radius: 4px;
+  list-style: none;
+}
+
+/* Responsive adjustments for My Account */
+@media (max-width: 768px) {
+  .llrp-my-account-social-login .llrp-social-button,
+  .llrp-my-account-social-register .llrp-social-button {
+    padding: 10px 12px;
+    font-size: 13px;
+  }
+}
