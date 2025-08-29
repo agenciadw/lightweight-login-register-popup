@@ -4,7 +4,7 @@ Tags: woocommerce, login, register, popup
 Requires at least: 6.6
 Tested up to: 6.6
 Requires PHP: 7.4
-Stable tag: 0.4.2
+Stable tag: 0.4.3
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -31,7 +31,14 @@ Use a tela WooCommerce > Popup de Login para configurar o plugin.
 
 == Registro de Alterações ==
 
-= 0.4.2 - Hoje =
+= 0.4.3 - Hoje =
+
+- **CORREÇÃO CRÍTICA**: Corrigido bug onde o botão "Finalizar Compra" não funcionava quando o usuário já estava logado
+- **MELHORIA**: Implementada verificação de status de login antes de interceptar cliques no botão checkout
+- **DEBUG**: Adicionados logs de console para facilitar troubleshooting
+- **COMPATIBILIDADE**: Garantida funcionalidade normal do botão checkout para usuários logados
+
+= 0.4.2 =
 
 - **MELHORIA WHATSAPP**: Códigos de login agora são enviados em **duas mensagens separadas** para facilitar a cópia
 - **PRIMEIRA MENSAGEM**: "🔐 Código de Login - Segue seu código para efetuar login em [Nome da Loja], seu código é válido por 5 minutos"

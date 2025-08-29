@@ -10,6 +10,13 @@
 
     function openPopup(e) {
       if (e) e.preventDefault();
+
+      // Se o usuário já está logado, não abrir o popup
+      if (LLRP_Data.is_logged_in === "1") {
+        // Permitir que o clique continue normalmente para ir ao checkout
+        return true;
+      }
+
       resetSteps();
       $overlay.removeClass("hidden");
       $popup.removeClass("hidden");
@@ -209,7 +216,22 @@
     }
 
     // Event Binding
-    $(".checkout-button").on("click", openPopup);
+    $(".checkout-button").on("click.llrp", function (e) {
+      console.log(
+        "Checkout button clicked. User logged in:",
+        LLRP_Data.is_logged_in
+      );
+
+      // Se o usuário já está logado, permitir o comportamento normal do botão
+      if (LLRP_Data.is_logged_in === "1") {
+        console.log("User is logged in, allowing normal checkout behavior");
+        return true; // Não fazer nada, deixar o clique continuar normalmente
+      }
+
+      // Se não está logado, abrir o popup
+      console.log("User not logged in, opening popup");
+      openPopup(e);
+    });
     $popup.on("click", ".llrp-close", closePopup);
     $popup.on("click", ".llrp-back", resetSteps);
     $popup.on("click", "#llrp-email-submit", handleIdentifierStep);
@@ -624,5 +646,14 @@
 
     // Make the checkout button visible now that the JS is ready
     $(".checkout-button").css("visibility", "visible");
+
+    // Se o usuário está logado, garantir que o botão checkout funcione normalmente
+    if (LLRP_Data.is_logged_in === "1") {
+      console.log("User is logged in, ensuring checkout button works normally");
+      // Remover qualquer evento que possa estar interferindo
+      $(".checkout-button").off("click.llrp");
+      // Garantir que o botão seja clicável
+      $(".checkout-button").css("pointer-events", "auto");
+    }
   });
 })(jQuery);
