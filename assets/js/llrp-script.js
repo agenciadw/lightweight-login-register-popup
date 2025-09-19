@@ -576,10 +576,15 @@
           // SAFE REDIRECT: Check if we need to redirect or stay on current page
           if (res.data.redirect && res.data.redirect !== window.location.href) {
             // Only redirect if it's a different URL
-            if (isFluidCheckoutActive() && window.location.href.includes('checkout')) {
+            if (
+              isFluidCheckoutActive() &&
+              window.location.href.includes("checkout")
+            ) {
               // For Fluid Checkout on checkout page, just reload to preserve checkout state
-              console.log("🔄 FLUID CHECKOUT: Reloading checkout page to maintain state");
-              setTimeout(function() {
+              console.log(
+                "🔄 FLUID CHECKOUT: Reloading checkout page to maintain state"
+              );
+              setTimeout(function () {
                 window.location.reload();
               }, 500);
             } else {

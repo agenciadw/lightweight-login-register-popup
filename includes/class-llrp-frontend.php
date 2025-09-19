@@ -25,6 +25,9 @@ class Llrp_Frontend {
         add_action( 'user_register', [ __CLASS__, 'handle_direct_checkout_registration' ], 10, 1 );
         add_action( 'woocommerce_checkout_init', [ __CLASS__, 'inject_checkout_autofill_script' ] );
         add_action( 'wp_footer', [ __CLASS__, 'add_checkout_autofill_handler' ] );
+        
+        // Additional hook to catch when user is already logged in on checkout
+        add_action( 'woocommerce_before_checkout_form', [ __CLASS__, 'force_checkout_autofill_if_logged_in' ] );
     }
 
  public static function enqueue_assets() {
@@ -540,12 +543,28 @@ class Llrp_Frontend {
      * CRITICAL: Handle direct login on checkout page (SAFE MODE)
      */
     public static function handle_direct_checkout_login( $user_login, $user ) {
-        // Only handle if we're on checkout page and this is not our popup login
-        if ( ! is_checkout() || wp_doing_ajax() ) {
+        // Check if this is from our popup (has our specific action)
+        $is_our_popup = isset($_POST['action']) && in_array($_POST['action'], [
+            'llrp_code_login', 'llrp_login_with_password', 'llrp_google_login', 'llrp_facebook_login'
+        ]);
+        
+        // Only handle if this is NOT from our popup
+        if ( $is_our_popup ) {
+            error_log('🔑 LLRP: Ignoring login from our popup');
             return;
         }
         
-        error_log('🔑 LLRP: Direct checkout login detected for user: ' . $user->ID);
+        // Check if we're in a checkout context (direct page OR checkout AJAX)
+        $is_checkout_context = is_checkout() || 
+                               (isset($_SERVER['HTTP_REFERER']) && 
+                                (strpos($_SERVER['HTTP_REFERER'], '/checkout') !== false || 
+                                 strpos($_SERVER['HTTP_REFERER'], '/finalizar-compra') !== false));
+        
+        if ( ! $is_checkout_context ) {
+            return;
+        }
+        
+        error_log('🔑 LLRP CRITICAL: Direct WooCommerce checkout login detected for user: ' . $user->ID);
         
         // Store user ID in session for JavaScript to pick up
         if ( ! session_id() ) {
@@ -553,18 +572,36 @@ class Llrp_Frontend {
         }
         $_SESSION['llrp_direct_checkout_login'] = $user->ID;
         $_SESSION['llrp_direct_checkout_login_time'] = time();
+        
+        error_log('🔑 LLRP: Session stored for direct checkout login');
     }
     
     /**
      * CRITICAL: Handle direct registration on checkout page (SAFE MODE)
      */
     public static function handle_direct_checkout_registration( $user_id ) {
-        // Only handle if we're on checkout page and this is not our popup registration
-        if ( ! is_checkout() || wp_doing_ajax() ) {
+        // Check if this is from our popup (has our specific action)
+        $is_our_popup = isset($_POST['action']) && in_array($_POST['action'], [
+            'llrp_register', 'llrp_google_login', 'llrp_facebook_login'
+        ]);
+        
+        // Only handle if this is NOT from our popup
+        if ( $is_our_popup ) {
+            error_log('📝 LLRP: Ignoring registration from our popup');
             return;
         }
         
-        error_log('📝 LLRP: Direct checkout registration detected for user: ' . $user_id);
+        // Check if we're in a checkout context (direct page OR checkout AJAX)
+        $is_checkout_context = is_checkout() || 
+                               (isset($_SERVER['HTTP_REFERER']) && 
+                                (strpos($_SERVER['HTTP_REFERER'], '/checkout') !== false || 
+                                 strpos($_SERVER['HTTP_REFERER'], '/finalizar-compra') !== false));
+        
+        if ( ! $is_checkout_context ) {
+            return;
+        }
+        
+        error_log('📝 LLRP CRITICAL: Direct WooCommerce checkout registration detected for user: ' . $user_id);
         
         // Store user ID in session for JavaScript to pick up
         if ( ! session_id() ) {
@@ -572,6 +609,8 @@ class Llrp_Frontend {
         }
         $_SESSION['llrp_direct_checkout_register'] = $user_id;
         $_SESSION['llrp_direct_checkout_register_time'] = time();
+        
+        error_log('📝 LLRP: Session stored for direct checkout registration');
     }
 
     /**
@@ -668,28 +707,39 @@ class Llrp_Frontend {
             setTimeout(function() {
                 if (typeof LLRP_Data !== 'undefined' && LLRP_Data.is_logged_in === '1') {
                     var emailField = $('#billing_email');
-                    // Only autofill if form is completely empty (not interfering with existing data)
-                    if (emailField.length && !emailField.val() && $('#billing_first_name').length && !$('#billing_first_name').val()) {
-                        console.log('🔄 LLRP: Empty checkout form detected, requesting autofill for logged-in user');
+                    // More aggressive check - if user is logged in and any key field is empty, try autofill
+                    if (emailField.length && (!emailField.val() || ($('#billing_first_name').length && !$('#billing_first_name').val()))) {
+                        console.log('🔄 LLRP CRITICAL: Logged-in user with empty checkout form detected, requesting autofill');
                         
                         $.post(LLRP_Data.ajax_url, {
                             action: 'llrp_get_checkout_user_data',
                             nonce: LLRP_Data.nonce
                         }).done(function(response) {
                             if (response.success && response.data) {
-                                console.log('🔄 LLRP: Autofill data received, filling form:', response.data);
+                                console.log('🔄 LLRP CRITICAL: Autofill data received, filling form:', response.data);
                                 
                                 if (typeof fillCheckoutFormData === 'function') {
                                     fillCheckoutFormData(response.data);
+                                    
+                                    // Force trigger checkout update
+                                    $('body').trigger('update_checkout');
+                                    
+                                    // Also trigger for Brazilian Market plugin
+                                    $(document.body).trigger('updated_checkout');
+                                    $(document.body).trigger('checkout_updated');
                                 }
                                 
                                 if (response.data.email && typeof syncEmailFields === 'function') {
                                     syncEmailFields(response.data.email);
                                 }
+                                
+                                console.log('🔄 LLRP CRITICAL: Auto-fill completed for direct checkout user');
                             }
                         }).fail(function() {
                             console.log('🔄 LLRP: Autofill request failed - no problem, continuing normally');
                         });
+                    } else if (emailField.length && emailField.val()) {
+                        console.log('🔄 LLRP: Checkout form already has email (' + emailField.val() + '), skipping autofill');
                     }
                 }
             }, 2000); // Increased delay to ensure page is fully loaded
@@ -698,6 +748,70 @@ class Llrp_Frontend {
         <?php
     }
     
+    /**
+     * CRITICAL: Force autofill when logged-in user accesses checkout page
+     */
+    public static function force_checkout_autofill_if_logged_in() {
+        if ( ! is_user_logged_in() ) {
+            return;
+        }
+        
+        $user_id = get_current_user_id();
+        $user_data = self::get_user_checkout_data_static( $user_id );
+        
+        if ( empty( $user_data ) ) {
+            return;
+        }
+        
+        error_log('🔄 LLRP CRITICAL: Forcing autofill for logged-in user on checkout: ' . $user_id);
+        
+        // Inline JavaScript to force autofill
+        ?>
+        <script type="text/javascript">
+        jQuery(document).ready(function($) {
+            console.log('🔄 LLRP CRITICAL: Force autofill for logged-in user detected');
+            
+            var userData = <?php echo wp_json_encode( $user_data ); ?>;
+            
+            // Multiple attempts to ensure autofill works
+            function attemptAutofill() {
+                if (typeof fillCheckoutFormData === 'function') {
+                    console.log('🔄 LLRP CRITICAL: Executing force autofill with data:', userData);
+                    fillCheckoutFormData(userData);
+                    
+                    // Sync email fields
+                    if (userData.email && typeof syncEmailFields === 'function') {
+                        syncEmailFields(userData.email);
+                    }
+                    
+                    // Trigger checkout updates
+                    $('body').trigger('update_checkout');
+                    $(document.body).trigger('updated_checkout');
+                    $(document.body).trigger('checkout_updated');
+                    
+                    console.log('🔄 LLRP CRITICAL: Force autofill completed');
+                    return true;
+                } else {
+                    console.log('🔄 LLRP: fillCheckoutFormData not available yet, will retry');
+                    return false;
+                }
+            }
+            
+            // Try immediately
+            if (!attemptAutofill()) {
+                // Try after 1 second if function wasn't available
+                setTimeout(function() {
+                    if (!attemptAutofill()) {
+                        // Final attempt after 3 seconds
+                        setTimeout(attemptAutofill, 3000);
+                    }
+                }, 1000);
+            }
+        });
+        </script>
+        <?php
+    }
+
     /**
      * Static method to get user checkout data (for use without instance)
      */
