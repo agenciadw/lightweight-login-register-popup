@@ -50,6 +50,16 @@ function llrp_woocommerce_missing_notice() {
 }
 
 /**
+ * Declare HPOS compatibility
+ */
+function llrp_declare_woocommerce_features_compatibility() {
+    if ( class_exists( '\Automattic\WooCommerce\Utilities\FeaturesUtil' ) ) {
+        \Automattic\WooCommerce\Utilities\FeaturesUtil::declare_compatibility( 'custom_order_tables', __FILE__, true );
+        \Automattic\WooCommerce\Utilities\FeaturesUtil::declare_compatibility( 'cart_checkout_blocks', __FILE__, true );
+    }
+}
+
+/**
  * Initialize plugin components
  */
 function llrp_init() {
@@ -58,6 +68,9 @@ function llrp_init() {
         add_action( 'admin_notices', 'llrp_woocommerce_missing_notice' );
         return;
     }
+    
+    // Declare WooCommerce features compatibility
+    llrp_declare_woocommerce_features_compatibility();
     
     // Include core classes
     require_once LLRP_PLUGIN_DIR . 'includes/class-llrp-frontend.php';
@@ -72,6 +85,9 @@ function llrp_init() {
     Llrp_Frontend::init();
     Llrp_Ajax::init();
 }
+
+// Declare compatibility before WooCommerce init
+add_action( 'before_woocommerce_init', 'llrp_declare_woocommerce_features_compatibility' );
 
 // Initialize plugin after all plugins are loaded
 add_action( 'plugins_loaded', 'llrp_init' );

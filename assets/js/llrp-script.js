@@ -1217,25 +1217,39 @@
 
       console.log("LLRP: Updating cart fragments:", fragments);
 
-      // Check if Interactivity API is active
-      if (typeof wp !== 'undefined' && wp.interactivity) {
-        console.log("LLRP: Using Interactivity API approach");
-        
-        // Trigger native WooCommerce cart refresh for Interactivity API
+      // Check if Interactivity API or WooCommerce Blocks are active
+      var isInteractivityActive = (typeof wp !== "undefined" && wp.interactivity) ||
+                                 $(".wp-block-woocommerce-mini-cart").length > 0 ||
+                                 $(".wc-block-mini-cart").length > 0 ||
+                                 $(".wc-block-cart").length > 0;
+
+      if (isInteractivityActive) {
+        console.log("LLRP: Using Interactivity API/Blocks approach");
+
+        // Multiple triggers for better compatibility
         $(document.body).trigger("wc_fragment_refresh");
+        $(document.body).trigger("woocommerce_fragments_refreshed");
         
-        // Force refresh mini cart if using blocks
-        if ($('.wp-block-woocommerce-mini-cart').length) {
-          $('.wp-block-woocommerce-mini-cart').trigger('refresh');
+        // Specific for mini cart blocks
+        if ($(".wp-block-woocommerce-mini-cart").length) {
+          $(".wp-block-woocommerce-mini-cart").trigger("refresh");
+          // Also try direct DOM update for blocks
+          var event = new CustomEvent('wc-blocks_cart_fragments_update');
+          document.dispatchEvent(event);
+        }
+
+        // Trigger update for cart count and buttons
+        if ($(".wc-block-mini-cart__button").length) {
+          $(".wc-block-mini-cart__button").trigger("update");
         }
         
-        // Trigger update for cart count
-        if ($('.wc-block-mini-cart__button').length) {
-          $('.wc-block-mini-cart__button').trigger('update');
+        // Force refresh via native WooCommerce if available
+        if (typeof wc_cart_fragments_params !== 'undefined' && typeof wc_cart_fragments_params.ajax_url !== 'undefined') {
+          $(document.body).trigger('wc_fragment_refresh');
         }
       } else {
         console.log("LLRP: Using traditional fragment update");
-        
+
         // Update each fragment (traditional method)
         $.each(fragments, function (selector, content) {
           if (selector && content !== undefined) {
@@ -1256,7 +1270,7 @@
         $(document.body).trigger("fluidcheckout_fragments_updated");
         $(document.body).trigger("fc_fragments_updated");
       }
-      
+
       console.log("LLRP: Cart fragments update completed");
     }
 

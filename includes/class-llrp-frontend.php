@@ -9,10 +9,10 @@ class Llrp_Frontend {
      * Check if WooCommerce Interactivity API is active
      */
     private static function is_interactivity_api_active() {
-        // Check if Interactivity API is enabled
-        if ( function_exists( 'wc_get_setting' ) ) {
-            $cart_fragments_setting = wc_get_setting( 'advanced', 'woocommerce_feature_product_block_editor_enabled' );
-            if ( $cart_fragments_setting === 'yes' ) {
+        // Check if WooCommerce features utility is available
+        if ( class_exists( '\Automattic\WooCommerce\Utilities\FeaturesUtil' ) ) {
+            // Check if cart/checkout blocks are enabled
+            if ( \Automattic\WooCommerce\Utilities\FeaturesUtil::feature_is_enabled( 'cart_checkout_blocks' ) ) {
                 return true;
             }
         }
@@ -22,10 +22,21 @@ class Llrp_Frontend {
             return true;
         }
         
-        // Check if mini cart is using Interactivity API
-        if ( function_exists( 'wc_get_cart_fragments' ) && 
-             get_option( 'woocommerce_cart_redirect_after_add' ) === 'no' ) {
-            return true;
+        // Check if blocks are being used for cart/checkout
+        if ( function_exists( 'has_block' ) ) {
+            global $post;
+            if ( $post && ( has_block( 'woocommerce/cart', $post ) || has_block( 'woocommerce/checkout', $post ) ) ) {
+                return true;
+            }
+        }
+        
+        // Check WooCommerce settings for Interactivity API features
+        if ( function_exists( 'wc_get_setting' ) ) {
+            // Check if cart fragments are disabled (sign of Interactivity API)
+            $cart_fragments_setting = get_option( 'woocommerce_cart_redirect_after_add' );
+            if ( $cart_fragments_setting === 'no' && function_exists( 'wc_get_cart_fragments' ) ) {
+                return true;
+            }
         }
         
         return false;
