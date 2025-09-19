@@ -889,7 +889,7 @@ class Llrp_Ajax {
     }
 
     /**
-     * Trigger cart fragments update for Fluid Checkout compatibility
+     * Trigger cart fragments update for modern WooCommerce compatibility
      */
     private static function trigger_cart_fragments_update() {
         // Force WooCommerce to refresh cart fragments
@@ -897,8 +897,15 @@ class Llrp_Ajax {
             // Clear cart cache
             WC()->cart->get_cart_contents_count();
             
-            // Trigger cart fragments refresh
+            // Trigger cart fragments refresh (legacy)
             do_action( 'woocommerce_cart_updated' );
+            
+            // Trigger for Interactivity API compatibility
+            if ( function_exists( 'wc_get_cart_fragments' ) ) {
+                // Force cart fragments refresh for Interactivity API
+                do_action( 'wp_ajax_woocommerce_get_refreshed_fragments' );
+                do_action( 'wp_ajax_nopriv_woocommerce_get_refreshed_fragments' );
+            }
             
             // If Fluid Checkout is active, trigger its specific hooks
             if ( class_exists( 'FluidCheckout' ) ) {
@@ -908,18 +915,25 @@ class Llrp_Ajax {
     }
 
     /**
-     * Get cart fragments for AJAX response
+     * Get cart fragments for AJAX response (Interactivity API compatible)
      */
     private static function get_cart_fragments() {
         if ( ! function_exists( 'WC' ) || ! WC()->cart ) {
             return [];
         }
 
-        // Get cart fragments
-        $cart_fragments = apply_filters( 'woocommerce_add_to_cart_fragments', [] );
+        // Use WooCommerce native function if available (Interactivity API)
+        if ( function_exists( 'wc_get_cart_fragments' ) ) {
+            $cart_fragments = wc_get_cart_fragments();
+        } else {
+            // Fallback to legacy method
+            $cart_fragments = apply_filters( 'woocommerce_add_to_cart_fragments', [] );
+        }
         
-        // Add user login state to fragments
-        $cart_fragments['.llrp-user-state'] = is_user_logged_in() ? 'logged-in' : 'logged-out';
+        // Add user login state to fragments (non-intrusive)
+        if ( ! isset( $cart_fragments['.llrp-user-state'] ) ) {
+            $cart_fragments['.llrp-user-state'] = is_user_logged_in() ? 'logged-in' : 'logged-out';
+        }
         
         // Add Fluid Checkout specific fragments if available
         if ( class_exists( 'FluidCheckout' ) ) {

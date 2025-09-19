@@ -4,6 +4,33 @@ if ( ! defined( 'ABSPATH' ) ) {
 }
 
 class Llrp_Frontend {
+    
+    /**
+     * Check if WooCommerce Interactivity API is active
+     */
+    private static function is_interactivity_api_active() {
+        // Check if Interactivity API is enabled
+        if ( function_exists( 'wc_get_setting' ) ) {
+            $cart_fragments_setting = wc_get_setting( 'advanced', 'woocommerce_feature_product_block_editor_enabled' );
+            if ( $cart_fragments_setting === 'yes' ) {
+                return true;
+            }
+        }
+        
+        // Check for specific Interactivity API functions or classes
+        if ( function_exists( 'wp_interactivity' ) || class_exists( 'WP_Interactivity_API' ) ) {
+            return true;
+        }
+        
+        // Check if mini cart is using Interactivity API
+        if ( function_exists( 'wc_get_cart_fragments' ) && 
+             get_option( 'woocommerce_cart_redirect_after_add' ) === 'no' ) {
+            return true;
+        }
+        
+        return false;
+    }
+    
     public static function init() {
         add_action( 'wp_enqueue_scripts',      [ __CLASS__, 'enqueue_assets' ] );
         add_action( 'wp_footer',               [ __CLASS__, 'render_popup_markup' ] );
@@ -18,7 +45,11 @@ class Llrp_Frontend {
         // Fluid Checkout compatibility hooks
         add_action( 'wp_ajax_llrp_fluid_checkout_login', [ __CLASS__, 'ajax_fluid_checkout_login' ] );
         add_action( 'wp_ajax_nopriv_llrp_fluid_checkout_login', [ __CLASS__, 'ajax_fluid_checkout_login' ] );
-        add_filter( 'woocommerce_add_to_cart_fragments', [ __CLASS__, 'add_fluid_checkout_fragments' ] );
+        
+        // Only add fragments filter if Interactivity API is not active
+        if ( ! self::is_interactivity_api_active() ) {
+            add_filter( 'woocommerce_add_to_cart_fragments', [ __CLASS__, 'add_fluid_checkout_fragments' ] );
+        }
         
         // CRITICAL: WooCommerce direct checkout login hooks (ONLY for direct checkout access)
         add_action( 'wp_login', [ __CLASS__, 'handle_direct_checkout_login' ], 10, 2 );

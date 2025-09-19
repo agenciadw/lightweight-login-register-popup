@@ -91,7 +91,7 @@
         );
         console.log("🛒 ADDITIONAL DOM BACKUP saved:", additionalBackup);
 
-          console.log("🛒 Cart backup completed successfully");
+        console.log("🛒 Cart backup completed successfully");
         return true;
       } catch (error) {
         console.error(
@@ -1208,7 +1208,7 @@
     }
 
     /**
-     * Update cart fragments for Fluid Checkout compatibility
+     * Update cart fragments with Interactivity API compatibility
      */
     function updateCartFragments(fragments) {
       if (!fragments || typeof fragments !== "object") {
@@ -1217,25 +1217,47 @@
 
       console.log("LLRP: Updating cart fragments:", fragments);
 
-      // Update each fragment
-      $.each(fragments, function (selector, content) {
-        if (selector && content !== undefined) {
-          var $element = $(selector);
-          if ($element.length) {
-            $element.html(content);
-            console.log("LLRP: Updated fragment:", selector);
-          }
+      // Check if Interactivity API is active
+      if (typeof wp !== 'undefined' && wp.interactivity) {
+        console.log("LLRP: Using Interactivity API approach");
+        
+        // Trigger native WooCommerce cart refresh for Interactivity API
+        $(document.body).trigger("wc_fragment_refresh");
+        
+        // Force refresh mini cart if using blocks
+        if ($('.wp-block-woocommerce-mini-cart').length) {
+          $('.wp-block-woocommerce-mini-cart').trigger('refresh');
         }
-      });
+        
+        // Trigger update for cart count
+        if ($('.wc-block-mini-cart__button').length) {
+          $('.wc-block-mini-cart__button').trigger('update');
+        }
+      } else {
+        console.log("LLRP: Using traditional fragment update");
+        
+        // Update each fragment (traditional method)
+        $.each(fragments, function (selector, content) {
+          if (selector && content !== undefined) {
+            var $element = $(selector);
+            if ($element.length) {
+              $element.html(content);
+              console.log("LLRP: Updated fragment:", selector);
+            }
+          }
+        });
 
-      // Trigger WooCommerce cart fragments update event
-      $(document.body).trigger("wc_fragments_refreshed");
+        // Trigger WooCommerce cart fragments update event
+        $(document.body).trigger("wc_fragments_refreshed");
+      }
 
-      // Trigger Fluid Checkout specific events if available
+      // Always trigger Fluid Checkout specific events if available
       if (isFluidCheckoutActive()) {
         $(document.body).trigger("fluidcheckout_fragments_updated");
         $(document.body).trigger("fc_fragments_updated");
       }
+      
+      console.log("LLRP: Cart fragments update completed");
     }
 
     /**
