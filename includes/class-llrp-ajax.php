@@ -227,8 +227,14 @@ class Llrp_Ajax {
 
         delete_user_meta( $user->ID, '_llrp_login_code_hash' );
         delete_user_meta( $user->ID, '_llrp_login_code_expiration' );
+        // CRITICAL: Debug logging before authentication
+        error_log('🛒 LLRP CRITICAL: About to authenticate user - Cart count before: ' . (WC()->cart ? WC()->cart->get_cart_contents_count() : 'N/A'));
+        
         wp_set_current_user( $user->ID, $user->user_login );
         wp_set_auth_cookie( $user->ID, true );
+        
+        // CRITICAL: Debug logging after authentication
+        error_log('🛒 LLRP CRITICAL: User authenticated - Cart count after: ' . (WC()->cart ? WC()->cart->get_cart_contents_count() : 'N/A'));
 
         // Trigger cart fragments update for Fluid Checkout compatibility
         self::trigger_cart_fragments_update();
@@ -260,6 +266,9 @@ class Llrp_Ajax {
             wp_send_json_error([ 'message' => __( 'Credenciais inválidas.', 'llrp' ) ]);
         }
 
+        // CRITICAL: Debug logging before password login
+        error_log('🛒 LLRP CRITICAL: About to login with password - Cart count before: ' . (WC()->cart ? WC()->cart->get_cart_contents_count() : 'N/A'));
+
         $creds = [
             'user_login'    => $user->user_login,
             'user_password' => $password,
@@ -269,6 +278,9 @@ class Llrp_Ajax {
         if ( is_wp_error( $user_signon ) ) {
             wp_send_json_error([ 'message' => __( 'Credenciais inválidas.', 'llrp' ) ]);
         }
+        
+        // CRITICAL: Debug logging after password login
+        error_log('🛒 LLRP CRITICAL: Password login successful - Cart count after: ' . (WC()->cart ? WC()->cart->get_cart_contents_count() : 'N/A'));
 
         // Trigger cart fragments update for Fluid Checkout compatibility
         self::trigger_cart_fragments_update();
@@ -392,8 +404,14 @@ class Llrp_Ajax {
             }
         }
 
+        // CRITICAL: Debug logging before setting auth cookie  
+        error_log('🛒 LLRP CRITICAL: About to set auth cookie for new user - Cart count before: ' . (WC()->cart ? WC()->cart->get_cart_contents_count() : 'N/A'));
+        
         // Use WooCommerce's native login method
         wc_set_customer_auth_cookie( $user_id );
+        
+        // CRITICAL: Debug logging after setting auth cookie
+        error_log('🛒 LLRP CRITICAL: Auth cookie set for new user - Cart count after: ' . (WC()->cart ? WC()->cart->get_cart_contents_count() : 'N/A'));
 
         // Trigger cart fragments update for Fluid Checkout compatibility
         self::trigger_cart_fragments_update();
@@ -993,14 +1011,24 @@ class Llrp_Ajax {
             return [];
         }
         
+        // CRITICAL: Email must be the same for both account_email and billing_email
+        $user_email = $user->user_email;
+        $billing_email = get_user_meta($user_id, 'billing_email', true) ?: $user_email;
+        
+        // Always ensure both email fields have the same value
+        $final_email = $billing_email ?: $user_email;
+        
         // Collect all user data for checkout form
         $user_data = [
-            'email' => $user->user_email,
+            // CRITICAL: Both email fields must have identical values
+            'email' => $final_email,
+            'account_email' => $final_email,
+            'billing_email' => $final_email,
+            
             'first_name' => get_user_meta($user_id, 'first_name', true),
             'last_name' => get_user_meta($user_id, 'last_name', true),
             'billing_first_name' => get_user_meta($user_id, 'billing_first_name', true),
             'billing_last_name' => get_user_meta($user_id, 'billing_last_name', true),
-            'billing_email' => get_user_meta($user_id, 'billing_email', true) ?: $user->user_email,
             'billing_phone' => get_user_meta($user_id, 'billing_phone', true),
             'billing_address_1' => get_user_meta($user_id, 'billing_address_1', true),
             'billing_address_2' => get_user_meta($user_id, 'billing_address_2', true),
@@ -1019,6 +1047,9 @@ class Llrp_Ajax {
             'shipping_postcode' => get_user_meta($user_id, 'shipping_postcode', true),
             'shipping_country' => get_user_meta($user_id, 'shipping_country', true) ?: 'BR'
         ];
+        
+        // Log the email synchronization
+        error_log('📧 LLRP CRITICAL: Email sync for user ' . $user_id . ' - account_email = billing_email = ' . $final_email);
         
         // Remove empty values
         $user_data = array_filter($user_data, function($value) {
