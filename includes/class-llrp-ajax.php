@@ -19,6 +19,9 @@ class Llrp_Ajax {
         add_action( 'wp_ajax_llrp_check_login_status', [ __CLASS__, 'ajax_check_login_status' ] );
         add_action( 'wp_ajax_nopriv_llrp_refresh_nonce', [ __CLASS__, 'ajax_refresh_nonce' ] );
         add_action( 'wp_ajax_llrp_refresh_nonce', [ __CLASS__, 'ajax_refresh_nonce' ] );
+        
+        // CRITICAL: Direct checkout autofill endpoint
+        add_action( 'wp_ajax_llrp_get_checkout_user_data', [ __CLASS__, 'ajax_get_checkout_user_data' ] );
     }
 
     public static function ajax_check_user() {
@@ -942,6 +945,38 @@ class Llrp_Ajax {
     }
 
     /**
+     * CRITICAL: Get checkout user data for direct login autofill
+     */
+    public static function ajax_get_checkout_user_data() {
+        // Verificação de nonce
+        $nonce = sanitize_text_field( wp_unslash( $_POST['nonce'] ?? '' ) );
+        if ( ! wp_verify_nonce( $nonce, 'llrp_nonce' ) ) {
+            error_log( 'LLRP: Nonce verification failed for get_checkout_user_data' );
+            wp_send_json_error( [ 'message' => __( 'Erro de segurança. Recarregue a página e tente novamente.', 'llrp' ) ] );
+        }
+        
+        // Check if user is logged in
+        if ( ! is_user_logged_in() ) {
+            wp_send_json_error( [ 'message' => __( 'Usuário não está logado.', 'llrp' ) ] );
+        }
+        
+        $user_id = get_current_user_id();
+        error_log( '🔄 LLRP CRITICAL: AJAX request for checkout user data - User ID: ' . $user_id );
+        
+        // Get user data
+        $user_data = self::get_user_checkout_data( $user_id );
+        
+        if ( empty( $user_data ) ) {
+            error_log( '🔄 LLRP: No user data found for autofill' );
+            wp_send_json_error( [ 'message' => __( 'Dados do usuário não encontrados.', 'llrp' ) ] );
+        }
+        
+        error_log( '🔄 LLRP CRITICAL: Sending checkout user data for autofill: ' . print_r( $user_data, true ) );
+        
+        wp_send_json_success( $user_data );
+    }
+
+    /**
      * Direct validation without any nonce dependency
      */
     private static function validate_direct_registration_request() {
@@ -1038,6 +1073,16 @@ class Llrp_Ajax {
             'billing_country' => get_user_meta($user_id, 'billing_country', true) ?: 'BR',
             'billing_cpf' => get_user_meta($user_id, 'billing_cpf', true),
             'billing_cnpj' => get_user_meta($user_id, 'billing_cnpj', true),
+            
+            // Brazilian Market plugin compatibility
+            'billing_number' => get_user_meta($user_id, 'billing_number', true),
+            'billing_neighborhood' => get_user_meta($user_id, 'billing_neighborhood', true),
+            'billing_cellphone' => get_user_meta($user_id, 'billing_cellphone', true),
+            'billing_birthdate' => get_user_meta($user_id, 'billing_birthdate', true),
+            'billing_sex' => get_user_meta($user_id, 'billing_sex', true),
+            'billing_company_cnpj' => get_user_meta($user_id, 'billing_company_cnpj', true),
+            'billing_ie' => get_user_meta($user_id, 'billing_ie', true),
+            'billing_rg' => get_user_meta($user_id, 'billing_rg', true),
             'shipping_first_name' => get_user_meta($user_id, 'shipping_first_name', true),
             'shipping_last_name' => get_user_meta($user_id, 'shipping_last_name', true),
             'shipping_address_1' => get_user_meta($user_id, 'shipping_address_1', true),

@@ -10,140 +10,166 @@
 
     // CRITICAL: Enhanced cart persistence with dual backup system
     function saveCartBeforeLogin() {
-      console.log('🛒 CRITICAL: Saving cart before login - STARTED');
-      
+      console.log("🛒 CRITICAL: Saving cart before login - STARTED");
+
       try {
         // Method 1: WooCommerce fragments (primary)
         var cartData = null;
-        if (typeof wc_add_to_cart_params !== 'undefined' && window.wc_cart_fragments_params) {
+        if (
+          typeof wc_add_to_cart_params !== "undefined" &&
+          window.wc_cart_fragments_params
+        ) {
           cartData = {
-            method: 'wc_fragments',
+            method: "wc_fragments",
             fragments: window.wc_cart_fragments_params.cart_fragments || {},
-            cart_hash: window.wc_cart_fragments_params.cart_hash || '',
-            cart_total: $('.cart-contents .amount').text() || '',
-            cart_count: $('.cart-contents .count').text() || '0',
-            timestamp: Date.now()
+            cart_hash: window.wc_cart_fragments_params.cart_hash || "",
+            cart_total: $(".cart-contents .amount").text() || "",
+            cart_count: $(".cart-contents .count").text() || "0",
+            timestamp: Date.now(),
           };
         }
-        
+
         // Method 2: DOM cart contents (fallback)
         var domCartData = {
-          method: 'dom_content',
+          method: "dom_content",
           cart_items: [],
-          cart_total: $('.cart-contents .amount').text() || $('.woocommerce-Price-amount').text() || '',
-          cart_count: $('.cart-contents .count').text() || $('.cart-contents-count').text() || '0',
-          timestamp: Date.now()
+          cart_total:
+            $(".cart-contents .amount").text() ||
+            $(".woocommerce-Price-amount").text() ||
+            "",
+          cart_count:
+            $(".cart-contents .count").text() ||
+            $(".cart-contents-count").text() ||
+            "0",
+          timestamp: Date.now(),
         };
-        
+
         // Extract cart items from DOM
-        $('.woocommerce-cart-form .cart_item, .cart-item').each(function() {
+        $(".woocommerce-cart-form .cart_item, .cart-item").each(function () {
           var item = {
-            product_name: $(this).find('.product-name, .product-title').text().trim(),
-            quantity: $(this).find('.qty, input[name*="cart"]').val() || '1',
-            price: $(this).find('.amount, .price').text().trim()
+            product_name: $(this)
+              .find(".product-name, .product-title")
+              .text()
+              .trim(),
+            quantity: $(this).find('.qty, input[name*="cart"]').val() || "1",
+            price: $(this).find(".amount, .price").text().trim(),
           };
           if (item.product_name) {
             domCartData.cart_items.push(item);
           }
         });
-        
+
         // CRITICAL: Dual backup system
         var primaryData = cartData || domCartData;
-        
+
         // Backup 1: localStorage (primary)
-        localStorage.setItem('llrp_cart_backup', JSON.stringify(primaryData));
-        console.log('🛒 PRIMARY BACKUP saved to localStorage:', primaryData);
-        
+        localStorage.setItem("llrp_cart_backup", JSON.stringify(primaryData));
+        console.log("🛒 PRIMARY BACKUP saved to localStorage:", primaryData);
+
         // Backup 2: sessionStorage (failsafe)
-        sessionStorage.setItem('llrp_cart_backup_failsafe', JSON.stringify(primaryData));
-        console.log('🛒 FAILSAFE BACKUP saved to sessionStorage:', primaryData);
-        
+        sessionStorage.setItem(
+          "llrp_cart_backup_failsafe",
+          JSON.stringify(primaryData)
+        );
+        console.log("🛒 FAILSAFE BACKUP saved to sessionStorage:", primaryData);
+
         // Backup 3: Additional DOM backup
         var additionalBackup = {
-          method: 'additional_dom',
-          cart_widget_html: $('.widget_shopping_cart_content').html() || '',
-          cart_dropdown_html: $('.cart-dropdown, .cart-contents').html() || '',
-          mini_cart_html: $('.mini-cart, .woocommerce-mini-cart').html() || '',
-          timestamp: Date.now()
+          method: "additional_dom",
+          cart_widget_html: $(".widget_shopping_cart_content").html() || "",
+          cart_dropdown_html: $(".cart-dropdown, .cart-contents").html() || "",
+          mini_cart_html: $(".mini-cart, .woocommerce-mini-cart").html() || "",
+          timestamp: Date.now(),
         };
-        
-        localStorage.setItem('llrp_cart_dom_backup', JSON.stringify(additionalBackup));
-        console.log('🛒 ADDITIONAL DOM BACKUP saved:', additionalBackup);
-        
-        console.log('🛒 CRITICAL: Cart backup completed successfully with 3 methods');
+
+        localStorage.setItem(
+          "llrp_cart_dom_backup",
+          JSON.stringify(additionalBackup)
+        );
+        console.log("🛒 ADDITIONAL DOM BACKUP saved:", additionalBackup);
+
+        console.log(
+          "🛒 CRITICAL: Cart backup completed successfully with 3 methods"
+        );
         return true;
-        
       } catch (error) {
-        console.error('🚨 CRITICAL ERROR: Failed to save cart before login:', error);
+        console.error(
+          "🚨 CRITICAL ERROR: Failed to save cart before login:",
+          error
+        );
         return false;
       }
     }
-    
+
     function restoreCartAfterLogin() {
-      console.log('🛒 CRITICAL: Restoring cart after login - STARTED');
-      
+      console.log("🛒 CRITICAL: Restoring cart after login - STARTED");
+
       try {
         // Try primary backup first
-        var savedCart = localStorage.getItem('llrp_cart_backup');
-        var backupSource = 'localStorage';
-        
+        var savedCart = localStorage.getItem("llrp_cart_backup");
+        var backupSource = "localStorage";
+
         // Fallback to sessionStorage if primary fails
         if (!savedCart) {
-          savedCart = sessionStorage.getItem('llrp_cart_backup_failsafe');
-          backupSource = 'sessionStorage';
-          console.log('🛒 Primary backup not found, using failsafe backup');
+          savedCart = sessionStorage.getItem("llrp_cart_backup_failsafe");
+          backupSource = "sessionStorage";
+          console.log("🛒 Primary backup not found, using failsafe backup");
         }
-        
+
         if (savedCart) {
           var cartData = JSON.parse(savedCart);
-          console.log('🛒 RESTORING cart from ' + backupSource + ':', cartData);
-          
+          console.log("🛒 RESTORING cart from " + backupSource + ":", cartData);
+
           // Check if cart data is not too old (24 hours)
-          if (cartData.timestamp && (Date.now() - cartData.timestamp) < 24 * 60 * 60 * 1000) {
-            
-            if (cartData.method === 'wc_fragments' && cartData.fragments) {
+          if (
+            cartData.timestamp &&
+            Date.now() - cartData.timestamp < 24 * 60 * 60 * 1000
+          ) {
+            if (cartData.method === "wc_fragments" && cartData.fragments) {
               // Restore using WooCommerce fragments
               updateCartFragments(cartData.fragments);
-              console.log('🛒 Cart restored using WC fragments method');
+              console.log("🛒 Cart restored using WC fragments method");
             } else {
               // Force page reload to ensure cart is restored
-              console.log('🛒 Forcing page reload to restore cart state');
-              setTimeout(function() {
+              console.log("🛒 Forcing page reload to restore cart state");
+              setTimeout(function () {
                 window.location.reload();
               }, 1000);
             }
-            
+
             // Clear backups after successful restoration
-            localStorage.removeItem('llrp_cart_backup');
-            sessionStorage.removeItem('llrp_cart_backup_failsafe');
-            localStorage.removeItem('llrp_cart_dom_backup');
-            
-            console.log('🛒 CRITICAL: Cart restoration completed successfully');
+            localStorage.removeItem("llrp_cart_backup");
+            sessionStorage.removeItem("llrp_cart_backup_failsafe");
+            localStorage.removeItem("llrp_cart_dom_backup");
+
+            console.log("🛒 CRITICAL: Cart restoration completed successfully");
             return true;
           } else {
-            console.log('🛒 Cart data expired, clearing old backups');
-            localStorage.removeItem('llrp_cart_backup');
-            sessionStorage.removeItem('llrp_cart_backup_failsafe');
-            localStorage.removeItem('llrp_cart_dom_backup');
+            console.log("🛒 Cart data expired, clearing old backups");
+            localStorage.removeItem("llrp_cart_backup");
+            sessionStorage.removeItem("llrp_cart_backup_failsafe");
+            localStorage.removeItem("llrp_cart_dom_backup");
           }
         } else {
-          console.log('🛒 No cart backup found to restore');
+          console.log("🛒 No cart backup found to restore");
         }
-        
+
         return false;
-        
       } catch (error) {
-        console.error('🚨 CRITICAL ERROR: Failed to restore cart after login:', error);
+        console.error(
+          "🚨 CRITICAL ERROR: Failed to restore cart after login:",
+          error
+        );
         return false;
       }
     }
-    
+
     function mergeLocalCartWithUserCart() {
-      console.log('🛒 CRITICAL: Merging local cart with user cart - STARTED');
+      console.log("🛒 CRITICAL: Merging local cart with user cart - STARTED");
       // Immediately attempt restoration
       var restored = restoreCartAfterLogin();
       if (!restored) {
-        console.log('🛒 No local cart to merge, server-side cart will be used');
+        console.log("🛒 No local cart to merge, server-side cart will be used");
       }
     }
 
@@ -227,10 +253,10 @@
       if (e) e.preventDefault();
 
       // CRITICAL: Save cart with dual backup before ANY login action
-      console.log('🚨 CRITICAL: About to open popup - saving cart FIRST');
+      console.log("🚨 CRITICAL: About to open popup - saving cart FIRST");
       var cartSaved = saveCartBeforeLogin();
       if (!cartSaved) {
-        console.error('🚨 CRITICAL WARNING: Cart backup failed!');
+        console.error("🚨 CRITICAL WARNING: Cart backup failed!");
       }
 
       // Verificação dinâmica do status de login via AJAX
@@ -249,7 +275,7 @@
             resetSteps();
             $overlay.removeClass("hidden");
             $popup.removeClass("hidden");
-            
+
             // Hide close button if on checkout page
             hideCloseButtonIfCheckout();
           }
@@ -260,7 +286,7 @@
           resetSteps();
           $overlay.removeClass("hidden");
           $popup.removeClass("hidden");
-          
+
           // Hide close button if on checkout page
           hideCloseButtonIfCheckout();
         });
@@ -285,16 +311,17 @@
 
     function hideCloseButtonIfCheckout() {
       // Check if we're on checkout or finalizar-compra page
-      var isCheckoutPage = window.location.href.includes('checkout') || 
-                          window.location.href.includes('finalizar-compra') ||
-                          LLRP_Data.is_checkout_page === '1';
-      
+      var isCheckoutPage =
+        window.location.href.includes("checkout") ||
+        window.location.href.includes("finalizar-compra") ||
+        LLRP_Data.is_checkout_page === "1";
+
       if (isCheckoutPage) {
-        console.log('LLRP: Hiding close button on checkout page');
-        $popup.find('.llrp-close').hide();
+        console.log("LLRP: Hiding close button on checkout page");
+        $popup.find(".llrp-close").hide();
       } else {
-        console.log('LLRP: Showing close button on non-checkout page');
-        $popup.find('.llrp-close').show();
+        console.log("LLRP: Showing close button on non-checkout page");
+        $popup.find(".llrp-close").show();
       }
     }
 
@@ -384,7 +411,7 @@
       }
 
       // Use direct AJAX for registration (no nonce dependency)
-        $.post(LLRP_Data.ajax_url, {
+      $.post(LLRP_Data.ajax_url, {
         action: "llrp_register",
         identifier: savedIdentifier,
         email: email,
@@ -393,19 +420,25 @@
       })
         .done(function (res) {
           if (res.success) {
-            console.log('🛒 CRITICAL: Registration (with email) successful - restoring cart IMMEDIATELY');
-            
+            console.log(
+              "🛒 CRITICAL: Registration (with email) successful - restoring cart IMMEDIATELY"
+            );
+
             // CRITICAL: Immediate cart restoration
             mergeLocalCartWithUserCart();
-            
+
             // Update cart fragments if provided
             if (res.data.cart_fragments) {
               updateCartFragments(res.data.cart_fragments);
             }
-            
+
             // CRITICAL: Auto-fill with email sync for BOTH fields
             if (email) {
-              var userData = { email: email, account_email: email, billing_email: email };
+              var userData = {
+                email: email,
+                account_email: email,
+                billing_email: email,
+              };
               fillCheckoutFormData(userData);
               syncEmailFields(email);
             }
@@ -461,16 +494,18 @@
         nonce: LLRP_Data.nonce,
       }).done(function (res) {
         if (res.success) {
-          console.log('🛒 CRITICAL: Code login successful - restoring cart IMMEDIATELY');
-          
+          console.log(
+            "🛒 CRITICAL: Code login successful - restoring cart IMMEDIATELY"
+          );
+
           // CRITICAL: Immediate cart restoration
           mergeLocalCartWithUserCart();
-          
+
           // Update cart fragments if provided
           if (res.data.cart_fragments) {
             updateCartFragments(res.data.cart_fragments);
           }
-          
+
           // Auto-fill user data in checkout form if available
           if (res.data.user_data) {
             fillCheckoutFormData(res.data.user_data);
@@ -510,16 +545,18 @@
         nonce: LLRP_Data.nonce,
       }).done(function (res) {
         if (res.success) {
-          console.log('🛒 CRITICAL: Password login successful - restoring cart IMMEDIATELY');
-          
+          console.log(
+            "🛒 CRITICAL: Password login successful - restoring cart IMMEDIATELY"
+          );
+
           // CRITICAL: Immediate cart restoration
           mergeLocalCartWithUserCart();
-          
+
           // Update cart fragments if provided
           if (res.data.cart_fragments) {
             updateCartFragments(res.data.cart_fragments);
           }
-          
+
           // Auto-fill user data in checkout form if available
           if (res.data.user_data) {
             fillCheckoutFormData(res.data.user_data);
@@ -555,16 +592,18 @@
       })
         .done(function (res) {
           if (res.success) {
-            console.log('🛒 CRITICAL: Registration successful - restoring cart IMMEDIATELY');
-            
+            console.log(
+              "🛒 CRITICAL: Registration successful - restoring cart IMMEDIATELY"
+            );
+
             // CRITICAL: Immediate cart restoration
             mergeLocalCartWithUserCart();
-            
+
             // Update cart fragments if provided
             if (res.data.cart_fragments) {
               updateCartFragments(res.data.cart_fragments);
             }
-            
+
             // Auto-fill user data in checkout form if available
             if (res.data.user_data) {
               fillCheckoutFormData(res.data.user_data);
@@ -892,16 +931,18 @@
           if (res.success) {
             console.log("LLRP: Login successful, redirecting...");
 
-            console.log('🛒 CRITICAL: Google login successful - restoring cart IMMEDIATELY');
-            
+            console.log(
+              "🛒 CRITICAL: Google login successful - restoring cart IMMEDIATELY"
+            );
+
             // CRITICAL: Immediate cart restoration
             mergeLocalCartWithUserCart();
-            
+
             // Update cart fragments if provided
             if (res.data.cart_fragments) {
               updateCartFragments(res.data.cart_fragments);
             }
-            
+
             // Auto-fill user data in checkout form if available + email sync
             if (res.data.user_data) {
               fillCheckoutFormData(res.data.user_data);
@@ -982,16 +1023,18 @@
             })
               .done(function (res) {
                 if (res.success) {
-                  console.log('🛒 CRITICAL: Facebook login successful - restoring cart IMMEDIATELY');
-                  
+                  console.log(
+                    "🛒 CRITICAL: Facebook login successful - restoring cart IMMEDIATELY"
+                  );
+
                   // CRITICAL: Immediate cart restoration
                   mergeLocalCartWithUserCart();
-                  
+
                   // Update cart fragments if provided
                   if (res.data.cart_fragments) {
                     updateCartFragments(res.data.cart_fragments);
                   }
-                  
+
                   // Auto-fill user data in checkout form if available + email sync
                   if (res.data.user_data) {
                     fillCheckoutFormData(res.data.user_data);
@@ -1169,141 +1212,212 @@
      */
     function syncEmailFields(email) {
       if (!email) return;
-      
-      console.log('📧 CRITICAL: Syncing email fields - account_email ↔ billing_email:', email);
-      
+
+      console.log(
+        "📧 CRITICAL: Syncing email fields - account_email ↔ billing_email:",
+        email
+      );
+
       // All possible email field selectors
       var emailSelectors = [
-        '#account_email',
-        '#billing_email', 
+        "#account_email",
+        "#billing_email",
         'input[name="account_email"]',
         'input[name="billing_email"]',
         'input[name="email"]',
-        '#email',
-        '.email-field'
+        "#email",
+        ".email-field",
       ];
-      
-      emailSelectors.forEach(function(selector) {
+
+      emailSelectors.forEach(function (selector) {
         var $field = $(selector);
         if ($field.length) {
-          $field.val(email).trigger('change');
-          console.log('📧 Email synced to field:', selector, '=', email);
+          $field.val(email).trigger("change");
+          console.log("📧 Email synced to field:", selector, "=", email);
         }
       });
-      
+
       // Setup real-time synchronization listeners
-      emailSelectors.forEach(function(selector) {
-        $(document).off('input.email-sync change.email-sync', selector);
-        $(document).on('input.email-sync change.email-sync', selector, function() {
-          var newEmail = $(this).val();
-          if (newEmail && newEmail !== email) {
-            console.log('📧 Real-time sync triggered by:', selector, '→', newEmail);
-            syncEmailFields(newEmail);
+      emailSelectors.forEach(function (selector) {
+        $(document).off("input.email-sync change.email-sync", selector);
+        $(document).on(
+          "input.email-sync change.email-sync",
+          selector,
+          function () {
+            var newEmail = $(this).val();
+            if (newEmail && newEmail !== email) {
+              console.log(
+                "📧 Real-time sync triggered by:",
+                selector,
+                "→",
+                newEmail
+              );
+              syncEmailFields(newEmail);
+            }
           }
-        });
+        );
       });
     }
-    
+
     /**
      * Auto-fill checkout form with user data + CRITICAL email sync
      */
     function fillCheckoutFormData(userData) {
-      if (!userData || typeof userData !== 'object') {
+      if (!userData || typeof userData !== "object") {
         return;
       }
-      
-      console.log('📝 CRITICAL: Auto-filling checkout form with user data:', userData);
-      
+
+      console.log(
+        "📝 CRITICAL: Auto-filling checkout form with user data:",
+        userData
+      );
+
       // CRITICAL: Email must go to BOTH account_email AND billing_email
-      var userEmail = userData.email || userData.billing_email || userData.account_email || '';
+      var userEmail =
+        userData.email ||
+        userData.billing_email ||
+        userData.account_email ||
+        "";
       if (userEmail) {
         syncEmailFields(userEmail);
       }
-      
+
       // Common field mappings
       var fieldMappings = {
         // CRITICAL: Both email fields must have same value
-        'account_email': userEmail,
-        'billing_email': userEmail,
-        'email': userEmail,
-        
+        account_email: userEmail,
+        billing_email: userEmail,
+        email: userEmail,
+
         // Billing fields
-        'billing_first_name': userData.first_name || userData.billing_first_name || '',
-        'billing_last_name': userData.last_name || userData.billing_last_name || '',
-        'billing_phone': userData.phone || userData.billing_phone || '',
-        'billing_address_1': userData.address || userData.billing_address_1 || '',
-        'billing_address_2': userData.address_2 || userData.billing_address_2 || '',
-        'billing_city': userData.city || userData.billing_city || '',
-        'billing_state': userData.state || userData.billing_state || '',
-        'billing_postcode': userData.postcode || userData.billing_postcode || userData.cep || '',
-        'billing_country': userData.country || userData.billing_country || 'BR',
-        'billing_cpf': userData.cpf || userData.billing_cpf || '',
-        'billing_cnpj': userData.cnpj || userData.billing_cnpj || '',
-        
+        billing_first_name:
+          userData.first_name || userData.billing_first_name || "",
+        billing_last_name:
+          userData.last_name || userData.billing_last_name || "",
+        billing_phone: userData.phone || userData.billing_phone || "",
+        billing_address_1: userData.address || userData.billing_address_1 || "",
+        billing_address_2:
+          userData.address_2 || userData.billing_address_2 || "",
+        billing_city: userData.city || userData.billing_city || "",
+        billing_state: userData.state || userData.billing_state || "",
+        billing_postcode:
+          userData.postcode || userData.billing_postcode || userData.cep || "",
+        billing_country: userData.country || userData.billing_country || "BR",
+         billing_cpf: userData.cpf || userData.billing_cpf || "",
+         billing_cnpj: userData.cnpj || userData.billing_cnpj || "",
+         
+         // Brazilian Market plugin compatibility
+         billing_number: userData.number || userData.billing_number || "",
+         billing_neighborhood: userData.neighborhood || userData.billing_neighborhood || "",
+         billing_cellphone: userData.cellphone || userData.billing_cellphone || "",
+         billing_birthdate: userData.birthdate || userData.billing_birthdate || "",
+         billing_sex: userData.sex || userData.billing_sex || "",
+         billing_company_cnpj: userData.company_cnpj || userData.billing_company_cnpj || "",
+         billing_ie: userData.ie || userData.billing_ie || "",
+         billing_rg: userData.rg || userData.billing_rg || "",
+
         // Shipping fields (copy from billing)
-        'shipping_first_name': userData.first_name || userData.shipping_first_name || userData.billing_first_name || '',
-        'shipping_last_name': userData.last_name || userData.shipping_last_name || userData.billing_last_name || '',
-        'shipping_address_1': userData.address || userData.shipping_address_1 || userData.billing_address_1 || '',
-        'shipping_address_2': userData.address_2 || userData.shipping_address_2 || userData.billing_address_2 || '',
-        'shipping_city': userData.city || userData.shipping_city || userData.billing_city || '',
-        'shipping_state': userData.state || userData.shipping_state || userData.billing_state || '',
-        'shipping_postcode': userData.postcode || userData.shipping_postcode || userData.billing_postcode || userData.cep || '',
-        'shipping_country': userData.country || userData.shipping_country || userData.billing_country || 'BR'
+        shipping_first_name:
+          userData.first_name ||
+          userData.shipping_first_name ||
+          userData.billing_first_name ||
+          "",
+        shipping_last_name:
+          userData.last_name ||
+          userData.shipping_last_name ||
+          userData.billing_last_name ||
+          "",
+        shipping_address_1:
+          userData.address ||
+          userData.shipping_address_1 ||
+          userData.billing_address_1 ||
+          "",
+        shipping_address_2:
+          userData.address_2 ||
+          userData.shipping_address_2 ||
+          userData.billing_address_2 ||
+          "",
+        shipping_city:
+          userData.city ||
+          userData.shipping_city ||
+          userData.billing_city ||
+          "",
+        shipping_state:
+          userData.state ||
+          userData.shipping_state ||
+          userData.billing_state ||
+          "",
+        shipping_postcode:
+          userData.postcode ||
+          userData.shipping_postcode ||
+          userData.billing_postcode ||
+          userData.cep ||
+          "",
+        shipping_country:
+          userData.country ||
+          userData.shipping_country ||
+          userData.billing_country ||
+          "BR",
       };
-      
+
       // Fill form fields
-      Object.keys(fieldMappings).forEach(function(fieldName) {
+      Object.keys(fieldMappings).forEach(function (fieldName) {
         var value = fieldMappings[fieldName];
         if (value) {
           // Try different field selectors
           var selectors = [
-            '#' + fieldName,
+            "#" + fieldName,
             'input[name="' + fieldName + '"]',
             'select[name="' + fieldName + '"]',
-            'textarea[name="' + fieldName + '"]'
+            'textarea[name="' + fieldName + '"]',
           ];
-          
-          selectors.forEach(function(selector) {
+
+          selectors.forEach(function (selector) {
             var $field = $(selector);
             if ($field.length && !$field.val()) {
-              $field.val(value).trigger('change');
-              console.log('📝 Filled field', fieldName, 'with value:', value);
+              $field.val(value).trigger("change");
+              console.log("📝 Filled field", fieldName, "with value:", value);
             }
           });
         }
       });
-      
+
       // Trigger events to ensure other plugins/themes update
-      setTimeout(function() {
-        $('form.checkout').trigger('update_checkout');
-        $(document.body).trigger('updated_checkout');
-        $(document.body).trigger('checkout_updated');
+      setTimeout(function () {
+        $("form.checkout").trigger("update_checkout");
+        $(document.body).trigger("updated_checkout");
+        $(document.body).trigger("checkout_updated");
       }, 100);
     }
 
     // CRITICAL: Auto-restore cart when page loads if user is logged in
-    if (LLRP_Data.is_logged_in === '1' && !LLRP_Data.is_account_page) {
-      console.log('🛒 CRITICAL: User is logged in, attempting auto-restore cart on page load');
-      setTimeout(function() {
+    if (LLRP_Data.is_logged_in === "1" && !LLRP_Data.is_account_page) {
+      console.log(
+        "🛒 CRITICAL: User is logged in, attempting auto-restore cart on page load"
+      );
+      setTimeout(function () {
         var restored = restoreCartAfterLogin();
         if (!restored) {
-          console.log('🛒 No cart backup found to restore on page load');
+          console.log("🛒 No cart backup found to restore on page load");
         }
       }, 500);
     }
-    
+
     // CRITICAL: Additional failsafe - restore cart on any navigation to checkout
-    if (window.location.href.includes('checkout') || window.location.href.includes('finalizar-compra')) {
-      console.log('🛒 CRITICAL: On checkout page, checking for cart backup');
-      setTimeout(function() {
+    if (
+      window.location.href.includes("checkout") ||
+      window.location.href.includes("finalizar-compra")
+    ) {
+      console.log("🛒 CRITICAL: On checkout page, checking for cart backup");
+      setTimeout(function () {
         restoreCartAfterLogin();
       }, 1000);
     }
-    
+
     // CRITICAL: Backup cart before page unload
-    $(window).on('beforeunload', function() {
-      if (!LLRP_Data.is_logged_in || LLRP_Data.is_logged_in === '0') {
-        console.log('🛒 CRITICAL: Page unloading, saving cart as backup');
+    $(window).on("beforeunload", function () {
+      if (!LLRP_Data.is_logged_in || LLRP_Data.is_logged_in === "0") {
+        console.log("🛒 CRITICAL: Page unloading, saving cart as backup");
         saveCartBeforeLogin();
       }
     });
