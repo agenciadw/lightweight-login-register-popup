@@ -707,16 +707,20 @@ class Llrp_Frontend {
             setTimeout(function() {
                 if (typeof LLRP_Data !== 'undefined' && LLRP_Data.is_logged_in === '1') {
                     var emailField = $('#billing_email');
-                    // More aggressive check - if user is logged in and any key field is empty, try autofill
-                    if (emailField.length && (!emailField.val() || ($('#billing_first_name').length && !$('#billing_first_name').val()))) {
-                        console.log('🔄 LLRP CRITICAL: Logged-in user with empty checkout form detected, requesting autofill');
+                    
+                    // Check if form is truly empty (not just pre-filled by popup)
+                    var isFormReallyEmpty = emailField.length && !emailField.val() && 
+                                           $('#billing_first_name').length && !$('#billing_first_name').val();
+                    
+                    if (isFormReallyEmpty) {
+                        console.log('🔄 LLRP: Logged-in user with truly empty checkout form detected, requesting autofill');
                         
                         $.post(LLRP_Data.ajax_url, {
                             action: 'llrp_get_checkout_user_data',
                             nonce: LLRP_Data.nonce
                         }).done(function(response) {
                             if (response.success && response.data) {
-                                console.log('🔄 LLRP CRITICAL: Autofill data received, filling form:', response.data);
+                                console.log('🔄 LLRP: Fallback autofill data received, filling form:', response.data);
                                 
                                 if (typeof fillCheckoutFormData === 'function') {
                                     fillCheckoutFormData(response.data);
@@ -733,26 +737,45 @@ class Llrp_Frontend {
                                     syncEmailFields(response.data.email);
                                 }
                                 
-                                console.log('🔄 LLRP CRITICAL: Auto-fill completed for direct checkout user');
+                                console.log('🔄 LLRP: Fallback auto-fill completed');
                             }
                         }).fail(function() {
-                            console.log('🔄 LLRP: Autofill request failed - no problem, continuing normally');
+                            console.log('🔄 LLRP: Fallback autofill request failed - no problem, continuing normally');
                         });
                     } else if (emailField.length && emailField.val()) {
-                        console.log('🔄 LLRP: Checkout form already has email (' + emailField.val() + '), skipping autofill');
+                        console.log('🔄 LLRP: Checkout form already has email (' + emailField.val() + '), skipping fallback autofill');
+                    } else {
+                        console.log('🔄 LLRP: Checkout form partially filled, skipping fallback autofill');
                     }
                 }
-            }, 2000); // Increased delay to ensure page is fully loaded
+            }, 3000); // Longer delay to avoid conflict with popup autofill
         });
         </script>
         <?php
     }
     
     /**
-     * CRITICAL: Force autofill when logged-in user accesses checkout page
+     * CRITICAL: Force autofill when logged-in user accesses checkout page (ONLY for direct access)
      */
     public static function force_checkout_autofill_if_logged_in() {
         if ( ! is_user_logged_in() ) {
+            return;
+        }
+        
+        // CRITICAL: Don't force autofill if this came from our popup login
+        if ( wp_doing_ajax() ) {
+            error_log('🔄 LLRP: Skipping force autofill - AJAX request (likely our popup)');
+            return;
+        }
+        
+        // Check if there's a recent login from our popup (within last 10 seconds)
+        if ( ! session_id() ) {
+            session_start();
+        }
+        
+        if ( isset( $_SESSION['llrp_popup_login_timestamp'] ) && 
+             ( time() - $_SESSION['llrp_popup_login_timestamp'] ) < 10 ) {
+            error_log('🔄 LLRP: Skipping force autofill - recent popup login detected');
             return;
         }
         
@@ -763,7 +786,7 @@ class Llrp_Frontend {
             return;
         }
         
-        error_log('🔄 LLRP CRITICAL: Forcing autofill for logged-in user on checkout: ' . $user_id);
+        error_log('🔄 LLRP CRITICAL: Forcing autofill for logged-in user on checkout (DIRECT ACCESS): ' . $user_id);
         
         // Inline JavaScript to force autofill
         ?>
