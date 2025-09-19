@@ -14,6 +14,11 @@ class Llrp_Frontend {
         // Add social login buttons to My Account page
         add_action( 'woocommerce_login_form_end', [ __CLASS__, 'add_social_login_buttons' ] );
         add_action( 'woocommerce_register_form_end', [ __CLASS__, 'add_social_register_buttons' ] );
+        
+        // Fluid Checkout compatibility hooks
+        add_action( 'wp_ajax_llrp_fluid_checkout_login', [ __CLASS__, 'ajax_fluid_checkout_login' ] );
+        add_action( 'wp_ajax_nopriv_llrp_fluid_checkout_login', [ __CLASS__, 'ajax_fluid_checkout_login' ] );
+        add_filter( 'woocommerce_add_to_cart_fragments', [ __CLASS__, 'add_fluid_checkout_fragments' ] );
     }
 
  public static function enqueue_assets() {
@@ -22,8 +27,10 @@ class Llrp_Frontend {
         return;
     }
     
-    // 2) carregar no carrinho sempre, na minha conta só se não logado
-    $should_load = is_cart() || ( is_account_page() && ! is_user_logged_in() );
+    // 2) carregar no carrinho sempre, na minha conta e checkout só se não logado
+    $should_load = is_cart() || 
+                   ( is_account_page() && ! is_user_logged_in() ) ||
+                   ( is_checkout() && ! is_user_logged_in() );
     
     if ( ! $should_load ) {
         return;
@@ -60,6 +67,7 @@ class Llrp_Frontend {
         'initial_cart_count'    => (int) WC()->cart->get_cart_contents_count(),
         'is_logged_in'          => is_user_logged_in() ? 1 : 0,
         'is_cart_page'          => is_cart() ? 1 : 0,
+        'is_checkout_page'      => is_checkout() ? 1 : 0,
         'is_account_page'       => is_account_page() ? 1 : 0,
         'cpf_login_enabled'     => get_option( 'llrp_cpf_login_enabled' ),
         'cnpj_login_enabled'    => get_option( 'llrp_cnpj_login_enabled' ),
@@ -141,8 +149,8 @@ class Llrp_Frontend {
             return;
         }
 
-        // Only on cart page
-        if ( ! is_cart() ) {
+        // Only on cart and checkout pages
+        if ( ! is_cart() && ! is_checkout() ) {
             return;
         }
 
@@ -479,6 +487,47 @@ class Llrp_Frontend {
             <?php endif; ?>
         </div>
         <?php
+    }
+
+    /**
+     * AJAX handler for Fluid Checkout login state check
+     */
+    public static function ajax_fluid_checkout_login() {
+        check_ajax_referer( 'llrp_nonce', 'nonce' );
+        
+        $response = [
+            'is_logged_in' => is_user_logged_in(),
+            'user_id' => get_current_user_id(),
+            'user_email' => '',
+            'user_name' => '',
+        ];
+        
+        if ( is_user_logged_in() ) {
+            $user = wp_get_current_user();
+            $response['user_email'] = $user->user_email;
+            $response['user_name'] = $user->display_name ?: $user->user_login;
+        }
+        
+        wp_send_json_success( $response );
+    }
+
+    /**
+     * Add Fluid Checkout specific fragments
+     */
+    public static function add_fluid_checkout_fragments( $fragments ) {
+        // Add user login state fragment
+        $fragments['.llrp-user-state'] = is_user_logged_in() ? 'logged-in' : 'logged-out';
+        
+        // Add Fluid Checkout specific fragments if the plugin is active
+        if ( class_exists( 'FluidCheckout' ) ) {
+            // Add checkout form state
+            $fragments['.fc-checkout-form'] = is_user_logged_in() ? 'user-logged-in' : 'user-logged-out';
+            
+            // Add cart state
+            $fragments['.fc-cart'] = is_user_logged_in() ? 'user-logged-in' : 'user-logged-out';
+        }
+        
+        return $fragments;
     }
 }
 

@@ -8,18 +8,168 @@
     var deliveryMethod = "email";
     var userEmail = ""; // Variável para armazenar o e-mail do usuário
 
+    // Cart persistence functions
+    function saveCartToLocalStorage() {
+      console.log('LLRP: Saving cart to localStorage...');
+      if (typeof wc_add_to_cart_params !== 'undefined' && window.wc_cart_fragments_params) {
+        // Get current cart data from WooCommerce fragments
+        var cartData = {
+          fragments: window.wc_cart_fragments_params.cart_fragments || {},
+          cart_hash: window.wc_cart_fragments_params.cart_hash || '',
+          timestamp: Date.now()
+        };
+        localStorage.setItem('llrp_cart_backup', JSON.stringify(cartData));
+        console.log('LLRP: Cart saved to localStorage', cartData);
+      }
+    }
+
+    function restoreCartFromLocalStorage() {
+      console.log('LLRP: Attempting to restore cart from localStorage...');
+      var savedCart = localStorage.getItem('llrp_cart_backup');
+      if (savedCart) {
+        try {
+          var cartData = JSON.parse(savedCart);
+          // Check if cart data is not too old (24 hours)
+          if (cartData.timestamp && (Date.now() - cartData.timestamp) < 24 * 60 * 60 * 1000) {
+            console.log('LLRP: Restoring cart from localStorage', cartData);
+            if (cartData.fragments) {
+              updateCartFragments(cartData.fragments);
+            }
+            // Clear the backup after restoration
+            localStorage.removeItem('llrp_cart_backup');
+            return true;
+          } else {
+            console.log('LLRP: Cart data is too old, removing...');
+            localStorage.removeItem('llrp_cart_backup');
+          }
+        } catch (e) {
+          console.log('LLRP: Error parsing saved cart data', e);
+          localStorage.removeItem('llrp_cart_backup');
+        }
+      }
+      return false;
+    }
+
+    function mergeLocalCartWithUserCart() {
+      console.log('LLRP: Merging local cart with user cart...');
+      // This will be handled by the server-side after login
+      // The cart fragments will be updated via AJAX response
+      restoreCartFromLocalStorage();
+    }
+
+    // Function to refresh nonce when needed
+    function refreshNonce(callback) {
+      $.post(LLRP_Data.ajax_url, {
+        action: "llrp_refresh_nonce",
+      })
+        .done(function (res) {
+          if (res.success && res.data.nonce) {
+            LLRP_Data.nonce = res.data.nonce;
+            console.log("LLRP: Nonce refreshed successfully");
+            if (callback) callback(true);
+          } else {
+            console.log("LLRP: Failed to refresh nonce");
+            if (callback) callback(false);
+          }
+        })
+        .fail(function () {
+          console.log("LLRP: AJAX failed to refresh nonce");
+          if (callback) callback(false);
+        });
+    }
+
+    // Enhanced AJAX function that handles nonce errors automatically
+    function llrpAjax(data, successCallback, errorCallback) {
+      $.post(LLRP_Data.ajax_url, data)
+        .done(function (res) {
+          if (res.success) {
+            successCallback(res);
+          } else {
+            // Check if it's a nonce error
+            if (
+              res.data &&
+              res.data.message &&
+              (res.data.message.includes("segurança") ||
+                res.data.message.includes("Nonce verification failed"))
+            ) {
+              console.log("LLRP: Nonce error detected, trying to refresh...");
+
+              refreshNonce(function (refreshed) {
+                if (refreshed) {
+                  // Update the nonce in the data and retry
+                  data.nonce = LLRP_Data.nonce;
+
+                  $.post(LLRP_Data.ajax_url, data)
+                    .done(function (retryRes) {
+                      if (retryRes.success) {
+                        successCallback(retryRes);
+                      } else {
+                        errorCallback(retryRes);
+                      }
+                    })
+                    .fail(function () {
+                      errorCallback({
+                        data: {
+                          message: "Erro de conexão após renovar nonce.",
+                        },
+                      });
+                    });
+                } else {
+                  errorCallback({
+                    data: {
+                      message:
+                        "Não foi possível renovar a sessão. Recarregue a página.",
+                    },
+                  });
+                }
+              });
+            } else {
+              errorCallback(res);
+            }
+          }
+        })
+        .fail(function (xhr) {
+          errorCallback({ data: { message: "Erro de conexão." } });
+        });
+    }
+
     function openPopup(e) {
       if (e) e.preventDefault();
 
-      // Se o usuário já está logado, não abrir o popup
-      if (LLRP_Data.is_logged_in === "1") {
-        // Permitir que o clique continue normalmente para ir ao checkout
-        return true;
-      }
+      // Save cart before showing popup
+      saveCartToLocalStorage();
 
-      resetSteps();
-      $overlay.removeClass("hidden");
-      $popup.removeClass("hidden");
+      // Verificação dinâmica do status de login via AJAX
+      $.post(LLRP_Data.ajax_url, {
+        action: "llrp_check_login_status",
+        nonce: LLRP_Data.nonce,
+      })
+        .done(function (res) {
+          if (res.success && res.data.is_logged_in) {
+            // Usuário está logado, redirecionar para checkout
+            console.log("User is logged in, redirecting to checkout");
+            window.location.href = res.data.checkout_url;
+          } else {
+            // Usuário não está logado, mostrar popup
+            console.log("User not logged in, showing popup");
+            resetSteps();
+            $overlay.removeClass("hidden");
+            $popup.removeClass("hidden");
+            
+            // Hide close button if on checkout page
+            hideCloseButtonIfCheckout();
+          }
+        })
+        .fail(function () {
+          // Em caso de erro, assumir que não está logado e mostrar popup
+          console.log("AJAX failed, showing popup as fallback");
+          resetSteps();
+          $overlay.removeClass("hidden");
+          $popup.removeClass("hidden");
+          
+          // Hide close button if on checkout page
+          hideCloseButtonIfCheckout();
+        });
     }
 
     function closePopup() {
@@ -37,6 +187,21 @@
 
     function clearFeedback() {
       $popup.find(".llrp-feedback").text("");
+    }
+
+    function hideCloseButtonIfCheckout() {
+      // Check if we're on checkout or finalizar-compra page
+      var isCheckoutPage = window.location.href.includes('checkout') || 
+                          window.location.href.includes('finalizar-compra') ||
+                          LLRP_Data.is_checkout_page === '1';
+      
+      if (isCheckoutPage) {
+        console.log('LLRP: Hiding close button on checkout page');
+        $popup.find('.llrp-close').hide();
+      } else {
+        console.log('LLRP: Showing close button on non-checkout page');
+        $popup.find('.llrp-close').show();
+      }
     }
 
     function showFeedback(selector, message, isSuccess) {
@@ -123,19 +288,49 @@
         );
         return;
       }
-      $.post(LLRP_Data.ajax_url, {
+
+      // Use direct AJAX for registration (no nonce dependency)
+        $.post(LLRP_Data.ajax_url, {
         action: "llrp_register",
         identifier: savedIdentifier,
         email: email,
         password: password,
-        nonce: LLRP_Data.nonce,
-      }).done(function (res) {
-        if (res.success) {
-          window.location = res.data.redirect;
-        } else {
-          showFeedback("llrp-feedback-register-email", res.data.message);
-        }
-      });
+        // Remove nonce dependency for registration
+      })
+        .done(function (res) {
+          if (res.success) {
+            // Update cart fragments if provided
+            if (res.data.cart_fragments) {
+              updateCartFragments(res.data.cart_fragments);
+            }
+            
+            // Merge local cart with user cart after successful registration
+            mergeLocalCartWithUserCart();
+            
+            // Auto-fill user data in checkout form
+            if (email) {
+              fillCheckoutFormData({ email: email });
+            }
+
+            // Check if Fluid Checkout is active and handle accordingly
+            if (isFluidCheckoutActive()) {
+              // For Fluid Checkout, reload the page to ensure proper state detection
+              window.location.reload();
+            } else {
+              // For standard WooCommerce, redirect normally
+              window.location = res.data.redirect;
+            }
+          } else {
+            showFeedback("llrp-feedback-register-email", res.data.message);
+          }
+        })
+        .fail(function (xhr) {
+          console.log("LLRP: Registration AJAX failed:", xhr);
+          showFeedback(
+            "llrp-feedback-register-email",
+            "Erro de conexão. Tente novamente."
+          );
+        });
     }
 
     function handleSendCode() {
@@ -168,7 +363,34 @@
         nonce: LLRP_Data.nonce,
       }).done(function (res) {
         if (res.success) {
-          window.location.href = res.data.redirect;
+          // Update cart fragments if provided
+          if (res.data.cart_fragments) {
+            updateCartFragments(res.data.cart_fragments);
+          }
+          
+          // Merge local cart with user cart after successful login
+          mergeLocalCartWithUserCart();
+          
+          // Auto-fill user data in checkout form if available
+          if (res.data.user_data) {
+            fillCheckoutFormData(res.data.user_data);
+          }
+
+          // Check if Fluid Checkout is active and handle accordingly
+          console.log(
+            "LLRP: Checking Fluid Checkout status after code login..."
+          );
+          if (isFluidCheckoutActive()) {
+            console.log("LLRP: Fluid Checkout detected, reloading page...");
+            // For Fluid Checkout, reload the page to ensure proper state detection
+            setTimeout(function () {
+              window.location.reload();
+            }, 500);
+          } else {
+            console.log("LLRP: Standard WooCommerce, redirecting normally...");
+            // For standard WooCommerce, redirect normally
+            window.location.href = res.data.redirect;
+          }
         } else {
           showFeedback("llrp-feedback-code", res.data.message);
         }
@@ -188,7 +410,27 @@
         nonce: LLRP_Data.nonce,
       }).done(function (res) {
         if (res.success) {
-          window.location = res.data.redirect;
+          // Update cart fragments if provided
+          if (res.data.cart_fragments) {
+            updateCartFragments(res.data.cart_fragments);
+          }
+          
+          // Merge local cart with user cart after successful login
+          mergeLocalCartWithUserCart();
+          
+          // Auto-fill user data in checkout form if available
+          if (res.data.user_data) {
+            fillCheckoutFormData(res.data.user_data);
+          }
+
+          // Check if Fluid Checkout is active and handle accordingly
+          if (isFluidCheckoutActive()) {
+            // For Fluid Checkout, reload the page to ensure proper state detection
+            window.location.reload();
+          } else {
+            // For standard WooCommerce, redirect normally
+            window.location = res.data.redirect;
+          }
         } else {
           showFeedback("llrp-feedback-login", res.data.message);
         }
@@ -201,37 +443,83 @@
         showFeedback("llrp-feedback-register", "Por favor, insira uma senha.");
         return;
       }
+
+      // Use direct AJAX for registration (no nonce dependency)
       $.post(LLRP_Data.ajax_url, {
         action: "llrp_register",
         identifier: savedIdentifier,
         password: password,
-        nonce: LLRP_Data.nonce,
-      }).done(function (res) {
-        if (res.success) {
-          window.location = res.data.redirect;
-        } else {
-          showFeedback("llrp-feedback-register", res.data.message);
-        }
-      });
+        // Remove nonce dependency for registration
+      })
+        .done(function (res) {
+          if (res.success) {
+            // Update cart fragments if provided
+            if (res.data.cart_fragments) {
+              updateCartFragments(res.data.cart_fragments);
+            }
+            
+            // Merge local cart with user cart after successful registration
+            mergeLocalCartWithUserCart();
+            
+            // Auto-fill user data in checkout form if available
+            if (res.data.user_data) {
+              fillCheckoutFormData(res.data.user_data);
+            }
+
+            // Check if Fluid Checkout is active and handle accordingly
+            if (isFluidCheckoutActive()) {
+              // For Fluid Checkout, reload the page to ensure proper state detection
+              window.location.reload();
+            } else {
+              // For standard WooCommerce, redirect normally
+              window.location = res.data.redirect;
+            }
+          } else {
+            showFeedback("llrp-feedback-register", res.data.message);
+          }
+        })
+        .fail(function (xhr) {
+          console.log("LLRP: Registration AJAX failed:", xhr);
+          showFeedback(
+            "llrp-feedback-register",
+            "Erro de conexão. Tente novamente."
+          );
+        });
     }
 
-    // Event Binding
-    $(".checkout-button").on("click.llrp", function (e) {
-      console.log(
-        "Checkout button clicked. User logged in:",
-        LLRP_Data.is_logged_in
-      );
+    // Event Binding - Interceptação mais robusta do botão de checkout
+    function interceptCheckoutButton(e) {
+      console.log("Checkout button clicked, intercepting...");
 
-      // Se o usuário já está logado, permitir o comportamento normal do botão
-      if (LLRP_Data.is_logged_in === "1") {
-        console.log("User is logged in, allowing normal checkout behavior");
-        return true; // Não fazer nada, deixar o clique continuar normalmente
-      }
+      // SEMPRE prevenir o comportamento padrão primeiro
+      e.preventDefault();
+      e.stopPropagation();
 
-      // Se não está logado, abrir o popup
-      console.log("User not logged in, opening popup");
+      // Abrir o popup que fará a verificação dinâmica
       openPopup(e);
-    });
+
+      // Retornar false para garantir que o evento não continue
+      return false;
+    }
+
+    // Usar event delegation para garantir que funcione com elementos dinâmicos
+    $(document).on("click.llrp", ".checkout-button", interceptCheckoutButton);
+
+    // Também interceptar outros seletores comuns de botões de checkout
+    $(document).on(
+      "click.llrp",
+      'a[href*="checkout"], a[href*="finalizar-compra"]',
+      function (e) {
+        // Só interceptar se não estivermos na página de checkout
+        if (
+          !window.location.href.includes("checkout") &&
+          !window.location.href.includes("finalizar-compra")
+        ) {
+          console.log("Checkout link clicked, intercepting...");
+          return interceptCheckoutButton(e);
+        }
+      }
+    );
     $popup.on("click", ".llrp-close", closePopup);
     $popup.on("click", ".llrp-back", resetSteps);
     $popup.on("click", "#llrp-email-submit", handleIdentifierStep);
@@ -500,9 +788,25 @@
           if (res.success) {
             console.log("LLRP: Login successful, redirecting...");
 
-            // Smart redirect based on current page
+            // Update cart fragments if provided
+            if (res.data.cart_fragments) {
+              updateCartFragments(res.data.cart_fragments);
+            }
+            
+            // Merge local cart with user cart after successful login
+            mergeLocalCartWithUserCart();
+            
+            // Auto-fill user data in checkout form if available
+            if (res.data.user_data) {
+              fillCheckoutFormData(res.data.user_data);
+            }
+
+            // Smart redirect based on current page and Fluid Checkout
             if (LLRP_Data.is_account_page === "1") {
               // On My Account page, reload to show logged-in state
+              window.location.reload();
+            } else if (isFluidCheckoutActive()) {
+              // For Fluid Checkout, reload the page to ensure proper state detection
               window.location.reload();
             } else {
               // On cart page, redirect to checkout
@@ -569,9 +873,25 @@
             })
               .done(function (res) {
                 if (res.success) {
-                  // Smart redirect based on current page
+                  // Update cart fragments if provided
+                  if (res.data.cart_fragments) {
+                    updateCartFragments(res.data.cart_fragments);
+                  }
+                  
+                  // Merge local cart with user cart after successful login
+                  mergeLocalCartWithUserCart();
+                  
+                  // Auto-fill user data in checkout form if available
+                  if (res.data.user_data) {
+                    fillCheckoutFormData(res.data.user_data);
+                  }
+
+                  // Smart redirect based on current page and Fluid Checkout
                   if (LLRP_Data.is_account_page === "1") {
                     // On My Account page, reload to show logged-in state
+                    window.location.reload();
+                  } else if (isFluidCheckoutActive()) {
+                    // For Fluid Checkout, reload the page to ensure proper state detection
                     window.location.reload();
                   } else {
                     // On cart page, redirect to checkout
@@ -647,13 +967,161 @@
     // Make the checkout button visible now that the JS is ready
     $(".checkout-button").css("visibility", "visible");
 
-    // Se o usuário está logado, garantir que o botão checkout funcione normalmente
-    if (LLRP_Data.is_logged_in === "1") {
-      console.log("User is logged in, ensuring checkout button works normally");
-      // Remover qualquer evento que possa estar interferindo
-      $(".checkout-button").off("click.llrp");
-      // Garantir que o botão seja clicável
-      $(".checkout-button").css("pointer-events", "auto");
+    // Auto-show popup if user accesses checkout page directly without being logged in
+    if (LLRP_Data.is_checkout_page === "1" && LLRP_Data.is_logged_in !== "1") {
+      console.log(
+        "User accessed checkout page directly without being logged in, showing popup automatically"
+      );
+
+      // Small delay to ensure page is fully loaded
+      setTimeout(function () {
+        openPopup();
+      }, 500);
+    }
+
+    /**
+     * Check if Fluid Checkout is active
+     */
+    function isFluidCheckoutActive() {
+      // Check for Fluid Checkout indicators
+      var isActive =
+        typeof window.fluidCheckout !== "undefined" ||
+        $(".fluid-checkout").length > 0 ||
+        $(".fc-checkout").length > 0 ||
+        $("body").hasClass("fluid-checkout") ||
+        $("body").hasClass("fc-checkout") ||
+        $("body").hasClass("fluid-checkout-checkout") ||
+        $(".fc-step").length > 0 ||
+        $(".fc-checkout-step").length > 0 ||
+        $(".checkout-step").length > 0 ||
+        $(".woocommerce-checkout").hasClass("fluid-checkout") ||
+        $(".woocommerce-checkout").hasClass("fc-checkout") ||
+        window.location.href.indexOf("fluid-checkout") !== -1 ||
+        window.location.href.indexOf("finalizar-compra") !== -1 ||
+        window.location.href.indexOf("checkout") !== -1 ||
+        $(".checkout-step").length > 0 ||
+        $("form.checkout").hasClass("fluid-checkout") ||
+        $("form.checkout").hasClass("fc-checkout");
+
+      console.log("LLRP: Fluid Checkout detection:", {
+        window_fluidCheckout: typeof window.fluidCheckout !== "undefined",
+        fluid_checkout_elements: $(".fluid-checkout").length,
+        fc_checkout_elements: $(".fc-checkout").length,
+        body_fluid_checkout: $("body").hasClass("fluid-checkout"),
+        body_fc_checkout: $("body").hasClass("fc-checkout"),
+        fc_step_elements: $(".fc-step").length,
+        checkout_step_elements: $(".checkout-step").length,
+        finalizar_compra_url:
+          window.location.href.indexOf("finalizar-compra") !== -1,
+        is_active: isActive,
+      });
+
+      return isActive;
+    }
+
+    /**
+     * Update cart fragments for Fluid Checkout compatibility
+     */
+    function updateCartFragments(fragments) {
+      if (!fragments || typeof fragments !== "object") {
+        return;
+      }
+
+      console.log("LLRP: Updating cart fragments:", fragments);
+
+      // Update each fragment
+      $.each(fragments, function (selector, content) {
+        if (selector && content !== undefined) {
+          var $element = $(selector);
+          if ($element.length) {
+            $element.html(content);
+            console.log("LLRP: Updated fragment:", selector);
+          }
+        }
+      });
+
+      // Trigger WooCommerce cart fragments update event
+      $(document.body).trigger("wc_fragments_refreshed");
+
+      // Trigger Fluid Checkout specific events if available
+      if (isFluidCheckoutActive()) {
+        $(document.body).trigger("fluidcheckout_fragments_updated");
+        $(document.body).trigger("fc_fragments_updated");
+      }
+    }
+
+    /**
+     * Auto-fill checkout form with user data
+     */
+    function fillCheckoutFormData(userData) {
+      if (!userData || typeof userData !== 'object') {
+        return;
+      }
+      
+      console.log('LLRP: Auto-filling checkout form with user data:', userData);
+      
+      // Common field mappings
+      var fieldMappings = {
+        // Billing fields
+        'billing_email': userData.email || userData.billing_email || '',
+        'billing_first_name': userData.first_name || userData.billing_first_name || '',
+        'billing_last_name': userData.last_name || userData.billing_last_name || '',
+        'billing_phone': userData.phone || userData.billing_phone || '',
+        'billing_address_1': userData.address || userData.billing_address_1 || '',
+        'billing_address_2': userData.address_2 || userData.billing_address_2 || '',
+        'billing_city': userData.city || userData.billing_city || '',
+        'billing_state': userData.state || userData.billing_state || '',
+        'billing_postcode': userData.postcode || userData.billing_postcode || userData.cep || '',
+        'billing_country': userData.country || userData.billing_country || 'BR',
+        'billing_cpf': userData.cpf || userData.billing_cpf || '',
+        'billing_cnpj': userData.cnpj || userData.billing_cnpj || '',
+        
+        // Shipping fields (copy from billing)
+        'shipping_first_name': userData.first_name || userData.shipping_first_name || userData.billing_first_name || '',
+        'shipping_last_name': userData.last_name || userData.shipping_last_name || userData.billing_last_name || '',
+        'shipping_address_1': userData.address || userData.shipping_address_1 || userData.billing_address_1 || '',
+        'shipping_address_2': userData.address_2 || userData.shipping_address_2 || userData.billing_address_2 || '',
+        'shipping_city': userData.city || userData.shipping_city || userData.billing_city || '',
+        'shipping_state': userData.state || userData.shipping_state || userData.billing_state || '',
+        'shipping_postcode': userData.postcode || userData.shipping_postcode || userData.billing_postcode || userData.cep || '',
+        'shipping_country': userData.country || userData.shipping_country || userData.billing_country || 'BR'
+      };
+      
+      // Fill form fields
+      Object.keys(fieldMappings).forEach(function(fieldName) {
+        var value = fieldMappings[fieldName];
+        if (value) {
+          // Try different field selectors
+          var selectors = [
+            '#' + fieldName,
+            'input[name="' + fieldName + '"]',
+            'select[name="' + fieldName + '"]',
+            'textarea[name="' + fieldName + '"]'
+          ];
+          
+          selectors.forEach(function(selector) {
+            var $field = $(selector);
+            if ($field.length && !$field.val()) {
+              $field.val(value).trigger('change');
+              console.log('LLRP: Filled field', fieldName, 'with value:', value);
+            }
+          });
+        }
+      });
+      
+      // Trigger events to ensure other plugins/themes update
+      setTimeout(function() {
+        $('form.checkout').trigger('update_checkout');
+        $(document.body).trigger('updated_checkout');
+        $(document.body).trigger('checkout_updated');
+      }, 100);
+    }
+
+    // Auto-restore cart when page loads if user is logged in
+    if (LLRP_Data.is_logged_in === '1' && !LLRP_Data.is_account_page) {
+      setTimeout(function() {
+        restoreCartFromLocalStorage();
+      }, 500);
     }
   });
 })(jQuery);
