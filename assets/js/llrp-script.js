@@ -573,13 +573,27 @@
             fillCheckoutFormData(res.data.user_data);
           }
 
-          // Check if Fluid Checkout is active and handle accordingly
-          if (isFluidCheckoutActive()) {
-            // For Fluid Checkout, reload the page to ensure proper state detection
-            window.location.reload();
+          // SAFE REDIRECT: Check if we need to redirect or stay on current page
+          if (res.data.redirect && res.data.redirect !== window.location.href) {
+            // Only redirect if it's a different URL
+            if (isFluidCheckoutActive() && window.location.href.includes('checkout')) {
+              // For Fluid Checkout on checkout page, just reload to preserve checkout state
+              console.log("🔄 FLUID CHECKOUT: Reloading checkout page to maintain state");
+              setTimeout(function() {
+                window.location.reload();
+              }, 500);
+            } else {
+              // For other cases, redirect normally
+              console.log("🔄 REDIRECTING to:", res.data.redirect);
+              window.location = res.data.redirect;
+            }
           } else {
-            // For standard WooCommerce, redirect normally
-            window.location = res.data.redirect;
+            // No redirect needed, just close popup and reload fragments
+            console.log("🔄 NO REDIRECT: Staying on current page");
+            hidePopup();
+            if (res.data.cart_fragments) {
+              updateCartFragments(res.data.cart_fragments);
+            }
           }
         } else {
           showFeedback("llrp-feedback-login", res.data.message);

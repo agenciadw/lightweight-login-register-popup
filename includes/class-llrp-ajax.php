@@ -242,8 +242,11 @@ class Llrp_Ajax {
         // Trigger cart fragments update for Fluid Checkout compatibility
         self::trigger_cart_fragments_update();
 
+        // SMART REDIRECT: Based on referrer or current context
+        $redirect_url = self::get_smart_redirect_url();
+        
         wp_send_json_success( [ 
-            'redirect' => wc_get_checkout_url(),
+            'redirect' => $redirect_url,
             'user_logged_in' => true,
             'cart_fragments' => self::get_cart_fragments(),
             'user_data' => self::get_user_checkout_data($user->ID)
@@ -288,8 +291,11 @@ class Llrp_Ajax {
         // Trigger cart fragments update for Fluid Checkout compatibility
         self::trigger_cart_fragments_update();
 
+        // SMART REDIRECT: Based on referrer or current context
+        $redirect_url = self::get_smart_redirect_url();
+        
         wp_send_json_success([ 
-            'redirect' => wc_get_checkout_url(),
+            'redirect' => $redirect_url,
             'user_logged_in' => true,
             'cart_fragments' => self::get_cart_fragments(),
             'user_data' => self::get_user_checkout_data($user_signon->ID)
@@ -1036,6 +1042,39 @@ class Llrp_Ajax {
     /**
      * Get user data for checkout form auto-fill
      */
+    /**
+     * CRITICAL: Smart redirect URL based on context to prevent cart clearing
+     */
+    private static function get_smart_redirect_url() {
+        // Check HTTP_REFERER to understand where the user came from
+        $referer = wp_get_referer();
+        $current_url = isset($_SERVER['REQUEST_URI']) ? $_SERVER['REQUEST_URI'] : '';
+        
+        error_log('🔄 LLRP: Smart redirect - Referer: ' . $referer . ' | Current: ' . $current_url);
+        
+        // If user is coming from cart page, redirect to checkout
+        if ($referer && (strpos($referer, '/cart') !== false || strpos($referer, '/carrinho') !== false)) {
+            error_log('🔄 LLRP: User came from cart, redirecting to checkout');
+            return wc_get_checkout_url();
+        }
+        
+        // If user is already on checkout page, stay on checkout (prevent clearing)
+        if ($referer && (strpos($referer, '/checkout') !== false || strpos($referer, '/finalizar-compra') !== false)) {
+            error_log('🔄 LLRP: User is on checkout, staying on checkout to preserve state');
+            return $referer; // Stay on the same checkout page
+        }
+        
+        // Check current URL context
+        if (strpos($current_url, '/checkout') !== false || strpos($current_url, '/finalizar-compra') !== false) {
+            error_log('🔄 LLRP: Current URL is checkout, staying on current page');
+            return wc_get_checkout_url();
+        }
+        
+        // Default: redirect to checkout
+        error_log('🔄 LLRP: Default redirect to checkout');
+        return wc_get_checkout_url();
+    }
+
     private static function get_user_checkout_data($user_id) {
         if (!$user_id) {
             return [];
