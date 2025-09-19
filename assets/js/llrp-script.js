@@ -165,11 +165,22 @@
     }
 
     function mergeLocalCartWithUserCart() {
-      console.log("🛒 CRITICAL: Merging local cart with user cart - STARTED");
-      // Immediately attempt restoration
-      var restored = restoreCartAfterLogin();
-      if (!restored) {
-        console.log("🛒 No local cart to merge, server-side cart will be used");
+      console.log("🛒 SAFE: Checking if cart merge is needed");
+
+      // SAFE MODE: Only restore if there's a legitimate backup and current cart is empty
+      var currentCartCount = $(".cart-contents-count").text() || "0";
+      if (currentCartCount === "0" || parseInt(currentCartCount) === 0) {
+        console.log("🛒 SAFE: Current cart is empty, attempting restoration");
+        var restored = restoreCartAfterLogin();
+        if (!restored) {
+          console.log("🛒 SAFE: No local cart backup found - this is normal");
+        }
+      } else {
+        console.log(
+          "🛒 SAFE: Current cart has items (" +
+            currentCartCount +
+            "), not touching it"
+        );
       }
     }
 
@@ -1303,18 +1314,22 @@
         billing_postcode:
           userData.postcode || userData.billing_postcode || userData.cep || "",
         billing_country: userData.country || userData.billing_country || "BR",
-         billing_cpf: userData.cpf || userData.billing_cpf || "",
-         billing_cnpj: userData.cnpj || userData.billing_cnpj || "",
-         
-         // Brazilian Market plugin compatibility
-         billing_number: userData.number || userData.billing_number || "",
-         billing_neighborhood: userData.neighborhood || userData.billing_neighborhood || "",
-         billing_cellphone: userData.cellphone || userData.billing_cellphone || "",
-         billing_birthdate: userData.birthdate || userData.billing_birthdate || "",
-         billing_sex: userData.sex || userData.billing_sex || "",
-         billing_company_cnpj: userData.company_cnpj || userData.billing_company_cnpj || "",
-         billing_ie: userData.ie || userData.billing_ie || "",
-         billing_rg: userData.rg || userData.billing_rg || "",
+        billing_cpf: userData.cpf || userData.billing_cpf || "",
+        billing_cnpj: userData.cnpj || userData.billing_cnpj || "",
+
+        // Brazilian Market plugin compatibility
+        billing_number: userData.number || userData.billing_number || "",
+        billing_neighborhood:
+          userData.neighborhood || userData.billing_neighborhood || "",
+        billing_cellphone:
+          userData.cellphone || userData.billing_cellphone || "",
+        billing_birthdate:
+          userData.birthdate || userData.billing_birthdate || "",
+        billing_sex: userData.sex || userData.billing_sex || "",
+        billing_company_cnpj:
+          userData.company_cnpj || userData.billing_company_cnpj || "",
+        billing_ie: userData.ie || userData.billing_ie || "",
+        billing_rg: userData.rg || userData.billing_rg || "",
 
         // Shipping fields (copy from billing)
         shipping_first_name:
