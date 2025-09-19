@@ -2,40 +2,76 @@
 /**
  * Plugin Name: Lightweight Login & Register Popup
  * Plugin URI: https://github.com/agenciadw/lightweight-login-register-popup
- * Description: Popup personalizável na página do carrinho para permitir login, cadastro e recuperação de senha sem recarregar a página
- * Version: 0.5.6
+ * Description: Popup avançado para WooCommerce com login, registro e recuperação de senha. Inclui integração social (Google/Facebook), persistência de carrinho, auto-preenchimento inteligente e compatibilidade total com Fluid Checkout e Brazilian Market.
+ * Version: 1.0.0
  * Author: David William da Costa
  * Author URI: https://github.com/agenciadw
  * Requires PHP: 7.4 or higher
  * Requires at least: 6.6
+ * Tested up to: 6.6
+ * WC requires at least: 8.0
+ * WC tested up to: 9.0
  * Text Domain: lightweight-login-register-popup
+ * Domain Path: /languages
  * License: GPL v2 or later
  * License URI: https://www.gnu.org/licenses/gpl-2.0.html
+ * Network: false
  */
 
+// Prevent direct access
 if ( ! defined( 'ABSPATH' ) ) {
-    exit; // Exit if accessed directly
+    exit;
 }
 
-define( 'LLRP_VERSION', '0.5.6' );
+// Plugin constants
+define( 'LLRP_VERSION', '1.0.0' );
 define( 'LLRP_PLUGIN_DIR', plugin_dir_path( __FILE__ ) );
 define( 'LLRP_PLUGIN_URL', plugin_dir_url( __FILE__ ) );
 
-// Include core classes
-require_once LLRP_PLUGIN_DIR . 'includes/class-llrp-frontend.php';
-require_once LLRP_PLUGIN_DIR . 'includes/class-llrp-ajax.php';
-if ( is_admin() ) {
-    require_once LLRP_PLUGIN_DIR . 'includes/class-llrp-admin.php';
+/**
+ * Check if WooCommerce is active
+ */
+function llrp_is_woocommerce_active() {
+    return class_exists( 'WooCommerce' );
+}
+
+/**
+ * Admin notice for WooCommerce dependency
+ */
+function llrp_woocommerce_missing_notice() {
+    ?>
+    <div class="notice notice-error">
+        <p>
+            <strong><?php esc_html_e( 'Lightweight Login & Register Popup', 'llrp' ); ?></strong>: 
+            <?php esc_html_e( 'WooCommerce plugin is required for this plugin to work.', 'llrp' ); ?>
+        </p>
+    </div>
+    <?php
 }
 
 /**
  * Initialize plugin components
  */
 function llrp_init() {
-    Llrp_Frontend::init();
-    Llrp_Ajax::init();
+    // Check WooCommerce dependency
+    if ( ! llrp_is_woocommerce_active() ) {
+        add_action( 'admin_notices', 'llrp_woocommerce_missing_notice' );
+        return;
+    }
+    
+    // Include core classes
+    require_once LLRP_PLUGIN_DIR . 'includes/class-llrp-frontend.php';
+    require_once LLRP_PLUGIN_DIR . 'includes/class-llrp-ajax.php';
+    
     if ( is_admin() ) {
+        require_once LLRP_PLUGIN_DIR . 'includes/class-llrp-admin.php';
         Llrp_Admin::init();
     }
+    
+    // Initialize components
+    Llrp_Frontend::init();
+    Llrp_Ajax::init();
 }
+
+// Initialize plugin after all plugins are loaded
 add_action( 'plugins_loaded', 'llrp_init' );

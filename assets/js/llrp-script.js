@@ -8,9 +8,12 @@
     var deliveryMethod = "email";
     var userEmail = ""; // Variável para armazenar o e-mail do usuário
 
-    // CRITICAL: Enhanced cart persistence with dual backup system
+    /**
+     * Enhanced cart persistence with triple backup system
+     * Saves cart state before login to prevent loss
+     */
     function saveCartBeforeLogin() {
-      console.log("🛒 CRITICAL: Saving cart before login - STARTED");
+      console.log("🛒 Saving cart before login - STARTED");
 
       try {
         // Method 1: WooCommerce fragments (primary)
@@ -88,9 +91,7 @@
         );
         console.log("🛒 ADDITIONAL DOM BACKUP saved:", additionalBackup);
 
-        console.log(
-          "🛒 CRITICAL: Cart backup completed successfully with 3 methods"
-        );
+          console.log("🛒 Cart backup completed successfully");
         return true;
       } catch (error) {
         console.error(
