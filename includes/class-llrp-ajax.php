@@ -3,6 +3,20 @@ if ( ! defined( 'ABSPATH' ) ) {
     exit;
 }
 class Llrp_Ajax {
+    
+    /**
+     * Safe logging function - only logs in debug mode
+     */
+    private static function safe_log($message, $data = null) {
+        if (defined('WP_DEBUG') && WP_DEBUG) {
+            if ($data) {
+                error_log($message . ': ' . print_r($data, true));
+            } else {
+                error_log($message);
+            }
+        }
+    }
+    
     public static function init() {
         // Hooks para usuários não logados
         add_action( 'wp_ajax_nopriv_llrp_check_user', [ __CLASS__, 'ajax_check_user' ] );
@@ -230,14 +244,13 @@ class Llrp_Ajax {
 
         delete_user_meta( $user->ID, '_llrp_login_code_hash' );
         delete_user_meta( $user->ID, '_llrp_login_code_expiration' );
-        // CRITICAL: Debug logging before authentication
-        error_log('🛒 LLRP CRITICAL: About to authenticate user - Cart count before: ' . (WC()->cart ? WC()->cart->get_cart_contents_count() : 'N/A'));
+        // Authentication process (sensitive details only in debug mode)
+        self::safe_log('🛒 LLRP: About to authenticate user');
         
         wp_set_current_user( $user->ID, $user->user_login );
         wp_set_auth_cookie( $user->ID, true );
         
-        // CRITICAL: Debug logging after authentication
-        error_log('🛒 LLRP CRITICAL: User authenticated - Cart count after: ' . (WC()->cart ? WC()->cart->get_cart_contents_count() : 'N/A'));
+        self::safe_log('🛒 LLRP: User authenticated successfully');
 
         // Trigger cart fragments update for Fluid Checkout compatibility
         self::trigger_cart_fragments_update();
@@ -278,8 +291,8 @@ class Llrp_Ajax {
             wp_send_json_error([ 'message' => __( 'Credenciais inválidas.', 'llrp' ) ]);
         }
 
-        // CRITICAL: Debug logging before password login
-        error_log('🛒 LLRP CRITICAL: About to login with password - Cart count before: ' . (WC()->cart ? WC()->cart->get_cart_contents_count() : 'N/A'));
+        // Password login process (sensitive details only in debug mode)
+        self::safe_log('🛒 LLRP: About to login with password');
 
         $creds = [
             'user_login'    => $user->user_login,
@@ -291,8 +304,7 @@ class Llrp_Ajax {
             wp_send_json_error([ 'message' => __( 'Credenciais inválidas.', 'llrp' ) ]);
         }
         
-        // CRITICAL: Debug logging after password login
-        error_log('🛒 LLRP CRITICAL: Password login successful - Cart count after: ' . (WC()->cart ? WC()->cart->get_cart_contents_count() : 'N/A'));
+        self::safe_log('🛒 LLRP: Password login successful');
 
         // Trigger cart fragments update for Fluid Checkout compatibility
         self::trigger_cart_fragments_update();
@@ -441,7 +453,7 @@ class Llrp_Ajax {
         remove_filter( 'wp_verify_nonce', '__return_true', 999 );
 
         wp_send_json_success([ 
-            'redirect' => wc_get_checkout_url(),
+            'redirect' => wc_get_checkout_url() . '#reload',
             'user_logged_in' => true,
             'cart_fragments' => self::get_cart_fragments(),
             'user_data' => self::get_user_checkout_data($user_id)
@@ -705,6 +717,13 @@ class Llrp_Ajax {
             $redirect_url = wc_get_account_endpoint_url( 'dashboard' );
         }
         
+        // Add #reload to checkout URLs for proper state refresh
+        if (strpos($redirect_url, 'checkout') !== false || strpos($redirect_url, 'finalizar-compra') !== false) {
+            if (strpos($redirect_url, '#') === false) {
+                $redirect_url .= '#reload';
+            }
+        }
+        
         error_log( 'LLRP: Sending success response with redirect: ' . $redirect_url );
         wp_send_json_success( [ 
             'redirect' => $redirect_url,
@@ -790,6 +809,13 @@ class Llrp_Ajax {
         $redirect_url = wc_get_checkout_url(); // Default to checkout
         if ( isset( $_POST['from_account'] ) && $_POST['from_account'] === '1' ) {
             $redirect_url = wc_get_account_endpoint_url( 'dashboard' );
+        }
+        
+        // Add #reload to checkout URLs for proper state refresh
+        if (strpos($redirect_url, 'checkout') !== false || strpos($redirect_url, 'finalizar-compra') !== false) {
+            if (strpos($redirect_url, '#') === false) {
+                $redirect_url .= '#reload';
+            }
         }
         
         wp_send_json_success( [ 
@@ -993,7 +1019,7 @@ class Llrp_Ajax {
         }
         
         $user_id = get_current_user_id();
-        error_log( '🔄 LLRP CRITICAL: AJAX request for checkout user data - User ID: ' . $user_id );
+        // User data request logged (user ID removed for security)
         
         // Get user data
         $user_data = self::get_user_checkout_data( $user_id );
@@ -1003,7 +1029,7 @@ class Llrp_Ajax {
             wp_send_json_error( [ 'message' => __( 'Dados do usuário não encontrados.', 'llrp' ) ] );
         }
         
-        error_log( '🔄 LLRP CRITICAL: Sending checkout user data for autofill: ' . print_r( $user_data, true ) );
+        // Checkout user data sent (data removed from logs for security)
         
         wp_send_json_success( $user_data );
     }
@@ -1069,7 +1095,7 @@ class Llrp_Ajax {
      * Get user data for checkout form auto-fill
      */
     /**
-     * CRITICAL: Smart redirect URL based on context to prevent cart clearing
+     * CRITICAL: Smart redirect URL based on context with #reload for checkout refresh
      */
     private static function get_smart_redirect_url() {
         // Check HTTP_REFERER to understand where the user came from
@@ -1078,27 +1104,29 @@ class Llrp_Ajax {
         
         error_log('🔄 LLRP: Smart redirect - Referer: ' . $referer . ' | Current: ' . $current_url);
         
-        // If user is coming from cart page, redirect to checkout
+        // If user is coming from cart page, redirect to checkout with #reload
         if ($referer && (strpos($referer, '/cart') !== false || strpos($referer, '/carrinho') !== false)) {
-            error_log('🔄 LLRP: User came from cart, redirecting to checkout');
-            return wc_get_checkout_url();
+            error_log('🔄 LLRP: User came from cart, redirecting to checkout with #reload');
+            return wc_get_checkout_url() . '#reload';
         }
         
-        // If user is already on checkout page, stay on checkout (prevent clearing)
+        // If user is already on checkout page, add #reload to refresh properly
         if ($referer && (strpos($referer, '/checkout') !== false || strpos($referer, '/finalizar-compra') !== false)) {
-            error_log('🔄 LLRP: User is on checkout, staying on checkout to preserve state');
-            return $referer; // Stay on the same checkout page
+            error_log('🔄 LLRP: User is on checkout, adding #reload to preserve and refresh state');
+            // Remove existing fragment and add #reload
+            $clean_url = strtok($referer, '#');
+            return $clean_url . '#reload';
         }
         
         // Check current URL context
         if (strpos($current_url, '/checkout') !== false || strpos($current_url, '/finalizar-compra') !== false) {
-            error_log('🔄 LLRP: Current URL is checkout, staying on current page');
-            return wc_get_checkout_url();
+            error_log('🔄 LLRP: Current URL is checkout, adding #reload');
+            return wc_get_checkout_url() . '#reload';
         }
         
-        // Default: redirect to checkout
-        error_log('🔄 LLRP: Default redirect to checkout');
-        return wc_get_checkout_url();
+        // Default: redirect to checkout with #reload
+        error_log('🔄 LLRP: Default redirect to checkout with #reload');
+        return wc_get_checkout_url() . '#reload';
     }
 
     private static function get_user_checkout_data($user_id) {
@@ -1159,7 +1187,7 @@ class Llrp_Ajax {
         ];
         
         // Log the email synchronization
-        error_log('📧 LLRP CRITICAL: Email sync for user ' . $user_id . ' - account_email = billing_email = ' . $final_email);
+        // Email sync completed (details removed for security)
         
         // Remove empty values
         $user_data = array_filter($user_data, function($value) {

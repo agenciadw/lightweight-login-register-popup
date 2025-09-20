@@ -126,6 +126,7 @@ class Llrp_Frontend {
         'google_client_id'      => get_option( 'llrp_google_client_id' ),
         'facebook_login_enabled' => get_option( 'llrp_facebook_login_enabled' ),
         'facebook_app_id'       => get_option( 'llrp_facebook_app_id' ),
+        'debug_mode'            => defined( 'WP_DEBUG' ) && WP_DEBUG ? '1' : '0',
     ] );
 
         // Enqueue frontend styles and scripts
@@ -606,7 +607,7 @@ class Llrp_Frontend {
             return;
         }
         
-        error_log('🔑 LLRP CRITICAL: Direct WooCommerce checkout login detected for user: ' . $user->ID);
+        // Direct checkout login detected (user ID removed for security)
         
         // Store user ID in session for JavaScript to pick up
         if ( ! session_id() ) {
@@ -643,7 +644,7 @@ class Llrp_Frontend {
             return;
         }
         
-        error_log('📝 LLRP CRITICAL: Direct WooCommerce checkout registration detected for user: ' . $user_id);
+        // Direct checkout registration detected (user ID removed for security)
         
         // Store user ID in session for JavaScript to pick up
         if ( ! session_id() ) {
@@ -713,7 +714,7 @@ class Llrp_Frontend {
                     setTimeout(function() {
                         if (typeof fillCheckoutFormData === "function") {
                             var userData = ' . wp_json_encode( $user_data ) . ';
-                            console.log("🔄 LLRP: Autofilling with data:", userData);
+                            // Autofilling checkout form (data removed from logs for security)
                             fillCheckoutFormData(userData);
                             
                             // Sync email fields for Brazilian Market compatibility

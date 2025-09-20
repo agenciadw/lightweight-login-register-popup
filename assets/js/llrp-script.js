@@ -7,6 +7,19 @@
     var savedIdentifier = "";
     var deliveryMethod = "email";
     var userEmail = ""; // Variável para armazenar o e-mail do usuário
+    
+    // Debug mode - only log in development
+    var debugMode = typeof LLRP_Data !== 'undefined' && LLRP_Data.debug_mode === '1';
+    
+    function safeLog(message, data) {
+      if (debugMode) {
+        if (data) {
+          console.log(message, data);
+        } else {
+          console.log(message);
+        }
+      }
+    }
 
     /**
      * Soft refresh for Interactivity API compatibility
@@ -14,27 +27,30 @@
      */
     function softRefresh() {
       console.log("🔄 LLRP: Using soft refresh (Interactivity API compatible)");
-      
+
       // Close popup
       closePopup();
-      
+
       // Update cart fragments
-      if (typeof wc_cart_fragments_params !== 'undefined') {
-        $(document.body).trigger('wc_fragment_refresh');
-        $(document.body).trigger('woocommerce_fragments_refreshed');
+      if (typeof wc_cart_fragments_params !== "undefined") {
+        $(document.body).trigger("wc_fragment_refresh");
+        $(document.body).trigger("woocommerce_fragments_refreshed");
       }
-      
+
       // Trigger checkout updates if on checkout page
-      if (window.location.href.includes('checkout') || window.location.href.includes('finalizar-compra')) {
-        $('body').trigger('update_checkout');
-        $(document.body).trigger('updated_checkout');
+      if (
+        window.location.href.includes("checkout") ||
+        window.location.href.includes("finalizar-compra")
+      ) {
+        $("body").trigger("update_checkout");
+        $(document.body).trigger("updated_checkout");
       }
-      
+
       // Update account page if needed
-      if (LLRP_Data.is_account_page === '1') {
-        $('.woocommerce-MyAccount-content').trigger('refresh');
+      if (LLRP_Data.is_account_page === "1") {
+        $(".woocommerce-MyAccount-content").trigger("refresh");
       }
-      
+
       console.log("🔄 LLRP: Soft refresh completed");
     }
 
@@ -43,7 +59,7 @@
      * Saves cart state before login to prevent loss
      */
     function saveCartBeforeLogin() {
-      console.log("🛒 Saving cart before login - STARTED");
+      safeLog("🛒 Saving cart before login");
 
       try {
         // Method 1: WooCommerce fragments (primary)
@@ -338,7 +354,7 @@
       $overlay.addClass("hidden");
       $popup.addClass("hidden");
     }
-    
+
     function hidePopup() {
       closePopup();
     }
@@ -492,7 +508,9 @@
             // Check if Fluid Checkout is active and handle accordingly
             if (isFluidCheckoutActive()) {
               // For Fluid Checkout, use soft refresh instead of hard reload
-              console.log("🔄 FLUID CHECKOUT: Using soft refresh for Interactivity API compatibility");
+              console.log(
+                "🔄 FLUID CHECKOUT: Using soft refresh for Interactivity API compatibility"
+              );
               softRefresh();
             } else {
               // For standard WooCommerce, redirect normally
@@ -678,7 +696,9 @@
             // Check if Fluid Checkout is active and handle accordingly
             if (isFluidCheckoutActive()) {
               // For Fluid Checkout, use soft refresh for Interactivity API compatibility
-              console.log("🔄 FLUID CHECKOUT: Using soft refresh for Interactivity API compatibility");
+              console.log(
+                "🔄 FLUID CHECKOUT: Using soft refresh for Interactivity API compatibility"
+              );
               softRefresh();
             } else {
               // For standard WooCommerce, redirect normally
@@ -983,9 +1003,8 @@
 
     function processGoogleLogin(userInfo) {
       console.log("LLRP: Processing Google login");
-      console.log("LLRP: User info:", userInfo);
-      console.log("LLRP: Nonce:", LLRP_Data.nonce);
-      console.log("LLRP: AJAX URL:", LLRP_Data.ajax_url);
+      safeLog("LLRP: Processing user login");
+      // Sensitive data removed from production logs
 
       $.post(LLRP_Data.ajax_url, {
         action: "llrp_google_login",
@@ -1021,11 +1040,15 @@
             // Smart redirect based on current page and Fluid Checkout
             if (LLRP_Data.is_account_page === "1") {
               // On My Account page, use soft refresh to show logged-in state
-              console.log("🔄 MY ACCOUNT: Using soft refresh for Interactivity API compatibility");
+              console.log(
+                "🔄 MY ACCOUNT: Using soft refresh for Interactivity API compatibility"
+              );
               softRefresh();
             } else if (isFluidCheckoutActive()) {
               // For Fluid Checkout, use soft refresh for Interactivity API compatibility
-              console.log("🔄 FLUID CHECKOUT: Using soft refresh for Interactivity API compatibility");
+              console.log(
+                "🔄 FLUID CHECKOUT: Using soft refresh for Interactivity API compatibility"
+              );
               softRefresh();
             } else {
               // On cart page, redirect to checkout
@@ -1115,11 +1138,15 @@
                   // Smart redirect based on current page and Fluid Checkout
                   if (LLRP_Data.is_account_page === "1") {
                     // On My Account page, use soft refresh to show logged-in state
-                    console.log("🔄 MY ACCOUNT: Using soft refresh for Interactivity API compatibility");
+                    console.log(
+                      "🔄 MY ACCOUNT: Using soft refresh for Interactivity API compatibility"
+                    );
                     softRefresh();
                   } else if (isFluidCheckoutActive()) {
                     // For Fluid Checkout, use soft refresh for Interactivity API compatibility
-                    console.log("🔄 FLUID CHECKOUT: Using soft refresh for Interactivity API compatibility");
+                    console.log(
+                      "🔄 FLUID CHECKOUT: Using soft refresh for Interactivity API compatibility"
+                    );
                     softRefresh();
                   } else {
                     // On cart page, redirect to checkout
