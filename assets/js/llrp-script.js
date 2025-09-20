@@ -6,7 +6,7 @@
     if (typeof LLRP_Data === "undefined") {
       return;
     }
-    
+
     var $overlay = $("#llrp-overlay");
     var $popup = $("#llrp-popup");
     var savedIdentifier = "";
@@ -735,9 +735,12 @@
 
     // Usar event delegation para garantir que funcione com elementos dinâmicos
     // Mas verificar se não é um botão de submit de formulário para evitar conflitos
-    $(document).on("click.llrp", ".checkout-button", function(e) {
+    $(document).on("click.llrp", ".checkout-button", function (e) {
       // Evitar interceptar botões de formulário que podem estar processando checkout
-      if ($(e.target).closest('form').length && $(e.target).attr('type') === 'submit') {
+      if (
+        $(e.target).closest("form").length &&
+        $(e.target).attr("type") === "submit"
+      ) {
         return; // Deixar o comportamento padrão para submits de formulário
       }
       return interceptCheckoutButton(e);
@@ -754,7 +757,7 @@
           !window.location.href.includes("finalizar-compra")
         ) {
           // Verificar se não é um elemento de um plugin de checkout diferente
-          if ($(e.target).closest('.mp-custom-checkout').length) {
+          if ($(e.target).closest(".mp-custom-checkout").length) {
             return; // Não interferir com outros plugins de checkout
           }
           safeLog("Checkout link clicked, intercepting...");
