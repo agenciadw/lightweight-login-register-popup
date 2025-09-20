@@ -437,14 +437,13 @@ class Llrp_Ajax {
             }
         }
 
-        // CRITICAL: Debug logging before setting auth cookie  
-        error_log('🛒 LLRP CRITICAL: About to set auth cookie for new user - Cart count before: ' . (WC()->cart ? WC()->cart->get_cart_contents_count() : 'N/A'));
+        // Setting auth cookie for new user (sensitive details only in debug mode)
+        self::safe_log('🛒 LLRP: About to set auth cookie for new user');
         
         // Use WooCommerce's native login method
         wc_set_customer_auth_cookie( $user_id );
         
-        // CRITICAL: Debug logging after setting auth cookie
-        error_log('🛒 LLRP CRITICAL: Auth cookie set for new user - Cart count after: ' . (WC()->cart ? WC()->cart->get_cart_contents_count() : 'N/A'));
+        self::safe_log('🛒 LLRP: Auth cookie set for new user');
 
         // Trigger cart fragments update for Fluid Checkout compatibility
         self::trigger_cart_fragments_update();

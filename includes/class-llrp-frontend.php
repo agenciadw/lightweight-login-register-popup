@@ -744,7 +744,7 @@ class Llrp_Frontend {
         ?>
         <script type="text/javascript">
         jQuery(document).ready(function($) {
-            console.log('🔄 LLRP: Checkout autofill handler initialized (safe mode)');
+            // Checkout autofill handler initialized
             
             // Simple check on page load - only if user is logged in and form is empty
             setTimeout(function() {
@@ -829,20 +829,20 @@ class Llrp_Frontend {
             return;
         }
         
-        error_log('🔄 LLRP CRITICAL: Forcing autofill for logged-in user on checkout (DIRECT ACCESS): ' . $user_id);
+        // Forcing autofill for logged-in user (user ID removed for security)
         
         // Inline JavaScript to force autofill
         ?>
         <script type="text/javascript">
         jQuery(document).ready(function($) {
-            console.log('🔄 LLRP CRITICAL: Force autofill for logged-in user detected');
+            // Force autofill detected (log removed for security)
             
             var userData = <?php echo wp_json_encode( $user_data ); ?>;
             
             // Multiple attempts to ensure autofill works
             function attemptAutofill() {
                 if (typeof fillCheckoutFormData === 'function') {
-                    console.log('🔄 LLRP CRITICAL: Executing force autofill with data:', userData);
+                    // Executing autofill (data removed for security)
                     fillCheckoutFormData(userData);
                     
                     // Sync email fields
@@ -855,10 +855,10 @@ class Llrp_Frontend {
                     $(document.body).trigger('updated_checkout');
                     $(document.body).trigger('checkout_updated');
                     
-                    console.log('🔄 LLRP CRITICAL: Force autofill completed');
+                    // Force autofill completed
                     return true;
                 } else {
-                    console.log('🔄 LLRP: fillCheckoutFormData not available yet, will retry');
+                    // Function not available yet, will retry
                     return false;
                 }
             }

@@ -113,14 +113,14 @@
 
         // Backup 1: localStorage (primary)
         localStorage.setItem("llrp_cart_backup", JSON.stringify(primaryData));
-        console.log("🛒 PRIMARY BACKUP saved to localStorage:", primaryData);
+        safeLog("🛒 PRIMARY BACKUP saved to localStorage");
 
         // Backup 2: sessionStorage (failsafe)
         sessionStorage.setItem(
           "llrp_cart_backup_failsafe",
           JSON.stringify(primaryData)
         );
-        console.log("🛒 FAILSAFE BACKUP saved to sessionStorage:", primaryData);
+        safeLog("🛒 FAILSAFE BACKUP saved to sessionStorage");
 
         // Backup 3: Additional DOM backup
         var additionalBackup = {
@@ -135,9 +135,9 @@
           "llrp_cart_dom_backup",
           JSON.stringify(additionalBackup)
         );
-        console.log("🛒 ADDITIONAL DOM BACKUP saved:", additionalBackup);
+        safeLog("🛒 ADDITIONAL DOM BACKUP saved");
 
-        console.log("🛒 Cart backup completed successfully");
+        safeLog("🛒 Cart backup completed successfully");
         return true;
       } catch (error) {
         console.error(
