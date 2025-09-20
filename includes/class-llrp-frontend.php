@@ -6,6 +6,19 @@ if ( ! defined( 'ABSPATH' ) ) {
 class Llrp_Frontend {
     
     /**
+     * Safe logging function - only logs in debug mode
+     */
+    private static function safe_log($message, $data = null) {
+        if (defined('WP_DEBUG') && WP_DEBUG) {
+            if ($data) {
+                error_log($message . ': ' . print_r($data, true));
+            } else {
+                error_log($message);
+            }
+        }
+    }
+    
+    /**
      * Check if WooCommerce Interactivity API is active
      */
     private static function is_interactivity_api_active() {
@@ -610,8 +623,8 @@ class Llrp_Frontend {
         // Direct checkout login detected (user ID removed for security)
         
         // Store user ID in session for JavaScript to pick up
-        if ( ! session_id() ) {
-            session_start();
+        if ( ! session_id() && ! headers_sent() ) {
+            @session_start();
         }
         $_SESSION['llrp_direct_checkout_login'] = $user->ID;
         $_SESSION['llrp_direct_checkout_login_time'] = time();
@@ -647,8 +660,8 @@ class Llrp_Frontend {
         // Direct checkout registration detected (user ID removed for security)
         
         // Store user ID in session for JavaScript to pick up
-        if ( ! session_id() ) {
-            session_start();
+        if ( ! session_id() && ! headers_sent() ) {
+            @session_start();
         }
         $_SESSION['llrp_direct_checkout_register'] = $user_id;
         $_SESSION['llrp_direct_checkout_register_time'] = time();
@@ -665,8 +678,8 @@ class Llrp_Frontend {
             return;
         }
         
-        if ( ! session_id() ) {
-            session_start();
+        if ( ! session_id() && ! headers_sent() ) {
+            @session_start();
         }
         
         $should_autofill = false;
@@ -812,8 +825,8 @@ class Llrp_Frontend {
         }
         
         // Check if there's a recent login from our popup (within last 10 seconds)
-        if ( ! session_id() ) {
-            session_start();
+        if ( ! session_id() && ! headers_sent() ) {
+            @session_start();
         }
         
         if ( isset( $_SESSION['llrp_popup_login_timestamp'] ) && 

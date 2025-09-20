@@ -10,9 +10,9 @@ class Llrp_Ajax {
     private static function safe_log($message, $data = null) {
         if (defined('WP_DEBUG') && WP_DEBUG) {
             if ($data) {
-                self::safe_log($message . ': ' . print_r($data, true));
+                error_log($message . ': ' . print_r($data, true));
             } else {
-                self::safe_log($message);
+                error_log($message);
             }
         }
     }
@@ -256,10 +256,12 @@ class Llrp_Ajax {
         self::trigger_cart_fragments_update();
 
         // CRITICAL: Mark this as popup login to prevent force autofill conflict
-        if ( ! session_id() ) {
-            session_start();
+        if ( ! session_id() && ! headers_sent() ) {
+            @session_start();
         }
-        $_SESSION['llrp_popup_login_timestamp'] = time();
+        if ( session_id() ) {
+            $_SESSION['llrp_popup_login_timestamp'] = time();
+        }
         
         // SMART REDIRECT: Based on referrer or current context
         $redirect_url = self::get_smart_redirect_url();
@@ -310,10 +312,12 @@ class Llrp_Ajax {
         self::trigger_cart_fragments_update();
 
         // CRITICAL: Mark this as popup login to prevent force autofill conflict
-        if ( ! session_id() ) {
-            session_start();
+        if ( ! session_id() && ! headers_sent() ) {
+            @session_start();
         }
-        $_SESSION['llrp_popup_login_timestamp'] = time();
+        if ( session_id() ) {
+            $_SESSION['llrp_popup_login_timestamp'] = time();
+        }
         
         // SMART REDIRECT: Based on referrer or current context
         $redirect_url = self::get_smart_redirect_url();

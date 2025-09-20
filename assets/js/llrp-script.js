@@ -2,6 +2,11 @@
   "use strict";
 
   $(function () {
+    // Check if we have the data we need
+    if (typeof LLRP_Data === "undefined") {
+      return;
+    }
+    
     var $overlay = $("#llrp-overlay");
     var $popup = $("#llrp-popup");
     var savedIdentifier = "";
@@ -141,10 +146,7 @@
         safeLog("🛒 Cart backup completed successfully");
         return true;
       } catch (error) {
-        safeLog(
-          "🚨 CRITICAL ERROR: Failed to save cart before login:",
-          error
-        );
+        safeLog("🚨 CRITICAL ERROR: Failed to save cart before login:", error);
         return false;
       }
     }
@@ -578,9 +580,7 @@
           }
 
           // Check if Fluid Checkout is active and handle accordingly
-          safeLog(
-            "LLRP: Checking Fluid Checkout status after code login..."
-          );
+          safeLog("LLRP: Checking Fluid Checkout status after code login...");
           if (isFluidCheckoutActive()) {
             safeLog("LLRP: Fluid Checkout detected, using soft refresh...");
             // For Fluid Checkout, use soft refresh instead of hard reload
@@ -734,7 +734,14 @@
     }
 
     // Usar event delegation para garantir que funcione com elementos dinâmicos
-    $(document).on("click.llrp", ".checkout-button", interceptCheckoutButton);
+    // Mas verificar se não é um botão de submit de formulário para evitar conflitos
+    $(document).on("click.llrp", ".checkout-button", function(e) {
+      // Evitar interceptar botões de formulário que podem estar processando checkout
+      if ($(e.target).closest('form').length && $(e.target).attr('type') === 'submit') {
+        return; // Deixar o comportamento padrão para submits de formulário
+      }
+      return interceptCheckoutButton(e);
+    });
 
     // Também interceptar outros seletores comuns de botões de checkout
     $(document).on(
@@ -746,6 +753,10 @@
           !window.location.href.includes("checkout") &&
           !window.location.href.includes("finalizar-compra")
         ) {
+          // Verificar se não é um elemento de um plugin de checkout diferente
+          if ($(e.target).closest('.mp-custom-checkout').length) {
+            return; // Não interferir com outros plugins de checkout
+          }
           safeLog("Checkout link clicked, intercepting...");
           return interceptCheckoutButton(e);
         }
