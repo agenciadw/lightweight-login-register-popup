@@ -9,6 +9,36 @@
     var userEmail = ""; // Variável para armazenar o e-mail do usuário
 
     /**
+     * Soft refresh for Interactivity API compatibility
+     * Replaces window.location.reload() to prevent conflicts
+     */
+    function softRefresh() {
+      console.log("🔄 LLRP: Using soft refresh (Interactivity API compatible)");
+      
+      // Close popup
+      closePopup();
+      
+      // Update cart fragments
+      if (typeof wc_cart_fragments_params !== 'undefined') {
+        $(document.body).trigger('wc_fragment_refresh');
+        $(document.body).trigger('woocommerce_fragments_refreshed');
+      }
+      
+      // Trigger checkout updates if on checkout page
+      if (window.location.href.includes('checkout') || window.location.href.includes('finalizar-compra')) {
+        $('body').trigger('update_checkout');
+        $(document.body).trigger('updated_checkout');
+      }
+      
+      // Update account page if needed
+      if (LLRP_Data.is_account_page === '1') {
+        $('.woocommerce-MyAccount-content').trigger('refresh');
+      }
+      
+      console.log("🔄 LLRP: Soft refresh completed");
+    }
+
+    /**
      * Enhanced cart persistence with triple backup system
      * Saves cart state before login to prevent loss
      */
@@ -131,10 +161,10 @@
               updateCartFragments(cartData.fragments);
               console.log("🛒 Cart restored using WC fragments method");
             } else {
-              // Force page reload to ensure cart is restored
-              console.log("🛒 Forcing page reload to restore cart state");
+              // Use soft refresh to restore cart state (Interactivity API compatible)
+              console.log("🛒 Using soft refresh to restore cart state");
               setTimeout(function () {
-                window.location.reload();
+                softRefresh();
               }, 1000);
             }
 
@@ -308,6 +338,10 @@
       $overlay.addClass("hidden");
       $popup.addClass("hidden");
     }
+    
+    function hidePopup() {
+      closePopup();
+    }
 
     function resetSteps() {
       $popup.find(".llrp-step").addClass("hidden");
@@ -457,8 +491,9 @@
 
             // Check if Fluid Checkout is active and handle accordingly
             if (isFluidCheckoutActive()) {
-              // For Fluid Checkout, reload the page to ensure proper state detection
-              window.location.reload();
+              // For Fluid Checkout, use soft refresh instead of hard reload
+              console.log("🔄 FLUID CHECKOUT: Using soft refresh for Interactivity API compatibility");
+              softRefresh();
             } else {
               // For standard WooCommerce, redirect normally
               window.location = res.data.redirect;
@@ -528,10 +563,10 @@
             "LLRP: Checking Fluid Checkout status after code login..."
           );
           if (isFluidCheckoutActive()) {
-            console.log("LLRP: Fluid Checkout detected, reloading page...");
-            // For Fluid Checkout, reload the page to ensure proper state detection
+            console.log("LLRP: Fluid Checkout detected, using soft refresh...");
+            // For Fluid Checkout, use soft refresh instead of hard reload
             setTimeout(function () {
-              window.location.reload();
+              softRefresh();
             }, 500);
           } else {
             console.log("LLRP: Standard WooCommerce, redirecting normally...");
@@ -581,12 +616,12 @@
               isFluidCheckoutActive() &&
               window.location.href.includes("checkout")
             ) {
-              // For Fluid Checkout on checkout page, just reload to preserve checkout state
+              // For Fluid Checkout on checkout page, use soft refresh to preserve checkout state
               console.log(
-                "🔄 FLUID CHECKOUT: Reloading checkout page to maintain state"
+                "🔄 FLUID CHECKOUT: Using soft refresh to maintain state (Interactivity API compatible)"
               );
               setTimeout(function () {
-                window.location.reload();
+                softRefresh();
               }, 500);
             } else {
               // For other cases, redirect normally
@@ -642,8 +677,9 @@
 
             // Check if Fluid Checkout is active and handle accordingly
             if (isFluidCheckoutActive()) {
-              // For Fluid Checkout, reload the page to ensure proper state detection
-              window.location.reload();
+              // For Fluid Checkout, use soft refresh for Interactivity API compatibility
+              console.log("🔄 FLUID CHECKOUT: Using soft refresh for Interactivity API compatibility");
+              softRefresh();
             } else {
               // For standard WooCommerce, redirect normally
               window.location = res.data.redirect;
@@ -984,11 +1020,13 @@
 
             // Smart redirect based on current page and Fluid Checkout
             if (LLRP_Data.is_account_page === "1") {
-              // On My Account page, reload to show logged-in state
-              window.location.reload();
+              // On My Account page, use soft refresh to show logged-in state
+              console.log("🔄 MY ACCOUNT: Using soft refresh for Interactivity API compatibility");
+              softRefresh();
             } else if (isFluidCheckoutActive()) {
-              // For Fluid Checkout, reload the page to ensure proper state detection
-              window.location.reload();
+              // For Fluid Checkout, use soft refresh for Interactivity API compatibility
+              console.log("🔄 FLUID CHECKOUT: Using soft refresh for Interactivity API compatibility");
+              softRefresh();
             } else {
               // On cart page, redirect to checkout
               window.location.href = res.data.redirect;
@@ -1076,11 +1114,13 @@
 
                   // Smart redirect based on current page and Fluid Checkout
                   if (LLRP_Data.is_account_page === "1") {
-                    // On My Account page, reload to show logged-in state
-                    window.location.reload();
+                    // On My Account page, use soft refresh to show logged-in state
+                    console.log("🔄 MY ACCOUNT: Using soft refresh for Interactivity API compatibility");
+                    softRefresh();
                   } else if (isFluidCheckoutActive()) {
-                    // For Fluid Checkout, reload the page to ensure proper state detection
-                    window.location.reload();
+                    // For Fluid Checkout, use soft refresh for Interactivity API compatibility
+                    console.log("🔄 FLUID CHECKOUT: Using soft refresh for Interactivity API compatibility");
+                    softRefresh();
                   } else {
                     // On cart page, redirect to checkout
                     window.location.href = res.data.redirect;

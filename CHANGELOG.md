@@ -245,3 +245,4 @@ lightweight-login-register-popup/
 
 **🎉 Parabéns! Você está usando a versão 1.0.0 - uma solução completa e robusta para autenticação no WooCommerce!**
 
+
