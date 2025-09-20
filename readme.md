@@ -22,54 +22,62 @@ Elimina a frustração de perder itens do carrinho ou ter que preencher dados ma
 🚀 **FUNCIONALIDADES PRINCIPAIS:**
 
 **🔑 Sistema de Autenticação Avançado**
-* **Login múltiplo:** E-mail, telefone, CPF ou CNPJ
-* **Cadastro otimizado** com validação em tempo real
-* **Login social:** Google OAuth2 e Facebook SDK integrados
-* **Códigos por WhatsApp:** Integração com Joinotify para códigos via WhatsApp
-* **Recuperação de senha** integrada ao WordPress nativo
+
+- **Login múltiplo:** E-mail, telefone, CPF ou CNPJ
+- **Cadastro otimizado** com validação em tempo real
+- **Login social:** Google OAuth2 e Facebook SDK integrados
+- **Códigos por WhatsApp:** Integração com Joinotify para códigos via WhatsApp
+- **Recuperação de senha** integrada ao WordPress nativo
 
 **🛒 Persistência Inteligente de Carrinho**
-* **Backup automático** antes de qualquer login (localStorage + sessionStorage + DOM)
-* **Restauração imediata** após autenticação bem-sucedida
-* **Zero perda de itens** em qualquer cenário de login
-* **Mesclagem inteligente** entre carrinho local e do usuário
+
+- **Backup automático** antes de qualquer login (localStorage + sessionStorage + DOM)
+- **Restauração imediata** após autenticação bem-sucedida
+- **Zero perda de itens** em qualquer cenário de login
+- **Mesclagem inteligente** entre carrinho local e do usuário
 
 **📝 Auto-preenchimento Inteligente**
-* **Preenchimento automático completo** de todos os dados do usuário
-* **Sincronização bidireccional** account_email ↔ billing_email
-* **Compatibilidade total** com Brazilian Market on WooCommerce
-* **Múltiplos pontos de detecção:** popup, login direto, usuário já logado
+
+- **Preenchimento automático completo** de todos os dados do usuário
+- **Sincronização bidireccional** account_email ↔ billing_email
+- **Compatibilidade total** com Brazilian Market on WooCommerce
+- **Múltiplos pontos de detecção:** popup, login direto, usuário já logado
 
 **🔄 Sistema de Redirecionamento Inteligente**
-* **Análise de contexto** baseada em HTTP_REFERER
-* **Login do carrinho** → redireciona para checkout
-* **Login direto no checkout** → permanece no checkout (preserva estado)
-* **Proteção contra limpeza** do estado do checkout
+
+- **Análise de contexto** baseada em HTTP_REFERER
+- **Login do carrinho** → redireciona para checkout
+- **Login direto no checkout** → permanece no checkout (preserva estado)
+- **Proteção contra limpeza** do estado do checkout
 
 **🎨 Interface Otimizada**
-* **Popup responsivo** com design moderno
-* **Botão de fechamento condicional** (oculto em páginas críticas)
-* **Feedback visual em tempo real**
-* **Temas personalizáveis** via painel administrativo
+
+- **Popup responsivo** com design moderno
+- **Botão de fechamento condicional** (oculto em páginas críticas)
+- **Feedback visual em tempo real**
+- **Temas personalizáveis** via painel administrativo
 
 == Compatibilidade ==
 
 **✅ WooCommerce Moderno:**
-* HPOS (High-Performance Order Storage) ✅
-* Interactivity API powered Mini Cart ✅
-* Cart & Checkout Blocks ✅
-* WooCommerce tradicional ✅
+
+- HPOS (High-Performance Order Storage) ✅
+- Interactivity API powered Mini Cart ✅
+- Cart & Checkout Blocks ✅
+- WooCommerce tradicional ✅
 
 **✅ Plugins Especializados:**
-* Fluid Checkout ✅
-* Brazilian Market on WooCommerce ✅
-* Extra Checkout Fields for Brazil ✅
-* Joinotify (WhatsApp) ✅
+
+- Fluid Checkout ✅
+- Brazilian Market on WooCommerce ✅
+- Extra Checkout Fields for Brazil ✅
+- Joinotify (WhatsApp) ✅
 
 **✅ Campos Brasileiros:**
-* CPF/CNPJ, Número, Bairro, Celular
-* Data de nascimento, Sexo, IE, RG
-* Endereço completo brasileiro
+
+- CPF/CNPJ, Número, Bairro, Celular
+- Data de nascimento, Sexo, IE, RG
+- Endereço completo brasileiro
 
 == Instalação ==
 
@@ -82,40 +90,47 @@ Elimina a frustração de perder itens do carrinho ou ter que preencher dados ma
 == Configuração ==
 
 **🔧 Configurações Básicas:**
-* Ative/desative login com CPF/CNPJ
-* Configure cores e tipografia do popup
-* Personalize textos e mensagens
-* Ajuste comportamento de redirecionamento
+
+- Ative/desative login com CPF/CNPJ
+- Configure cores e tipografia do popup
+- Personalize textos e mensagens
+- Ajuste comportamento de redirecionamento
 
 **🌐 Login Social:**
-* Configure Google Client ID para login com Google
-* Configure Facebook App ID/Secret para login com Facebook
-* Botões automáticos nos formulários de login/registro
+
+- Configure Google Client ID para login com Google
+- Configure Facebook App ID/Secret para login com Facebook
+- Botões automáticos nos formulários de login/registro
 
 **📱 WhatsApp (Joinotify):**
-* Configure número remetente para códigos via WhatsApp
-* Ative botões interativos para melhor UX
-* Mensagens personalizáveis com código de verificação
+
+- Configure número remetente para códigos via WhatsApp
+- Ative botões interativos para melhor UX
+- Mensagens personalizáveis com código de verificação
 
 == Casos de Uso ==
 
 **🛒 Cenário 1: Compra no Carrinho**
+
 1. Cliente adiciona produtos ao carrinho
-2. Clica em "Finalizar Compra" 
+2. Clica em "Finalizar Compra"
 3. Faz login via popup elegante
 4. ✅ **Resultado:** Redirecionado para checkout com carrinho preservado e dados preenchidos
 
 **🔄 Cenário 2: Checkout Direto**
+
 1. Cliente acessa `/checkout` diretamente
 2. Faz login via sistema nativo WooCommerce
 3. ✅ **Resultado:** Dados preenchidos automaticamente sem perda de estado
 
 **👤 Cenário 3: Usuário Já Logado**
+
 1. Cliente logado acessa checkout
 2. Formulário aparece inicialmente vazio
 3. ✅ **Resultado:** Auto-preenchimento automático detecta e preenche todos os dados
 
 **📱 Cenário 4: Login Social**
+
 1. Cliente usa Google ou Facebook
 2. ✅ **Resultado:** Dados sociais importados automaticamente
 
@@ -154,33 +169,37 @@ Sim! Integração com Joinotify para envio de códigos via WhatsApp com botões 
 🎉 **LANÇAMENTO OFICIAL - VERSÃO ESTÁVEL**
 
 **🚀 FUNCIONALIDADES PRINCIPAIS CONSOLIDADAS:**
-* ✅ Sistema de autenticação avançado (email/telefone/CPF/social)
-* ✅ Persistência inteligente de carrinho (sistema triplo de backup)  
-* ✅ Auto-preenchimento inteligente (múltiplos pontos de detecção)
-* ✅ Redirecionamento inteligente (baseado em contexto)
-* ✅ Compatibilidade universal (Fluid Checkout + Brazilian Market + HPOS)
+
+- ✅ Sistema de autenticação avançado (email/telefone/CPF/social)
+- ✅ Persistência inteligente de carrinho (sistema triplo de backup)
+- ✅ Auto-preenchimento inteligente (múltiplos pontos de detecção)
+- ✅ Redirecionamento inteligente (baseado em contexto)
+- ✅ Compatibilidade universal (Fluid Checkout + Brazilian Market + HPOS)
 
 **🛡️ PROBLEMAS CRÍTICOS RESOLVIDOS:**
-* ✅ Perda de carrinho após login (RESOLVIDO)
-* ✅ Auto-preenchimento checkout direto (RESOLVIDO)  
-* ✅ Conflitos entre sistemas de preenchimento (RESOLVIDO)
-* ✅ Redirecionamento incorreto (RESOLVIDO)
-* ✅ Sincronização de emails account_email ↔ billing_email (RESOLVIDO)
+
+- ✅ Perda de carrinho após login (RESOLVIDO)
+- ✅ Auto-preenchimento checkout direto (RESOLVIDO)
+- ✅ Conflitos entre sistemas de preenchimento (RESOLVIDO)
+- ✅ Redirecionamento incorreto (RESOLVIDO)
+- ✅ Sincronização de emails account_email ↔ billing_email (RESOLVIDO)
 
 **🔧 COMPATIBILIDADE UNIVERSAL:**
-* ✅ HPOS (High-Performance Order Storage)
-* ✅ Interactivity API powered Mini Cart
-* ✅ Cart & Checkout Blocks
-* ✅ WooCommerce tradicional
-* ✅ Fluid Checkout
-* ✅ Brazilian Market on WooCommerce
+
+- ✅ HPOS (High-Performance Order Storage)
+- ✅ Interactivity API powered Mini Cart
+- ✅ Cart & Checkout Blocks
+- ✅ WooCommerce tradicional
+- ✅ Fluid Checkout
+- ✅ Brazilian Market on WooCommerce
 
 **📋 CENÁRIOS TESTADOS E FUNCIONANDO:**
-* ✅ Login carrinho → checkout (carrinho preservado)
-* ✅ Login direto checkout → dados preenchidos
-* ✅ Usuário já logado → auto-preenchimento
-* ✅ Registro nova conta → email preenchido
-* ✅ Login social → dados importados
+
+- ✅ Login carrinho → checkout (carrinho preservado)
+- ✅ Login direto checkout → dados preenchidos
+- ✅ Usuário já logado → auto-preenchimento
+- ✅ Registro nova conta → email preenchido
+- ✅ Login social → dados importados
 
 **🎯 MARCO HISTÓRICO:**
 Plugin robusto, testado e pronto para produção com arquitetura escalável e código limpo.
