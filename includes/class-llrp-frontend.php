@@ -593,7 +593,7 @@ class Llrp_Frontend {
         
         // Only handle if this is NOT from our popup
         if ( $is_our_popup ) {
-            error_log('🔑 LLRP: Ignoring login from our popup');
+            self::safe_log('🔑 LLRP: Ignoring login from our popup');
             return;
         }
         
@@ -616,7 +616,7 @@ class Llrp_Frontend {
         $_SESSION['llrp_direct_checkout_login'] = $user->ID;
         $_SESSION['llrp_direct_checkout_login_time'] = time();
         
-        error_log('🔑 LLRP: Session stored for direct checkout login');
+        self::safe_log('🔑 LLRP: Session stored for direct checkout login');
     }
     
     /**
@@ -630,7 +630,7 @@ class Llrp_Frontend {
         
         // Only handle if this is NOT from our popup
         if ( $is_our_popup ) {
-            error_log('📝 LLRP: Ignoring registration from our popup');
+            self::safe_log('📝 LLRP: Ignoring registration from our popup');
             return;
         }
         
@@ -653,7 +653,7 @@ class Llrp_Frontend {
         $_SESSION['llrp_direct_checkout_register'] = $user_id;
         $_SESSION['llrp_direct_checkout_register_time'] = time();
         
-        error_log('📝 LLRP: Session stored for direct checkout registration');
+        self::safe_log('📝 LLRP: Session stored for direct checkout registration');
     }
 
     /**
@@ -703,7 +703,7 @@ class Llrp_Frontend {
             // Get user data for autofill
             $user_data = self::get_user_checkout_data_static( $user_id );
             
-            error_log('🔄 LLRP: Preparing autofill for ' . $trigger_type . ' - User: ' . $user_id);
+            self::safe_log('🔄 LLRP: Preparing autofill for ' . $trigger_type . ' - User: ' . $user_id);
             
             // Add JavaScript data
             wp_add_inline_script( 'llrp-frontend', '
@@ -807,7 +807,7 @@ class Llrp_Frontend {
         
         // CRITICAL: Don't force autofill if this came from our popup login
         if ( wp_doing_ajax() ) {
-            error_log('🔄 LLRP: Skipping force autofill - AJAX request (likely our popup)');
+            self::safe_log('🔄 LLRP: Skipping force autofill - AJAX request (likely our popup)');
             return;
         }
         
@@ -818,7 +818,7 @@ class Llrp_Frontend {
         
         if ( isset( $_SESSION['llrp_popup_login_timestamp'] ) && 
              ( time() - $_SESSION['llrp_popup_login_timestamp'] ) < 10 ) {
-            error_log('🔄 LLRP: Skipping force autofill - recent popup login detected');
+            self::safe_log('🔄 LLRP: Skipping force autofill - recent popup login detected');
             return;
         }
         

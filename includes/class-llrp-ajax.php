@@ -10,9 +10,9 @@ class Llrp_Ajax {
     private static function safe_log($message, $data = null) {
         if (defined('WP_DEBUG') && WP_DEBUG) {
             if ($data) {
-                error_log($message . ': ' . print_r($data, true));
+                self::safe_log($message . ': ' . print_r($data, true));
             } else {
-                error_log($message);
+                self::safe_log($message);
             }
         }
     }
@@ -43,7 +43,7 @@ class Llrp_Ajax {
         $nonce = sanitize_text_field( wp_unslash( $_POST['nonce'] ?? '' ) );
         if ( ! wp_verify_nonce( $nonce, 'llrp_nonce' ) ) {
             if ( ! wp_verify_nonce( $nonce, 'woocommerce-process_checkout' ) ) {
-                error_log( 'LLRP: Nonce verification failed for check_user. Nonce: ' . $nonce );
+                self::safe_log( 'LLRP: Nonce verification failed for check_user. Nonce: ' . $nonce );
                 wp_send_json_error( [ 'message' => __( 'Erro de segurança. Recarregue a página e tente novamente.', 'llrp' ) ] );
             }
         }
@@ -78,7 +78,7 @@ class Llrp_Ajax {
         $nonce = sanitize_text_field( wp_unslash( $_POST['nonce'] ?? '' ) );
         if ( ! wp_verify_nonce( $nonce, 'llrp_nonce' ) ) {
             if ( ! wp_verify_nonce( $nonce, 'woocommerce-process_checkout' ) ) {
-                error_log( 'LLRP: Nonce verification failed for send_login_code. Nonce: ' . $nonce );
+                self::safe_log( 'LLRP: Nonce verification failed for send_login_code. Nonce: ' . $nonce );
                 wp_send_json_error( [ 'message' => __( 'Erro de segurança. Recarregue a página e tente novamente.', 'llrp' ) ] );
             }
         }
@@ -218,7 +218,7 @@ class Llrp_Ajax {
         $nonce = sanitize_text_field( wp_unslash( $_POST['nonce'] ?? '' ) );
         if ( ! wp_verify_nonce( $nonce, 'llrp_nonce' ) ) {
             if ( ! wp_verify_nonce( $nonce, 'woocommerce-process_checkout' ) ) {
-                error_log( 'LLRP: Nonce verification failed for code_login. Nonce: ' . $nonce );
+                self::safe_log( 'LLRP: Nonce verification failed for code_login. Nonce: ' . $nonce );
                 wp_send_json_error( [ 'message' => __( 'Erro de segurança. Recarregue a página e tente novamente.', 'llrp' ) ] );
             }
         }
@@ -277,7 +277,7 @@ class Llrp_Ajax {
         $nonce = sanitize_text_field( wp_unslash( $_POST['nonce'] ?? '' ) );
         if ( ! wp_verify_nonce( $nonce, 'llrp_nonce' ) ) {
             if ( ! wp_verify_nonce( $nonce, 'woocommerce-process_checkout' ) ) {
-                error_log( 'LLRP: Nonce verification failed for login_with_password. Nonce: ' . $nonce );
+                self::safe_log( 'LLRP: Nonce verification failed for login_with_password. Nonce: ' . $nonce );
                 wp_send_json_error( [ 'message' => __( 'Erro de segurança. Recarregue a página e tente novamente.', 'llrp' ) ] );
             }
         }
@@ -329,7 +329,7 @@ class Llrp_Ajax {
     public static function ajax_register() {
         // Direct WordPress user creation without any nonce validation
         if ( ! self::validate_direct_registration_request() ) {
-            error_log( 'LLRP: Direct registration validation failed. IP: ' . self::get_client_ip() );
+            self::safe_log( 'LLRP: Direct registration validation failed. IP: ' . self::get_client_ip() );
             wp_send_json_error( [ 'message' => __( 'Erro de segurança. Recarregue a página e tente novamente.', 'llrp' ) ] );
         }
         
@@ -401,7 +401,7 @@ class Llrp_Ajax {
             $user_id = wp_create_user( $username, $password, $email );
             
             if ( is_wp_error( $user_id ) ) {
-                error_log( 'LLRP: wp_create_user error: ' . $user_id->get_error_message() );
+                self::safe_log( 'LLRP: wp_create_user error: ' . $user_id->get_error_message() );
                 wp_send_json_error([ 'message' => $user_id->get_error_message() ]);
             }
 
@@ -428,7 +428,7 @@ class Llrp_Ajax {
             do_action( 'woocommerce_created_customer', $user_id, array( 'user_login' => $username, 'user_email' => $email ), $password );
 
         } catch ( Exception $e ) {
-            error_log( 'LLRP: Registration error: ' . $e->getMessage() );
+            self::safe_log( 'LLRP: Registration error: ' . $e->getMessage() );
             
             if ( email_exists( $email ) ) {
                 wp_send_json_error([ 'message' => __( 'Seu usuário foi criado, mas um plugin de terceiros causou um erro. Por favor, tente fazer o login.', 'llrp' ) ]);
@@ -566,65 +566,65 @@ class Llrp_Ajax {
      */
     public static function ajax_google_login() {
         // Debug logging
-        error_log( 'LLRP: Google login attempt started' );
-        error_log( 'LLRP: POST data: ' . print_r( $_POST, true ) );
+        self::safe_log( 'LLRP: Google login attempt started' );
+        self::safe_log( 'LLRP: POST data: ' . print_r( $_POST, true ) );
         
         // More flexible nonce verification with debug
         $nonce = sanitize_text_field( wp_unslash( $_POST['nonce'] ?? '' ) );
-        error_log( 'LLRP: Received nonce: ' . $nonce );
-        error_log( 'LLRP: Current user ID: ' . get_current_user_id() );
+        self::safe_log( 'LLRP: Received nonce: ' . $nonce );
+        self::safe_log( 'LLRP: Current user ID: ' . get_current_user_id() );
         
         // Try to verify nonce with fallback
         $nonce_valid = wp_verify_nonce( $nonce, 'llrp_nonce' );
-        error_log( 'LLRP: Nonce validation result: ' . ( $nonce_valid ? 'VALID' : 'INVALID' ) );
+        self::safe_log( 'LLRP: Nonce validation result: ' . ( $nonce_valid ? 'VALID' : 'INVALID' ) );
         
         // Temporary bypass for debugging (REMOVE IN PRODUCTION)
         if ( ! $nonce_valid ) {
-            error_log( 'LLRP: Nonce verification failed - checking if user logged in or has valid session' );
+            self::safe_log( 'LLRP: Nonce verification failed - checking if user logged in or has valid session' );
             
             // Alternative verification: check if this is a valid AJAX request
             if ( ! defined( 'DOING_AJAX' ) || ! DOING_AJAX ) {
-                error_log( 'LLRP: Not an AJAX request' );
+                self::safe_log( 'LLRP: Not an AJAX request' );
                 wp_send_json_error( [ 'message' => __( 'Erro de segurança. Recarregue a página e tente novamente.', 'llrp' ) ] );
             }
             
             // Check if request has required data
             if ( empty( $_POST['user_info'] ) && empty( $_POST['id_token'] ) ) {
-                error_log( 'LLRP: Missing required data' );
+                self::safe_log( 'LLRP: Missing required data' );
                 wp_send_json_error( [ 'message' => __( 'Dados inválidos recebidos.', 'llrp' ) ] );
             }
             
-            error_log( 'LLRP: Nonce failed but other validations passed - proceeding with caution' );
+            self::safe_log( 'LLRP: Nonce failed but other validations passed - proceeding with caution' );
         } else {
-            error_log( 'LLRP: Nonce verification passed' );
+            self::safe_log( 'LLRP: Nonce verification passed' );
         }
         
         // Check for new user_info format first
         $user_info_raw = sanitize_text_field( wp_unslash( $_POST['user_info'] ?? '' ) );
         $id_token = sanitize_text_field( wp_unslash( $_POST['id_token'] ?? '' ) );
         
-        error_log( 'LLRP: Raw user_info: ' . $user_info_raw );
-        error_log( 'LLRP: ID token: ' . $id_token );
+        self::safe_log( 'LLRP: Raw user_info: ' . $user_info_raw );
+        self::safe_log( 'LLRP: ID token: ' . $id_token );
         
         if ( empty( $user_info_raw ) && empty( $id_token ) ) {
-            error_log( 'LLRP: Both user_info and id_token are empty' );
+            self::safe_log( 'LLRP: Both user_info and id_token are empty' );
             wp_send_json_error( [ 'message' => __( 'Dados do Google inválidos.', 'llrp' ) ] );
         }
 
         // Verificar se o login com Google está habilitado
         $google_enabled = get_option( 'llrp_google_login_enabled' );
-        error_log( 'LLRP: Google login enabled: ' . ( $google_enabled ? 'YES' : 'NO' ) );
+        self::safe_log( 'LLRP: Google login enabled: ' . ( $google_enabled ? 'YES' : 'NO' ) );
         
         if ( ! $google_enabled ) {
-            error_log( 'LLRP: Google login not enabled' );
+            self::safe_log( 'LLRP: Google login not enabled' );
             wp_send_json_error( [ 'message' => __( 'Login com Google não está habilitado.', 'llrp' ) ] );
         }
 
         $client_id = get_option( 'llrp_google_client_id' );
-        error_log( 'LLRP: Google client ID: ' . $client_id );
+        self::safe_log( 'LLRP: Google client ID: ' . $client_id );
         
         if ( empty( $client_id ) ) {
-            error_log( 'LLRP: Google client ID is empty' );
+            self::safe_log( 'LLRP: Google client ID is empty' );
             wp_send_json_error( [ 'message' => __( 'Configuração do Google não encontrada.', 'llrp' ) ] );
         }
 
@@ -632,17 +632,17 @@ class Llrp_Ajax {
 
         // Handle new user_info format
         if ( ! empty( $user_info_raw ) ) {
-            error_log( 'LLRP: Processing user_info format' );
+            self::safe_log( 'LLRP: Processing user_info format' );
             $user_info = json_decode( $user_info_raw, true );
-            error_log( 'LLRP: Decoded user_info: ' . print_r( $user_info, true ) );
+            self::safe_log( 'LLRP: Decoded user_info: ' . print_r( $user_info, true ) );
             
             if ( ! $user_info || ! isset( $user_info['email'] ) || ! isset( $user_info['verified_email'] ) ) {
-                error_log( 'LLRP: Invalid user_info data structure' );
+                self::safe_log( 'LLRP: Invalid user_info data structure' );
                 wp_send_json_error( [ 'message' => __( 'Dados do Google inválidos.', 'llrp' ) ] );
             }
 
             if ( ! $user_info['verified_email'] ) {
-                error_log( 'LLRP: Email not verified by Google' );
+                self::safe_log( 'LLRP: Email not verified by Google' );
                 wp_send_json_error( [ 'message' => __( 'E-mail do Google não verificado.', 'llrp' ) ] );
             }
 
@@ -654,7 +654,7 @@ class Llrp_Ajax {
                 'picture'    => $user_info['picture'] ?? ''
             ];
             
-            error_log( 'LLRP: Prepared user data: ' . print_r( $data, true ) );
+            self::safe_log( 'LLRP: Prepared user data: ' . print_r( $data, true ) );
         }
         // Handle legacy id_token format
         else if ( ! empty( $id_token ) ) {
@@ -692,19 +692,19 @@ class Llrp_Ajax {
             'provider'   => 'google'
         ];
 
-        error_log( 'LLRP: Final user_data to process: ' . print_r( $user_data, true ) );
-        error_log( 'LLRP: Calling process_social_login...' );
+        self::safe_log( 'LLRP: Final user_data to process: ' . print_r( $user_data, true ) );
+        self::safe_log( 'LLRP: Calling process_social_login...' );
         
         $user_id = self::process_social_login( $user_data );
         
-        error_log( 'LLRP: process_social_login returned: ' . print_r( $user_id, true ) );
+        self::safe_log( 'LLRP: process_social_login returned: ' . print_r( $user_id, true ) );
         
         if ( is_wp_error( $user_id ) ) {
-            error_log( 'LLRP: process_social_login error: ' . $user_id->get_error_message() );
+            self::safe_log( 'LLRP: process_social_login error: ' . $user_id->get_error_message() );
             wp_send_json_error( [ 'message' => $user_id->get_error_message() ] );
         }
 
-        error_log( 'LLRP: Setting auth cookie for user ID: ' . $user_id );
+        self::safe_log( 'LLRP: Setting auth cookie for user ID: ' . $user_id );
         wc_set_customer_auth_cookie( $user_id );
         
         // Trigger cart fragments update for Fluid Checkout compatibility
@@ -723,7 +723,7 @@ class Llrp_Ajax {
             }
         }
         
-        error_log( 'LLRP: Sending success response with redirect: ' . $redirect_url );
+        self::safe_log( 'LLRP: Sending success response with redirect: ' . $redirect_url );
         wp_send_json_success( [ 
             'redirect' => $redirect_url,
             'user_logged_in' => true,
@@ -829,48 +829,48 @@ class Llrp_Ajax {
      * Process social login data and create/login user
      */
     private static function process_social_login( $user_data ) {
-        error_log( 'LLRP: process_social_login started with data: ' . print_r( $user_data, true ) );
+        self::safe_log( 'LLRP: process_social_login started with data: ' . print_r( $user_data, true ) );
         
         $email = $user_data['email'];
         $provider = $user_data['provider'];
         
-        error_log( 'LLRP: Looking for existing user with email: ' . $email );
+        self::safe_log( 'LLRP: Looking for existing user with email: ' . $email );
         
         // Verificar se o usuário já existe
         $user = get_user_by( 'email', $email );
         
         if ( $user ) {
-            error_log( 'LLRP: Existing user found with ID: ' . $user->ID );
+            self::safe_log( 'LLRP: Existing user found with ID: ' . $user->ID );
             // Atualizar meta dados do provedor social
             update_user_meta( $user->ID, '_llrp_social_provider', $provider );
             if ( ! empty( $user_data['social_id'] ) ) {
                 update_user_meta( $user->ID, '_llrp_' . $provider . '_id', $user_data['social_id'] );
             }
             
-            error_log( 'LLRP: Returning existing user ID: ' . $user->ID );
+            self::safe_log( 'LLRP: Returning existing user ID: ' . $user->ID );
             return $user->ID;
         }
         
-        error_log( 'LLRP: No existing user found, creating new user' );
+        self::safe_log( 'LLRP: No existing user found, creating new user' );
         
         // Criar novo usuário
         $username = $email;
         $password = wp_generate_password();
         
-        error_log( 'LLRP: Creating new user with email: ' . $email );
+        self::safe_log( 'LLRP: Creating new user with email: ' . $email );
         
         try {
             // Usar wp_create_user ao invés de wc_create_new_customer para evitar problemas de nonce
             $user_id = wp_create_user( $username, $password, $email );
             
-            error_log( 'LLRP: wp_create_user result: ' . print_r( $user_id, true ) );
+            self::safe_log( 'LLRP: wp_create_user result: ' . print_r( $user_id, true ) );
             
             if ( is_wp_error( $user_id ) ) {
-                error_log( 'LLRP: wp_create_user error: ' . $user_id->get_error_message() );
+                self::safe_log( 'LLRP: wp_create_user error: ' . $user_id->get_error_message() );
                 return $user_id;
             }
             
-            error_log( 'LLRP: New user created successfully with ID: ' . $user_id );
+            self::safe_log( 'LLRP: New user created successfully with ID: ' . $user_id );
             
             // Definir role como customer do WooCommerce
             $user = new WP_User( $user_id );
@@ -986,7 +986,7 @@ class Llrp_Ajax {
         $nonce = sanitize_text_field( wp_unslash( $_POST['nonce'] ?? '' ) );
         if ( ! wp_verify_nonce( $nonce, 'llrp_nonce' ) ) {
             if ( ! wp_verify_nonce( $nonce, 'woocommerce-process_checkout' ) ) {
-                error_log( 'LLRP: Nonce verification failed for check_login_status. Nonce: ' . $nonce );
+                self::safe_log( 'LLRP: Nonce verification failed for check_login_status. Nonce: ' . $nonce );
                 wp_send_json_error( [ 'message' => __( 'Erro de segurança. Recarregue a página e tente novamente.', 'llrp' ) ] );
             }
         }
@@ -1008,7 +1008,7 @@ class Llrp_Ajax {
         // Verificação de nonce
         $nonce = sanitize_text_field( wp_unslash( $_POST['nonce'] ?? '' ) );
         if ( ! wp_verify_nonce( $nonce, 'llrp_nonce' ) ) {
-            error_log( 'LLRP: Nonce verification failed for get_checkout_user_data' );
+            self::safe_log( 'LLRP: Nonce verification failed for get_checkout_user_data' );
             wp_send_json_error( [ 'message' => __( 'Erro de segurança. Recarregue a página e tente novamente.', 'llrp' ) ] );
         }
         
@@ -1024,7 +1024,7 @@ class Llrp_Ajax {
         $user_data = self::get_user_checkout_data( $user_id );
         
         if ( empty( $user_data ) ) {
-            error_log( '🔄 LLRP: No user data found for autofill' );
+            self::safe_log( '🔄 LLRP: No user data found for autofill' );
             wp_send_json_error( [ 'message' => __( 'Dados do usuário não encontrados.', 'llrp' ) ] );
         }
         
@@ -1060,7 +1060,7 @@ class Llrp_Ajax {
         $attempts = get_transient( $transient_key );
         
         if ( $attempts && $attempts >= 5 ) {
-            error_log( 'LLRP: Registration rate limit exceeded for IP: ' . $ip );
+            self::safe_log( 'LLRP: Registration rate limit exceeded for IP: ' . $ip );
             return false;
         }
         
@@ -1101,17 +1101,17 @@ class Llrp_Ajax {
         $referer = wp_get_referer();
         $current_url = isset($_SERVER['REQUEST_URI']) ? $_SERVER['REQUEST_URI'] : '';
         
-        error_log('🔄 LLRP: Smart redirect - Referer: ' . $referer . ' | Current: ' . $current_url);
+        self::safe_log('🔄 LLRP: Smart redirect - Referer: ' . $referer . ' | Current: ' . $current_url);
         
         // If user is coming from cart page, redirect to checkout with #reload
         if ($referer && (strpos($referer, '/cart') !== false || strpos($referer, '/carrinho') !== false)) {
-            error_log('🔄 LLRP: User came from cart, redirecting to checkout with #reload');
+            self::safe_log('🔄 LLRP: User came from cart, redirecting to checkout with #reload');
             return wc_get_checkout_url() . '#reload';
         }
         
         // If user is already on checkout page, add #reload to refresh properly
         if ($referer && (strpos($referer, '/checkout') !== false || strpos($referer, '/finalizar-compra') !== false)) {
-            error_log('🔄 LLRP: User is on checkout, adding #reload to preserve and refresh state');
+            self::safe_log('🔄 LLRP: User is on checkout, adding #reload to preserve and refresh state');
             // Remove existing fragment and add #reload
             $clean_url = strtok($referer, '#');
             return $clean_url . '#reload';
@@ -1119,12 +1119,12 @@ class Llrp_Ajax {
         
         // Check current URL context
         if (strpos($current_url, '/checkout') !== false || strpos($current_url, '/finalizar-compra') !== false) {
-            error_log('🔄 LLRP: Current URL is checkout, adding #reload');
+            self::safe_log('🔄 LLRP: Current URL is checkout, adding #reload');
             return wc_get_checkout_url() . '#reload';
         }
         
         // Default: redirect to checkout with #reload
-        error_log('🔄 LLRP: Default redirect to checkout with #reload');
+        self::safe_log('🔄 LLRP: Default redirect to checkout with #reload');
         return wc_get_checkout_url() . '#reload';
     }
 

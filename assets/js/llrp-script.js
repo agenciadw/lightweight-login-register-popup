@@ -7,16 +7,17 @@
     var savedIdentifier = "";
     var deliveryMethod = "email";
     var userEmail = ""; // Variável para armazenar o e-mail do usuário
-    
+
     // Debug mode - only log in development
-    var debugMode = typeof LLRP_Data !== 'undefined' && LLRP_Data.debug_mode === '1';
-    
+    var debugMode =
+      typeof LLRP_Data !== "undefined" && LLRP_Data.debug_mode === "1";
+
     function safeLog(message, data) {
       if (debugMode) {
         if (data) {
-          console.log(message, data);
+          safeLog(message, data);
         } else {
-          console.log(message);
+          safeLog(message);
         }
       }
     }
@@ -26,7 +27,7 @@
      * Replaces window.location.reload() to prevent conflicts
      */
     function softRefresh() {
-      console.log("🔄 LLRP: Using soft refresh (Interactivity API compatible)");
+      safeLog("🔄 LLRP: Using soft refresh (Interactivity API compatible)");
 
       // Close popup
       closePopup();
@@ -51,7 +52,7 @@
         $(".woocommerce-MyAccount-content").trigger("refresh");
       }
 
-      console.log("🔄 LLRP: Soft refresh completed");
+      safeLog("🔄 LLRP: Soft refresh completed");
     }
 
     /**
@@ -140,7 +141,7 @@
         safeLog("🛒 Cart backup completed successfully");
         return true;
       } catch (error) {
-        console.error(
+        safeLog(
           "🚨 CRITICAL ERROR: Failed to save cart before login:",
           error
         );
@@ -149,7 +150,7 @@
     }
 
     function restoreCartAfterLogin() {
-      console.log("🛒 CRITICAL: Restoring cart after login - STARTED");
+      safeLog("🛒 CRITICAL: Restoring cart after login - STARTED");
 
       try {
         // Try primary backup first
@@ -160,12 +161,12 @@
         if (!savedCart) {
           savedCart = sessionStorage.getItem("llrp_cart_backup_failsafe");
           backupSource = "sessionStorage";
-          console.log("🛒 Primary backup not found, using failsafe backup");
+          safeLog("🛒 Primary backup not found, using failsafe backup");
         }
 
         if (savedCart) {
           var cartData = JSON.parse(savedCart);
-          console.log("🛒 RESTORING cart from " + backupSource + ":", cartData);
+          safeLog("🛒 RESTORING cart from " + backupSource + ":", cartData);
 
           // Check if cart data is not too old (24 hours)
           if (
@@ -175,10 +176,10 @@
             if (cartData.method === "wc_fragments" && cartData.fragments) {
               // Restore using WooCommerce fragments
               updateCartFragments(cartData.fragments);
-              console.log("🛒 Cart restored using WC fragments method");
+              safeLog("🛒 Cart restored using WC fragments method");
             } else {
               // Use soft refresh to restore cart state (Interactivity API compatible)
-              console.log("🛒 Using soft refresh to restore cart state");
+              safeLog("🛒 Using soft refresh to restore cart state");
               setTimeout(function () {
                 softRefresh();
               }, 1000);
@@ -189,21 +190,21 @@
             sessionStorage.removeItem("llrp_cart_backup_failsafe");
             localStorage.removeItem("llrp_cart_dom_backup");
 
-            console.log("🛒 CRITICAL: Cart restoration completed successfully");
+            safeLog("🛒 CRITICAL: Cart restoration completed successfully");
             return true;
           } else {
-            console.log("🛒 Cart data expired, clearing old backups");
+            safeLog("🛒 Cart data expired, clearing old backups");
             localStorage.removeItem("llrp_cart_backup");
             sessionStorage.removeItem("llrp_cart_backup_failsafe");
             localStorage.removeItem("llrp_cart_dom_backup");
           }
         } else {
-          console.log("🛒 No cart backup found to restore");
+          safeLog("🛒 No cart backup found to restore");
         }
 
         return false;
       } catch (error) {
-        console.error(
+        safeLog(
           "🚨 CRITICAL ERROR: Failed to restore cart after login:",
           error
         );
@@ -212,18 +213,18 @@
     }
 
     function mergeLocalCartWithUserCart() {
-      console.log("🛒 SAFE: Checking if cart merge is needed");
+      safeLog("🛒 SAFE: Checking if cart merge is needed");
 
       // SAFE MODE: Only restore if there's a legitimate backup and current cart is empty
       var currentCartCount = $(".cart-contents-count").text() || "0";
       if (currentCartCount === "0" || parseInt(currentCartCount) === 0) {
-        console.log("🛒 SAFE: Current cart is empty, attempting restoration");
+        safeLog("🛒 SAFE: Current cart is empty, attempting restoration");
         var restored = restoreCartAfterLogin();
         if (!restored) {
-          console.log("🛒 SAFE: No local cart backup found - this is normal");
+          safeLog("🛒 SAFE: No local cart backup found - this is normal");
         }
       } else {
-        console.log(
+        safeLog(
           "🛒 SAFE: Current cart has items (" +
             currentCartCount +
             "), not touching it"
@@ -239,15 +240,15 @@
         .done(function (res) {
           if (res.success && res.data.nonce) {
             LLRP_Data.nonce = res.data.nonce;
-            console.log("LLRP: Nonce refreshed successfully");
+            safeLog("LLRP: Nonce refreshed successfully");
             if (callback) callback(true);
           } else {
-            console.log("LLRP: Failed to refresh nonce");
+            safeLog("LLRP: Failed to refresh nonce");
             if (callback) callback(false);
           }
         })
         .fail(function () {
-          console.log("LLRP: AJAX failed to refresh nonce");
+          safeLog("LLRP: AJAX failed to refresh nonce");
           if (callback) callback(false);
         });
     }
@@ -266,7 +267,7 @@
               (res.data.message.includes("segurança") ||
                 res.data.message.includes("Nonce verification failed"))
             ) {
-              console.log("LLRP: Nonce error detected, trying to refresh...");
+              safeLog("LLRP: Nonce error detected, trying to refresh...");
 
               refreshNonce(function (refreshed) {
                 if (refreshed) {
@@ -311,10 +312,10 @@
       if (e) e.preventDefault();
 
       // CRITICAL: Save cart with dual backup before ANY login action
-      console.log("🚨 CRITICAL: About to open popup - saving cart FIRST");
+      safeLog("🚨 CRITICAL: About to open popup - saving cart FIRST");
       var cartSaved = saveCartBeforeLogin();
       if (!cartSaved) {
-        console.error("🚨 CRITICAL WARNING: Cart backup failed!");
+        safeLog("🚨 CRITICAL WARNING: Cart backup failed!");
       }
 
       // Verificação dinâmica do status de login via AJAX
@@ -325,11 +326,11 @@
         .done(function (res) {
           if (res.success && res.data.is_logged_in) {
             // Usuário está logado, redirecionar para checkout
-            console.log("User is logged in, redirecting to checkout");
+            safeLog("User is logged in, redirecting to checkout");
             window.location.href = res.data.checkout_url;
           } else {
             // Usuário não está logado, mostrar popup
-            console.log("User not logged in, showing popup");
+            safeLog("User not logged in, showing popup");
             resetSteps();
             $overlay.removeClass("hidden");
             $popup.removeClass("hidden");
@@ -340,7 +341,7 @@
         })
         .fail(function () {
           // Em caso de erro, assumir que não está logado e mostrar popup
-          console.log("AJAX failed, showing popup as fallback");
+          safeLog("AJAX failed, showing popup as fallback");
           resetSteps();
           $overlay.removeClass("hidden");
           $popup.removeClass("hidden");
@@ -379,10 +380,10 @@
         LLRP_Data.is_checkout_page === "1";
 
       if (isCheckoutPage) {
-        console.log("LLRP: Hiding close button on checkout page");
+        safeLog("LLRP: Hiding close button on checkout page");
         $popup.find(".llrp-close").hide();
       } else {
-        console.log("LLRP: Showing close button on non-checkout page");
+        safeLog("LLRP: Showing close button on non-checkout page");
         $popup.find(".llrp-close").show();
       }
     }
@@ -482,7 +483,7 @@
       })
         .done(function (res) {
           if (res.success) {
-            console.log(
+            safeLog(
               "🛒 CRITICAL: Registration (with email) successful - restoring cart IMMEDIATELY"
             );
 
@@ -508,7 +509,7 @@
             // Check if Fluid Checkout is active and handle accordingly
             if (isFluidCheckoutActive()) {
               // For Fluid Checkout, use soft refresh instead of hard reload
-              console.log(
+              safeLog(
                 "🔄 FLUID CHECKOUT: Using soft refresh for Interactivity API compatibility"
               );
               softRefresh();
@@ -521,7 +522,7 @@
           }
         })
         .fail(function (xhr) {
-          console.log("LLRP: Registration AJAX failed:", xhr);
+          safeLog("LLRP: Registration AJAX failed:", xhr);
           showFeedback(
             "llrp-feedback-register-email",
             "Erro de conexão. Tente novamente."
@@ -559,7 +560,7 @@
         nonce: LLRP_Data.nonce,
       }).done(function (res) {
         if (res.success) {
-          console.log(
+          safeLog(
             "🛒 CRITICAL: Code login successful - restoring cart IMMEDIATELY"
           );
 
@@ -577,17 +578,17 @@
           }
 
           // Check if Fluid Checkout is active and handle accordingly
-          console.log(
+          safeLog(
             "LLRP: Checking Fluid Checkout status after code login..."
           );
           if (isFluidCheckoutActive()) {
-            console.log("LLRP: Fluid Checkout detected, using soft refresh...");
+            safeLog("LLRP: Fluid Checkout detected, using soft refresh...");
             // For Fluid Checkout, use soft refresh instead of hard reload
             setTimeout(function () {
               softRefresh();
             }, 500);
           } else {
-            console.log("LLRP: Standard WooCommerce, redirecting normally...");
+            safeLog("LLRP: Standard WooCommerce, redirecting normally...");
             // For standard WooCommerce, redirect normally
             window.location.href = res.data.redirect;
           }
@@ -610,7 +611,7 @@
         nonce: LLRP_Data.nonce,
       }).done(function (res) {
         if (res.success) {
-          console.log(
+          safeLog(
             "🛒 CRITICAL: Password login successful - restoring cart IMMEDIATELY"
           );
 
@@ -635,7 +636,7 @@
               window.location.href.includes("checkout")
             ) {
               // For Fluid Checkout on checkout page, use soft refresh to preserve checkout state
-              console.log(
+              safeLog(
                 "🔄 FLUID CHECKOUT: Using soft refresh to maintain state (Interactivity API compatible)"
               );
               setTimeout(function () {
@@ -643,12 +644,12 @@
               }, 500);
             } else {
               // For other cases, redirect normally
-              console.log("🔄 REDIRECTING to:", res.data.redirect);
+              safeLog("🔄 REDIRECTING to:", res.data.redirect);
               window.location = res.data.redirect;
             }
           } else {
             // No redirect needed, just close popup and reload fragments
-            console.log("🔄 NO REDIRECT: Staying on current page");
+            safeLog("🔄 NO REDIRECT: Staying on current page");
             hidePopup();
             if (res.data.cart_fragments) {
               updateCartFragments(res.data.cart_fragments);
@@ -676,7 +677,7 @@
       })
         .done(function (res) {
           if (res.success) {
-            console.log(
+            safeLog(
               "🛒 CRITICAL: Registration successful - restoring cart IMMEDIATELY"
             );
 
@@ -696,7 +697,7 @@
             // Check if Fluid Checkout is active and handle accordingly
             if (isFluidCheckoutActive()) {
               // For Fluid Checkout, use soft refresh for Interactivity API compatibility
-              console.log(
+              safeLog(
                 "🔄 FLUID CHECKOUT: Using soft refresh for Interactivity API compatibility"
               );
               softRefresh();
@@ -709,7 +710,7 @@
           }
         })
         .fail(function (xhr) {
-          console.log("LLRP: Registration AJAX failed:", xhr);
+          safeLog("LLRP: Registration AJAX failed:", xhr);
           showFeedback(
             "llrp-feedback-register",
             "Erro de conexão. Tente novamente."
@@ -719,7 +720,7 @@
 
     // Event Binding - Interceptação mais robusta do botão de checkout
     function interceptCheckoutButton(e) {
-      console.log("Checkout button clicked, intercepting...");
+      safeLog("Checkout button clicked, intercepting...");
 
       // SEMPRE prevenir o comportamento padrão primeiro
       e.preventDefault();
@@ -745,7 +746,7 @@
           !window.location.href.includes("checkout") &&
           !window.location.href.includes("finalizar-compra")
         ) {
-          console.log("Checkout link clicked, intercepting...");
+          safeLog("Checkout link clicked, intercepting...");
           return interceptCheckoutButton(e);
         }
       }
@@ -907,7 +908,7 @@
 
       // Check if Google SDK is loaded
       if (typeof google === "undefined") {
-        console.error("LLRP: Google SDK not loaded");
+        safeLog("LLRP: Google SDK not loaded");
         showFeedback(
           "llrp-feedback-email",
           "Google SDK não carregado. Tente novamente."
@@ -917,7 +918,7 @@
 
       // Check if OAuth2 is available
       if (!google.accounts || !google.accounts.oauth2) {
-        console.error("LLRP: Google OAuth2 not available");
+        safeLog("LLRP: Google OAuth2 not available");
         showFeedback(
           "llrp-feedback-email",
           "Google OAuth2 não disponível. Verifique a configuração."
@@ -925,7 +926,7 @@
         return;
       }
 
-      console.log("LLRP: Starting Google OAuth2 flow");
+      safeLog("LLRP: Starting Google OAuth2 flow");
 
       // Use Google OAuth popup flow
       google.accounts.oauth2
@@ -951,7 +952,7 @@
 
                   // Validate user info
                   if (!userInfo.email) {
-                    console.error("LLRP: No email in user info");
+                    safeLog("LLRP: No email in user info");
                     showFeedback(
                       "llrp-feedback-email",
                       "Google não forneceu e-mail."
@@ -963,14 +964,14 @@
                   processGoogleLogin(userInfo);
                 })
                 .catch((error) => {
-                  console.error("LLRP: Error fetching user info:", error);
+                  safeLog("LLRP: Error fetching user info:", error);
                   showFeedback(
                     "llrp-feedback-email",
                     "Erro ao obter informações do Google."
                   );
                 });
             } else {
-              console.log("LLRP: Google login cancelled or failed");
+              safeLog("LLRP: Google login cancelled or failed");
               showFeedback(
                 "llrp-feedback-email",
                 "Login com Google cancelado."
@@ -978,7 +979,7 @@
             }
           },
           error_callback: (error) => {
-            console.error("Google OAuth error:", error);
+            safeLog("Google OAuth error:", error);
             showFeedback(
               "llrp-feedback-email",
               "Erro no login com Google. Tente novamente."
@@ -998,11 +999,11 @@
         from_account: LLRP_Data.is_account_page || "0",
       })
         .done(function (res) {
-          console.log("LLRP: AJAX response:", res);
+          safeLog("LLRP: AJAX response:", res);
           if (res.success) {
-            console.log("LLRP: Login successful, redirecting...");
+            safeLog("LLRP: Login successful, redirecting...");
 
-            console.log(
+            safeLog(
               "🛒 CRITICAL: Google login successful - restoring cart IMMEDIATELY"
             );
 
@@ -1025,13 +1026,13 @@
             // Smart redirect based on current page and Fluid Checkout
             if (LLRP_Data.is_account_page === "1") {
               // On My Account page, use soft refresh to show logged-in state
-              console.log(
+              safeLog(
                 "🔄 MY ACCOUNT: Using soft refresh for Interactivity API compatibility"
               );
               softRefresh();
             } else if (isFluidCheckoutActive()) {
               // For Fluid Checkout, use soft refresh for Interactivity API compatibility
-              console.log(
+              safeLog(
                 "🔄 FLUID CHECKOUT: Using soft refresh for Interactivity API compatibility"
               );
               softRefresh();
@@ -1040,7 +1041,7 @@
               window.location.href = res.data.redirect;
             }
           } else {
-            console.log("LLRP: Login failed with message:", res.data.message);
+            safeLog("LLRP: Login failed with message:", res.data.message);
 
             // Check if it's a nonce error and regenerate
             if (res.data.message && res.data.message.includes("segurança")) {
@@ -1053,10 +1054,10 @@
           }
         })
         .fail(function (xhr) {
-          console.log("LLRP: AJAX request failed");
-          console.log("LLRP: Status:", xhr.status);
-          console.log("LLRP: Response:", xhr.responseText);
-          console.log("LLRP: Full xhr object:", xhr);
+          safeLog("LLRP: AJAX request failed");
+          safeLog("LLRP: Status:", xhr.status);
+          safeLog("LLRP: Response:", xhr.responseText);
+          safeLog("LLRP: Full xhr object:", xhr);
 
           if (xhr.status === 403) {
             showAccountFeedback(
@@ -1100,7 +1101,7 @@
             })
               .done(function (res) {
                 if (res.success) {
-                  console.log(
+                  safeLog(
                     "🛒 CRITICAL: Facebook login successful - restoring cart IMMEDIATELY"
                   );
 
@@ -1123,13 +1124,13 @@
                   // Smart redirect based on current page and Fluid Checkout
                   if (LLRP_Data.is_account_page === "1") {
                     // On My Account page, use soft refresh to show logged-in state
-                    console.log(
+                    safeLog(
                       "🔄 MY ACCOUNT: Using soft refresh for Interactivity API compatibility"
                     );
                     softRefresh();
                   } else if (isFluidCheckoutActive()) {
                     // For Fluid Checkout, use soft refresh for Interactivity API compatibility
-                    console.log(
+                    safeLog(
                       "🔄 FLUID CHECKOUT: Using soft refresh for Interactivity API compatibility"
                     );
                     softRefresh();
@@ -1209,7 +1210,7 @@
 
     // Auto-show popup if user accesses checkout page directly without being logged in
     if (LLRP_Data.is_checkout_page === "1" && LLRP_Data.is_logged_in !== "1") {
-      console.log(
+      safeLog(
         "User accessed checkout page directly without being logged in, showing popup automatically"
       );
 
@@ -1243,7 +1244,7 @@
         $("form.checkout").hasClass("fluid-checkout") ||
         $("form.checkout").hasClass("fc-checkout");
 
-      console.log("LLRP: Fluid Checkout detection:", {
+      safeLog("LLRP: Fluid Checkout detection:", {
         window_fluidCheckout: typeof window.fluidCheckout !== "undefined",
         fluid_checkout_elements: $(".fluid-checkout").length,
         fc_checkout_elements: $(".fc-checkout").length,
@@ -1267,7 +1268,7 @@
         return;
       }
 
-      console.log("LLRP: Updating cart fragments:", fragments);
+      safeLog("LLRP: Updating cart fragments:", fragments);
 
       // Check if Interactivity API or WooCommerce Blocks are active
       var isInteractivityActive =
@@ -1277,7 +1278,7 @@
         $(".wc-block-cart").length > 0;
 
       if (isInteractivityActive) {
-        console.log("LLRP: Using Interactivity API/Blocks approach");
+        safeLog("LLRP: Using Interactivity API/Blocks approach");
 
         // Multiple triggers for better compatibility
         $(document.body).trigger("wc_fragment_refresh");
@@ -1304,7 +1305,7 @@
           $(document.body).trigger("wc_fragment_refresh");
         }
       } else {
-        console.log("LLRP: Using traditional fragment update");
+        safeLog("LLRP: Using traditional fragment update");
 
         // Update each fragment (traditional method)
         $.each(fragments, function (selector, content) {
@@ -1312,7 +1313,7 @@
             var $element = $(selector);
             if ($element.length) {
               $element.html(content);
-              console.log("LLRP: Updated fragment:", selector);
+              safeLog("LLRP: Updated fragment:", selector);
             }
           }
         });
@@ -1327,7 +1328,7 @@
         $(document.body).trigger("fc_fragments_updated");
       }
 
-      console.log("LLRP: Cart fragments update completed");
+      safeLog("LLRP: Cart fragments update completed");
     }
 
     /**
@@ -1336,7 +1337,7 @@
     function syncEmailFields(email) {
       if (!email) return;
 
-      console.log(
+      safeLog(
         "📧 CRITICAL: Syncing email fields - account_email ↔ billing_email:",
         email
       );
@@ -1356,7 +1357,7 @@
         var $field = $(selector);
         if ($field.length) {
           $field.val(email).trigger("change");
-          console.log("📧 Email synced to field:", selector, "=", email);
+          safeLog("📧 Email synced to field:", selector, "=", email);
         }
       });
 
@@ -1369,7 +1370,7 @@
           function () {
             var newEmail = $(this).val();
             if (newEmail && newEmail !== email) {
-              console.log(
+              safeLog(
                 "📧 Real-time sync triggered by:",
                 selector,
                 "→",
@@ -1390,7 +1391,7 @@
         return;
       }
 
-      console.log(
+      safeLog(
         "📝 CRITICAL: Auto-filling checkout form with user data:",
         userData
       );
@@ -1503,7 +1504,7 @@
             var $field = $(selector);
             if ($field.length && !$field.val()) {
               $field.val(value).trigger("change");
-              console.log("📝 Filled field", fieldName, "with value:", value);
+              safeLog("📝 Filled field", fieldName, "with value:", value);
             }
           });
         }
@@ -1519,13 +1520,13 @@
 
     // CRITICAL: Auto-restore cart when page loads if user is logged in
     if (LLRP_Data.is_logged_in === "1" && !LLRP_Data.is_account_page) {
-      console.log(
+      safeLog(
         "🛒 CRITICAL: User is logged in, attempting auto-restore cart on page load"
       );
       setTimeout(function () {
         var restored = restoreCartAfterLogin();
         if (!restored) {
-          console.log("🛒 No cart backup found to restore on page load");
+          safeLog("🛒 No cart backup found to restore on page load");
         }
       }, 500);
     }
@@ -1535,7 +1536,7 @@
       window.location.href.includes("checkout") ||
       window.location.href.includes("finalizar-compra")
     ) {
-      console.log("🛒 CRITICAL: On checkout page, checking for cart backup");
+      safeLog("🛒 CRITICAL: On checkout page, checking for cart backup");
       setTimeout(function () {
         restoreCartAfterLogin();
       }, 1000);
@@ -1544,7 +1545,7 @@
     // CRITICAL: Backup cart before page unload
     $(window).on("beforeunload", function () {
       if (!LLRP_Data.is_logged_in || LLRP_Data.is_logged_in === "0") {
-        console.log("🛒 CRITICAL: Page unloading, saving cart as backup");
+        safeLog("🛒 CRITICAL: Page unloading, saving cart as backup");
         saveCartBeforeLogin();
       }
     });
