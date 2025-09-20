@@ -855,14 +855,7 @@
       }
     });
 
-    // Initialize Social Login SDKs
-    console.log("LLRP: Initializing social login...");
-    console.log("LLRP: Google enabled:", LLRP_Data.google_login_enabled);
-    console.log("LLRP: Google client ID:", LLRP_Data.google_client_id);
-    console.log(
-      "LLRP: Google object available:",
-      typeof google !== "undefined"
-    );
+    // Initialize Social Login SDKs (logs removed for security)
 
     initializeSocialLogin();
 
@@ -909,7 +902,7 @@
 
     function handleGoogleLogin(e) {
       e.preventDefault();
-      console.log("LLRP: Google login button clicked");
+      // Google login initiated (logs removed for security)
       clearFeedback();
 
       // Check if Google SDK is loaded
@@ -940,9 +933,9 @@
           client_id: LLRP_Data.google_client_id,
           scope: "email profile",
           callback: (response) => {
-            console.log("LLRP: Google OAuth callback received:", response);
+            // Google OAuth callback received (details removed for security)
             if (response.access_token) {
-              console.log("LLRP: Access token received, fetching user info");
+              // Access token received, fetching user info
               // Get user info using the access token
               fetch("https://www.googleapis.com/oauth2/v2/userinfo", {
                 headers: {
@@ -950,17 +943,11 @@
                 },
               })
                 .then((response) => {
-                  console.log(
-                    "LLRP: User info fetch response status:",
-                    response.status
-                  );
+                  // User info fetch response (status removed for security)
                   return response.json();
                 })
                 .then((userInfo) => {
-                  console.log(
-                    "LLRP: User info received from Google:",
-                    userInfo
-                  );
+                  // User info received from Google (data removed for security)
 
                   // Validate user info
                   if (!userInfo.email) {
@@ -1002,9 +989,7 @@
     }
 
     function processGoogleLogin(userInfo) {
-      console.log("LLRP: Processing Google login");
-      safeLog("LLRP: Processing user login");
-      // Sensitive data removed from production logs
+      // Processing Google login (sensitive data removed from production logs)
 
       $.post(LLRP_Data.ajax_url, {
         action: "llrp_google_login",
