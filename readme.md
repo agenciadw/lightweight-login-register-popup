@@ -1,104 +1,203 @@
 === Lightweight Login & Register Popup ===
-Contributors: agenciadw
-Tags: woocommerce, login, register, popup
+Contributors: agenciadw, davidwilliamdacosta
+Tags: woocommerce, login, register, popup, carrinho, checkout, social-login, google, facebook, cpf, cnpj, brazilian-market, fluid-checkout, hpos
 Requires at least: 6.6
 Tested up to: 6.6
 Requires PHP: 7.4
-Stable tag: 0.4.3
+WC requires at least: 8.0
+WC tested up to: 9.0
+Stable tag: 1.0.0
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
-Popup personalizável e integração com login social para WooCommerce - funciona no carrinho e página "Minha Conta"
+🚀 Solução completa de autenticação para WooCommerce com persistência de carrinho, auto-preenchimento inteligente e compatibilidade universal.
 
 == Descrição ==
 
-Este plugin adiciona um popup de login e registro na página do carrinho do WooCommerce e integra botões de login social (Google/Facebook) nos formulários da página "Minha Conta", permitindo que os clientes façam login, se registrem ou recuperem sua senha sem sair da página.
+**Lightweight Login & Register Popup** é uma solução avançada e completa para autenticação no WooCommerce que revoluciona a experiência do usuário durante o processo de compra.
 
-**Funcionalidades principais:**
+🎯 **PROBLEMA RESOLVIDO:**
+Elimina a frustração de perder itens do carrinho ou ter que preencher dados manualmente após login/cadastro, oferecendo uma experiência fluida e sem interrupções.
 
-- Popup de login/registro no carrinho
-- Login social (Google/Facebook) na página "Minha Conta"
-- Redirecionamento inteligente baseado no contexto
-- Interface totalmente personalizável
-- Suporte a CPF/CNPJ para login
-- Integração nativa com WooCommerce
+🚀 **FUNCIONALIDADES PRINCIPAIS:**
+
+**🔑 Sistema de Autenticação Avançado**
+* **Login múltiplo:** E-mail, telefone, CPF ou CNPJ
+* **Cadastro otimizado** com validação em tempo real
+* **Login social:** Google OAuth2 e Facebook SDK integrados
+* **Códigos por WhatsApp:** Integração com Joinotify para códigos via WhatsApp
+* **Recuperação de senha** integrada ao WordPress nativo
+
+**🛒 Persistência Inteligente de Carrinho**
+* **Backup automático** antes de qualquer login (localStorage + sessionStorage + DOM)
+* **Restauração imediata** após autenticação bem-sucedida
+* **Zero perda de itens** em qualquer cenário de login
+* **Mesclagem inteligente** entre carrinho local e do usuário
+
+**📝 Auto-preenchimento Inteligente**
+* **Preenchimento automático completo** de todos os dados do usuário
+* **Sincronização bidireccional** account_email ↔ billing_email
+* **Compatibilidade total** com Brazilian Market on WooCommerce
+* **Múltiplos pontos de detecção:** popup, login direto, usuário já logado
+
+**🔄 Sistema de Redirecionamento Inteligente**
+* **Análise de contexto** baseada em HTTP_REFERER
+* **Login do carrinho** → redireciona para checkout
+* **Login direto no checkout** → permanece no checkout (preserva estado)
+* **Proteção contra limpeza** do estado do checkout
+
+**🎨 Interface Otimizada**
+* **Popup responsivo** com design moderno
+* **Botão de fechamento condicional** (oculto em páginas críticas)
+* **Feedback visual em tempo real**
+* **Temas personalizáveis** via painel administrativo
+
+== Compatibilidade ==
+
+**✅ WooCommerce Moderno:**
+* HPOS (High-Performance Order Storage) ✅
+* Interactivity API powered Mini Cart ✅
+* Cart & Checkout Blocks ✅
+* WooCommerce tradicional ✅
+
+**✅ Plugins Especializados:**
+* Fluid Checkout ✅
+* Brazilian Market on WooCommerce ✅
+* Extra Checkout Fields for Brazil ✅
+* Joinotify (WhatsApp) ✅
+
+**✅ Campos Brasileiros:**
+* CPF/CNPJ, Número, Bairro, Celular
+* Data de nascimento, Sexo, IE, RG
+* Endereço completo brasileiro
 
 == Instalação ==
 
-Faça o upload dos arquivos do plugin para o diretório /wp-content/plugins/lightweight-login-register-popup ou instale o plugin diretamente pela tela de plugins do WordPress.
-Ative o plugin através da tela 'Plugins' no WordPress.
-Use a tela WooCommerce > Popup de Login para configurar o plugin.
+1. Faça upload dos arquivos para `/wp-content/plugins/lightweight-login-register-popup/`
+2. Ative o plugin em **Plugins > Plugins instalados**
+3. Configure em **WooCommerce > Login Popup**
+4. Personalize cores, textos e comportamentos
+5. Configure login social (Google/Facebook) se desejar
 
-== Registro de Alterações ==
+== Configuração ==
 
-= 0.4.3 - Hoje =
+**🔧 Configurações Básicas:**
+* Ative/desative login com CPF/CNPJ
+* Configure cores e tipografia do popup
+* Personalize textos e mensagens
+* Ajuste comportamento de redirecionamento
 
-- **CORREÇÃO CRÍTICA**: Corrigido bug onde o botão "Finalizar Compra" não funcionava quando o usuário já estava logado
-- **MELHORIA**: Implementada verificação de status de login antes de interceptar cliques no botão checkout
-- **DEBUG**: Adicionados logs de console para facilitar troubleshooting
-- **COMPATIBILIDADE**: Garantida funcionalidade normal do botão checkout para usuários logados
+**🌐 Login Social:**
+* Configure Google Client ID para login com Google
+* Configure Facebook App ID/Secret para login com Facebook
+* Botões automáticos nos formulários de login/registro
 
-= 0.4.2 =
+**📱 WhatsApp (Joinotify):**
+* Configure número remetente para códigos via WhatsApp
+* Ative botões interativos para melhor UX
+* Mensagens personalizáveis com código de verificação
 
-- **MELHORIA WHATSAPP**: Códigos de login agora são enviados em **duas mensagens separadas** para facilitar a cópia
-- **PRIMEIRA MENSAGEM**: "🔐 Código de Login - Segue seu código para efetuar login em [Nome da Loja], seu código é válido por 5 minutos"
-- **SEGUNDA MENSAGEM**: Apenas o código (ex: "123456") para facilitar a seleção e cópia
-- **MELHORIA UX**: Delay de 0.5 segundo entre mensagens para garantir ordem correta no WhatsApp
-- **COMPATIBILIDADE**: Funciona com todas as modalidades (botão copiar, botão interativo, mensagem simples)
+== Casos de Uso ==
 
-= 0.4.1 =
+**🛒 Cenário 1: Compra no Carrinho**
+1. Cliente adiciona produtos ao carrinho
+2. Clica em "Finalizar Compra" 
+3. Faz login via popup elegante
+4. ✅ **Resultado:** Redirecionado para checkout com carrinho preservado e dados preenchidos
 
-- **MELHORIA**: Padronização visual dos botões sociais - Botão do Facebook agora usa borda azul e texto azul (ao invés de preenchimento), mantendo consistência com o botão do Google
-- **MELHORIA**: Estilos específicos para página "Minha Conta" garantem consistência visual em todos os contextos
+**🔄 Cenário 2: Checkout Direto**
+1. Cliente acessa `/checkout` diretamente
+2. Faz login via sistema nativo WooCommerce
+3. ✅ **Resultado:** Dados preenchidos automaticamente sem perda de estado
 
-= 0.4.0 =
+**👤 Cenário 3: Usuário Já Logado**
+1. Cliente logado acessa checkout
+2. Formulário aparece inicialmente vazio
+3. ✅ **Resultado:** Auto-preenchimento automático detecta e preenche todos os dados
 
-- **NOVA FUNCIONALIDADE**: Extensão para página "Minha Conta" - Login social agora disponível nos formulários de login e registro da página "Minha Conta"
-- **MELHORIA**: Redirecionamento inteligente - Login na página "Minha Conta" redireciona para dashboard, login no carrinho redireciona para checkout
-- **MELHORIA**: Sistema de feedback adaptativo - Mensagens de erro/sucesso adaptam-se ao contexto (popup vs página)
-- **MELHORIA**: Estilos CSS específicos para integração com formulários do WooCommerce
-- **CORREÇÃO**: Corrigido problema de nonce em logins sociais usando função wp_create_user ao invés de wc_create_new_customer
-- **CORREÇÃO**: Redirecionamento baseado no contexto de origem da requisição
+**📱 Cenário 4: Login Social**
+1. Cliente usa Google ou Facebook
+2. ✅ **Resultado:** Dados sociais importados automaticamente
 
-= 0.3.0 =
+== Perguntas Frequentes ==
 
-- **NOVA FUNCIONALIDADE**: Login com Google - Permite login usando conta Google
-- **NOVA FUNCIONALIDADE**: Login com Facebook - Permite login usando conta Facebook
-- **NOVA FUNCIONALIDADE**: Configurações de login social no painel administrativo
-- **NOVA FUNCIONALIDADE**: Integração completa com Google Sign-In API e Facebook SDK
-- **NOVA FUNCIONALIDADE**: Criação automática de usuários via login social
-- **NOVA FUNCIONALIDADE**: Botões de login social com design moderno e responsivo
-- **MELHORIA**: Interface mais intuitiva com separadores visuais entre opções de login
-- **MELHORIA**: Feedback visual aprimorado para erros e sucessos
-- **MELHORIA**: Estilos CSS otimizados para melhor experiência do usuário
-- **MELHORIA**: Suporte completo para dispositivos móveis nos botões sociais
+= O plugin funciona com o Fluid Checkout? =
+Sim! Compatibilidade total com Fluid Checkout, incluindo preservação de estado e auto-preenchimento.
 
-= 0.2.1 - 17/08/2025 =
+= Funciona com campos brasileiros? =
+Sim! Suporte completo ao Brazilian Market on WooCommerce e todos os campos brasileiros (CPF, CNPJ, bairro, etc.).
 
-- **NOVA FUNCIONALIDADE**: Suporte a botões interativos do WhatsApp (botão "Copiar código")
-- **NOVA FUNCIONALIDADE**: Mensagem do WhatsApp aprimorada com formatação especial
-- **NOVA FUNCIONALIDADE**: Opção no painel administrativo para ativar/desativar botões interativos
-- **MELHORIA**: Integração com API de botões do WhatsApp Business
-- **MELHORIA**: Fallback automático para mensagem normal se botões não estiverem disponíveis
-- **MELHORIA**: Mensagem mais clara e organizada com emojis e formatação
-- **MELHORIA**: Informação sobre validade do código (5 minutos) na mensagem
+= O carrinho é perdido após login? =
+Não! Sistema triplo de backup garante que o carrinho nunca seja perdido em nenhum cenário.
 
-= 0.2.0 - 17/08/2025 =
+= Funciona com a Interactivity API do WooCommerce? =
+Sim! Compatibilidade total com HPOS, Interactivity API e Mini Cart moderno.
 
-- Funcionalidade: Adicionada funcionalidade "Login com Código" via e-mail.
-- Funcionalidade: Adicionada integração com WhatsApp para envio de códigos de login usando o plugin Joinotify.
-- Funcionalidade: Adicionado login com CPF e CNPJ.
-- Funcionalidade: Adicionadas opções no painel administrativo para ativar/desativar login com CPF e CNPJ.
-- Funcionalidade: Adicionada validação no backend para números de CPF e CNPJ.
-- Melhoria: Aumentada a segurança com sanitização de todas as entradas e adição de callbacks de sanitização explícitos para configurações.
-- Melhoria: Adicionado verificador de força de senha ao formulário de registro.
-- Melhoria: O fluxo de "Esqueceu a Senha" agora preenche automaticamente o e-mail do usuário.
-- Correção: Corrigido um bug que causava falha no botão "Enviar Código" com erro 400.
-- Correção: Corrigido um bug que tornava o botão de fechar invisível.
-- Correção: Corrigido um bug que impedia a tecla "Enter" de enviar formulários.
-- Correção: Corrigido um bug que fazia o botão "Enviar Código" não usar as cores corretas do painel administrativo.
-- Correção: Corrigido um bug que causava duplicação do e-mail do usuário na etapa "Esqueceu a Senha".
+= Posso personalizar as cores e textos? =
+Sim! Painel administrativo completo permite personalizar cores, fontes, textos e comportamentos.
 
-= 0.1.0 =
+= Funciona com login via WhatsApp? =
+Sim! Integração com Joinotify para envio de códigos via WhatsApp com botões interativos.
 
-Lançamento inicial.
+== Screenshots ==
+
+1. Popup de login elegante na página do carrinho
+2. Opções de login: senha, código por email/WhatsApp, social
+3. Interface de cadastro otimizada
+4. Painel administrativo completo
+5. Compatibilidade com checkout direto
+
+== Changelog ==
+
+= 1.0.0 - 19/09/2025 =
+
+🎉 **LANÇAMENTO OFICIAL - VERSÃO ESTÁVEL**
+
+**🚀 FUNCIONALIDADES PRINCIPAIS CONSOLIDADAS:**
+* ✅ Sistema de autenticação avançado (email/telefone/CPF/social)
+* ✅ Persistência inteligente de carrinho (sistema triplo de backup)  
+* ✅ Auto-preenchimento inteligente (múltiplos pontos de detecção)
+* ✅ Redirecionamento inteligente (baseado em contexto)
+* ✅ Compatibilidade universal (Fluid Checkout + Brazilian Market + HPOS)
+
+**🛡️ PROBLEMAS CRÍTICOS RESOLVIDOS:**
+* ✅ Perda de carrinho após login (RESOLVIDO)
+* ✅ Auto-preenchimento checkout direto (RESOLVIDO)  
+* ✅ Conflitos entre sistemas de preenchimento (RESOLVIDO)
+* ✅ Redirecionamento incorreto (RESOLVIDO)
+* ✅ Sincronização de emails account_email ↔ billing_email (RESOLVIDO)
+
+**🔧 COMPATIBILIDADE UNIVERSAL:**
+* ✅ HPOS (High-Performance Order Storage)
+* ✅ Interactivity API powered Mini Cart
+* ✅ Cart & Checkout Blocks
+* ✅ WooCommerce tradicional
+* ✅ Fluid Checkout
+* ✅ Brazilian Market on WooCommerce
+
+**📋 CENÁRIOS TESTADOS E FUNCIONANDO:**
+* ✅ Login carrinho → checkout (carrinho preservado)
+* ✅ Login direto checkout → dados preenchidos
+* ✅ Usuário já logado → auto-preenchimento
+* ✅ Registro nova conta → email preenchido
+* ✅ Login social → dados importados
+
+**🎯 MARCO HISTÓRICO:**
+Plugin robusto, testado e pronto para produção com arquitetura escalável e código limpo.
+
+== Upgrade Notice ==
+
+= 1.0.0 =
+🎉 Versão estável com compatibilidade universal! Backup recomendado antes da atualização. Todos os problemas críticos foram resolvidos.
+
+== Suporte ==
+
+**📞 Contato:** david@dwdigital.com.br
+**🔗 GitHub:** https://github.com/agenciadw/lightweight-login-register-popup
+**📚 Documentação:** Incluída no painel administrativo
+
+== Desenvolvedor ==
+
+Desenvolvido por **David William da Costa** - Especialista em WooCommerce e soluções e-commerce.
+
+🏷️ **Tags:** woocommerce, login, register, popup, carrinho, checkout, social-login, google, facebook, cpf, cnpj, brazilian-market, fluid-checkout, hpos, interactivity-api
