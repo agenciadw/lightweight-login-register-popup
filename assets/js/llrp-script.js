@@ -1218,10 +1218,11 @@
       console.log("LLRP: Updating cart fragments:", fragments);
 
       // Check if Interactivity API or WooCommerce Blocks are active
-      var isInteractivityActive = (typeof wp !== "undefined" && wp.interactivity) ||
-                                 $(".wp-block-woocommerce-mini-cart").length > 0 ||
-                                 $(".wc-block-mini-cart").length > 0 ||
-                                 $(".wc-block-cart").length > 0;
+      var isInteractivityActive =
+        (typeof wp !== "undefined" && wp.interactivity) ||
+        $(".wp-block-woocommerce-mini-cart").length > 0 ||
+        $(".wc-block-mini-cart").length > 0 ||
+        $(".wc-block-cart").length > 0;
 
       if (isInteractivityActive) {
         console.log("LLRP: Using Interactivity API/Blocks approach");
@@ -1229,12 +1230,12 @@
         // Multiple triggers for better compatibility
         $(document.body).trigger("wc_fragment_refresh");
         $(document.body).trigger("woocommerce_fragments_refreshed");
-        
+
         // Specific for mini cart blocks
         if ($(".wp-block-woocommerce-mini-cart").length) {
           $(".wp-block-woocommerce-mini-cart").trigger("refresh");
           // Also try direct DOM update for blocks
-          var event = new CustomEvent('wc-blocks_cart_fragments_update');
+          var event = new CustomEvent("wc-blocks_cart_fragments_update");
           document.dispatchEvent(event);
         }
 
@@ -1242,10 +1243,13 @@
         if ($(".wc-block-mini-cart__button").length) {
           $(".wc-block-mini-cart__button").trigger("update");
         }
-        
+
         // Force refresh via native WooCommerce if available
-        if (typeof wc_cart_fragments_params !== 'undefined' && typeof wc_cart_fragments_params.ajax_url !== 'undefined') {
-          $(document.body).trigger('wc_fragment_refresh');
+        if (
+          typeof wc_cart_fragments_params !== "undefined" &&
+          typeof wc_cart_fragments_params.ajax_url !== "undefined"
+        ) {
+          $(document.body).trigger("wc_fragment_refresh");
         }
       } else {
         console.log("LLRP: Using traditional fragment update");
