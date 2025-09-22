@@ -4,18 +4,13 @@ if ( ! defined( 'ABSPATH' ) ) {
 }
 class Llrp_Ajax {
     
-    /**
-     * Safe logging function - only logs in debug mode
-     */
-    private static function safe_log($message, $data = null) {
-        if (defined('WP_DEBUG') && WP_DEBUG) {
-            if ($data) {
-                error_log($message . ': ' . print_r($data, true));
-            } else {
-                error_log($message);
-            }
-        }
-    }
+     /**
+      * Safe logging function - silent operation for security
+      */
+     private static function safe_log($message, $data = null) {
+         // Silent operation for security - no logs
+         return;
+     }
     
     public static function init() {
         // Hooks para usuários não logados

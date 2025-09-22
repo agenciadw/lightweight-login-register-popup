@@ -3,7 +3,7 @@
  * Plugin Name: Lightweight Login & Register Popup
  * Plugin URI: https://github.com/agenciadw/lightweight-login-register-popup
  * Description: Popup avançado para WooCommerce com login, registro e recuperação de senha. Inclui integração social (Google/Facebook), persistência de carrinho, auto-preenchimento inteligente e compatibilidade total com Fluid Checkout e Brazilian Market.
- * Version: 1.0.0
+ * Version: 1.0.3
  * Author: David William da Costa
  * Author URI: https://github.com/agenciadw
  * Requires PHP: 7.4 or higher
@@ -24,7 +24,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 }
 
 // Plugin constants
-define( 'LLRP_VERSION', '1.0.0' );
+define( 'LLRP_VERSION', '1.0.3' );
 define( 'LLRP_PLUGIN_DIR', plugin_dir_path( __FILE__ ) );
 define( 'LLRP_PLUGIN_URL', plugin_dir_url( __FILE__ ) );
 

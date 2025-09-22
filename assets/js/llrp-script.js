@@ -7,8 +7,27 @@
       return;
     }
 
+    // Check for duplicate IDs that might conflict
     var $overlay = $("#llrp-overlay");
     var $popup = $("#llrp-popup");
+
+    // Ensure our elements exist and are unique
+    if ($overlay.length === 0) {
+      return;
+    }
+
+    if ($popup.length === 0) {
+      return;
+    }
+
+    if ($overlay.length > 1) {
+      $overlay = $overlay.first();
+    }
+
+    if ($popup.length > 1) {
+      $popup = $popup.first();
+    }
+
     var savedIdentifier = "";
     var deliveryMethod = "email";
     var userEmail = ""; // Variável para armazenar o e-mail do usuário
@@ -18,13 +37,8 @@
       typeof LLRP_Data !== "undefined" && LLRP_Data.debug_mode === "1";
 
     function safeLog(message, data) {
-      if (debugMode) {
-        if (data) {
-          safeLog(message, data);
-        } else {
-          safeLog(message);
-        }
-      }
+      // Silent operation for security - no console logs
+      return;
     }
 
     /**
@@ -311,46 +325,62 @@
     }
 
     function openPopup(e) {
-      if (e) e.preventDefault();
+      try {
+        if (e) e.preventDefault();
 
-      // CRITICAL: Save cart with dual backup before ANY login action
-      safeLog("🚨 CRITICAL: About to open popup - saving cart FIRST");
-      var cartSaved = saveCartBeforeLogin();
-      if (!cartSaved) {
-        safeLog("🚨 CRITICAL WARNING: Cart backup failed!");
-      }
+        safeLog("🔓 LLRP: Opening popup, checking login status");
 
-      // Verificação dinâmica do status de login via AJAX
-      $.post(LLRP_Data.ajax_url, {
-        action: "llrp_check_login_status",
-        nonce: LLRP_Data.nonce,
-      })
-        .done(function (res) {
-          if (res.success && res.data.is_logged_in) {
-            // Usuário está logado, redirecionar para checkout
-            safeLog("User is logged in, redirecting to checkout");
-            window.location.href = res.data.checkout_url;
-          } else {
-            // Usuário não está logado, mostrar popup
-            safeLog("User not logged in, showing popup");
+        // Verificar se os elementos existem
+        if ($overlay.length === 0 || $popup.length === 0) {
+          return;
+        }
+
+        // CRITICAL: Save cart with dual backup before ANY login action
+        safeLog("🚨 CRITICAL: About to open popup - saving cart FIRST");
+        var cartSaved = saveCartBeforeLogin();
+        if (!cartSaved) {
+          safeLog("🚨 CRITICAL WARNING: Cart backup failed!");
+        }
+
+        // Verificação dinâmica do status de login via AJAX
+        $.post(LLRP_Data.ajax_url, {
+          action: "llrp_check_login_status",
+          nonce: LLRP_Data.nonce,
+        })
+          .done(function (res) {
+            if (res.success && res.data.is_logged_in) {
+              // Usuário está logado, redirecionar para checkout
+              safeLog("🔓 LLRP: User is logged in, redirecting to checkout");
+              window.location.href = res.data.checkout_url;
+            } else {
+              // Usuário não está logado, mostrar popup
+              safeLog("🔓 LLRP: User not logged in, showing popup");
+              resetSteps();
+              $overlay.removeClass("hidden");
+              $popup.removeClass("hidden");
+
+              // Hide close button if on checkout page
+              hideCloseButtonIfCheckout();
+            }
+          })
+          .fail(function (xhr, status, error) {
+            // Em caso de erro, assumir que não está logado e mostrar popup
             resetSteps();
             $overlay.removeClass("hidden");
             $popup.removeClass("hidden");
 
             // Hide close button if on checkout page
             hideCloseButtonIfCheckout();
-          }
-        })
-        .fail(function () {
-          // Em caso de erro, assumir que não está logado e mostrar popup
-          safeLog("AJAX failed, showing popup as fallback");
+          });
+      } catch (error) {
+        // Fallback: mostrar popup mesmo com erro
+        if ($overlay.length > 0 && $popup.length > 0) {
           resetSteps();
           $overlay.removeClass("hidden");
           $popup.removeClass("hidden");
-
-          // Hide close button if on checkout page
           hideCloseButtonIfCheckout();
-        });
+        }
+      }
     }
 
     function closePopup() {
@@ -497,15 +527,26 @@
               updateCartFragments(res.data.cart_fragments);
             }
 
-            // CRITICAL: Auto-fill with email sync for BOTH fields
-            if (email) {
+            // Auto-fill user data in checkout form if available
+            if (res.data.user_data) {
+              // Immediate autofill
+              fillCheckoutFormData(res.data.user_data);
+
+              // Additional autofill with delay to ensure DOM updates
+              setTimeout(function () {
+                fillCheckoutFormData(res.data.user_data);
+              }, 300);
+            } else if (email) {
+              // Fallback: use email if user_data not available
               var userData = {
                 email: email,
                 account_email: email,
                 billing_email: email,
               };
               fillCheckoutFormData(userData);
-              syncEmailFields(email);
+              setTimeout(function () {
+                syncEmailFields(email);
+              }, 300);
             }
 
             // Check if Fluid Checkout is active and handle accordingly
@@ -625,7 +666,13 @@
 
           // Auto-fill user data in checkout form if available
           if (res.data.user_data) {
+            // Immediate autofill
             fillCheckoutFormData(res.data.user_data);
+
+            // Additional autofill with delay to ensure DOM updates
+            setTimeout(function () {
+              fillCheckoutFormData(res.data.user_data);
+            }, 300);
           }
 
           // SAFE REDIRECT: Check if we need to redirect or stay on current page
@@ -691,15 +738,18 @@
 
             // Auto-fill user data in checkout form if available
             if (res.data.user_data) {
+              // Immediate autofill
               fillCheckoutFormData(res.data.user_data);
+
+              // Additional autofill with delay to ensure DOM updates
+              setTimeout(function () {
+                fillCheckoutFormData(res.data.user_data);
+              }, 300);
             }
 
             // Check if Fluid Checkout is active and handle accordingly
             if (isFluidCheckoutActive()) {
               // For Fluid Checkout, use soft refresh for Interactivity API compatibility
-              safeLog(
-                "🔄 FLUID CHECKOUT: Using soft refresh for Interactivity API compatibility"
-              );
               softRefresh();
             } else {
               // For standard WooCommerce, redirect normally
@@ -720,17 +770,38 @@
 
     // Event Binding - Interceptação mais robusta do botão de checkout
     function interceptCheckoutButton(e) {
-      safeLog("Checkout button clicked, intercepting...");
+      try {
+        safeLog("🔗 LLRP: Checkout button clicked, intercepting...");
 
-      // SEMPRE prevenir o comportamento padrão primeiro
-      e.preventDefault();
-      e.stopPropagation();
+        // Verificar se devemos interceptar este elemento
+        var $target = $(e.target);
 
-      // Abrir o popup que fará a verificação dinâmica
-      openPopup(e);
+        // Não interceptar se for um botão de submit em formulário de checkout
+        if ($target.closest('form[name="checkout"]').length > 0) {
+          return true; // Permitir comportamento normal
+        }
 
-      // Retornar false para garantir que o evento não continue
-      return false;
+        // Não interceptar elementos de outros plugins de checkout
+        if (
+          $target.closest(".mp-checkout, .fc-checkout, .stripe-checkout")
+            .length > 0
+        ) {
+          return true; // Permitir comportamento normal
+        }
+
+        // SEMPRE prevenir o comportamento padrão primeiro
+        e.preventDefault();
+        e.stopPropagation();
+
+        // Abrir o popup que fará a verificação dinâmica
+        openPopup(e);
+
+        // Retornar false para garantir que o evento não continue
+        return false;
+      } catch (error) {
+        // Em caso de erro, permitir comportamento padrão
+        return true;
+      }
     }
 
     // Usar event delegation para garantir que funcione com elementos dinâmicos
@@ -760,7 +831,6 @@
           if ($(e.target).closest(".mp-custom-checkout").length) {
             return; // Não interferir com outros plugins de checkout
           }
-          safeLog("Checkout link clicked, intercepting...");
           return interceptCheckoutButton(e);
         }
       }
@@ -1222,12 +1292,10 @@
     // Make the checkout button visible now that the JS is ready
     $(".checkout-button").css("visibility", "visible");
 
+    // Plugin initialization completed silently
+
     // Auto-show popup if user accesses checkout page directly without being logged in
     if (LLRP_Data.is_checkout_page === "1" && LLRP_Data.is_logged_in !== "1") {
-      safeLog(
-        "User accessed checkout page directly without being logged in, showing popup automatically"
-      );
-
       // Small delay to ensure page is fully loaded
       setTimeout(function () {
         openPopup();
@@ -1400,15 +1468,37 @@
     /**
      * Auto-fill checkout form with user data + CRITICAL email sync
      */
+    /**
+     * Sync email fields to ensure consistency across all email inputs
+     */
+    function syncEmailFields(email) {
+      if (!email) return;
+
+      // Find all possible email fields and fill them
+      var emailSelectors = [
+        'input[name="email"]',
+        'input[id="email"]',
+        'input[name="billing_email"]',
+        'input[id="billing_email"]',
+        'input[name="account_email"]',
+        'input[id="account_email"]',
+        'input[type="email"]',
+      ];
+
+      emailSelectors.forEach(function (selector) {
+        var $field = $(selector);
+        if ($field.length > 0) {
+          $field.val(email);
+          // Trigger change event to ensure other plugins detect the change
+          $field.trigger("change").trigger("input").trigger("keyup");
+        }
+      });
+    }
+
     function fillCheckoutFormData(userData) {
       if (!userData || typeof userData !== "object") {
         return;
       }
-
-      safeLog(
-        "📝 CRITICAL: Auto-filling checkout form with user data:",
-        userData
-      );
 
       // CRITICAL: Email must go to BOTH account_email AND billing_email
       var userEmail =
@@ -1517,12 +1607,24 @@
           selectors.forEach(function (selector) {
             var $field = $(selector);
             if ($field.length && !$field.val()) {
-              $field.val(value).trigger("change");
-              safeLog("📝 Filled field", fieldName, "with value:", value);
+              $field.val(value);
+              // Trigger multiple events to ensure compatibility
+              $field
+                .trigger("change")
+                .trigger("input")
+                .trigger("keyup")
+                .trigger("blur");
             }
           });
         }
       });
+
+      // CRITICAL: Additional email sync with delay to ensure DOM is ready
+      setTimeout(function () {
+        if (userEmail) {
+          syncEmailFields(userEmail);
+        }
+      }, 100);
 
       // Trigger events to ensure other plugins/themes update
       setTimeout(function () {

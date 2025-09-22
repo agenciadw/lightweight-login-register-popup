@@ -218,6 +218,13 @@ class Llrp_Frontend {
         if ( ! is_cart() && ! is_checkout() ) {
             return;
         }
+        
+        // Prevent multiple instances of the popup
+        static $popup_rendered = false;
+        if ( $popup_rendered ) {
+            return;
+        }
+        $popup_rendered = true;
 
         // Prepare step texts
         $h_email  = get_option( 'llrp_header_email' )    ?: __( 'Finalize o pedido', 'llrp' );
