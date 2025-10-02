@@ -65,6 +65,12 @@
   display: block;
   margin-bottom: 10px;
 }
+
+.llrp-login-options label input {
+  width: 15px !important;
+  height: 15px !important;
+  margin-right: 8px !important;
+}
 .llrp-feedback {
   color: #d00;
   margin-top: 5px;
@@ -118,9 +124,46 @@
   opacity: 0.7;
 }
 
-@media (max-width: 762px) {
+/* === Responsive Mobile Styles === */
+@media (max-width: 768px) {
   .llrp-login-options {
+    display: flex !important;
+    flex-direction: column !important;
+    align-items: flex-start !important;
+    gap: 10px !important;
+    margin: 1.5em 0 !important;
+  }
+  
+  .llrp-login-options label {
+    display: inline-flex !important;
+    align-items: flex-start !important;
+    justify-content: flex-start !important;
+    white-space: nowrap !important;
+    margin-bottom: 0 !important;
+    text-align: left !important;
+  }
+  
+  
+  .llrp-login-options .llrp-forgot {
     display: block !important;
+    margin-top: 5px !important;
+    font-size: 0.9rem !important;
+    line-height: 1.4 !important;
+  }
+  
+  /* Ajustes adicionais para telas muito pequenas */
+  .llrp-popup {
+    margin: 10px !important;
+    padding: 15px !important;
+    max-width: calc(100vw - 20px) !important;
+  }
+  
+  .llrp-popup h2 {
+    font-size: 1.3rem !important;
+  }
+  
+  .llrp-popup p {
+    font-size: 0.9rem !important;
   }
 }
 

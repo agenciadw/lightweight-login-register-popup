@@ -193,7 +193,8 @@ class Llrp_Frontend {
         $css .= ".llrp-avatar { width: 70px !important; height: 70px !important; border-radius: 1px !important; margin-right: 10px !important; }";
         $css .= ".llrp-login-options { display: flex; justify-content: space-between !important; align-items: center !important; margin: 2em 0 !important; }";
         $css .= ".llrp-login-options label { display: inline-flex !important; align-items: center !important; white-space: nowrap !important; }";
-        $css .= ".llrp-login-options label input { margin-right: 5px !important; }";
+        $css .= ".llrp-login-options label input { width: 15px !important; height: 15px !important; margin-right: 8px !important; }";
+        $css .= "@media (max-width: 768px) { .llrp-login-options { flex-direction: column !important; align-items: flex-start !important; gap: 10px !important; } .llrp-login-options label { align-items: flex-start !important; justify-content: flex-start !important; text-align: left !important; } }";
         $btn_code_bg      = sanitize_hex_color( get_option( 'llrp_color_btn_code_bg', '#2271b1' ) );
         $btn_code_bg_h    = sanitize_hex_color( get_option( 'llrp_color_btn_code_bg_hover', '#1e639a' ) );
         $btn_code_bd      = sanitize_hex_color( get_option( 'llrp_color_btn_code_border', $btn_code_bg ) );
