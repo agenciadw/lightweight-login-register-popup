@@ -1,0 +1,55 @@
+{
+  "name": "Lightweight Login & Register Popup",
+  "slug": "lightweight-login-register-popup",
+  "version": "1.1.0",
+  "description": "Popup inteligente para WooCommerce com suporte a checkout de convidado. Inclui login social (Google/Facebook), login com CPF/CNPJ, persistência de carrinho, auto-preenchimento inteligente e compatibilidade total com Fluid Checkout e Brazilian Market.",
+  "author": "David William da Costa",
+  "author_uri": "https://github.com/agenciadw",
+  "plugin_uri": "https://github.com/agenciadw/lightweight-login-register-popup",
+  "requires_wp": "6.6",
+  "tested_up_to": "6.6",
+  "requires_php": "7.4",
+  "wc_requires": "8.0",
+  "wc_tested_up_to": "9.0",
+  "license": "GPL v2 or later",
+  "license_uri": "https://www.gnu.org/licenses/gpl-2.0.html",
+  "text_domain": "lightweight-login-register-popup",
+  "domain_path": "/languages",
+  "network": false,
+  "features": [
+    "Checkout de Convidado Inteligente",
+    "Login Social (Google/Facebook)",
+    "Login com CPF/CNPJ",
+    "Persistência de Carrinho",
+    "Auto-preenchimento Inteligente",
+    "Compatibilidade com Fluid Checkout",
+    "Compatibilidade com Brazilian Market",
+    "Design Responsivo",
+    "Customização Total",
+    "Sistema de Códigos por E-mail/WhatsApp"
+  ],
+  "compatibility": {
+    "plugins": [
+      "Fluid Checkout",
+      "Brazilian Market on WooCommerce",
+      "WooCommerce Blocks",
+      "WooCommerce HPOS"
+    ],
+    "themes": [
+      "Storefront",
+      "Astra",
+      "GeneratePress",
+      "OceanWP",
+      "Custom Themes"
+    ]
+  },
+  "screenshots": [
+    "assets/screenshot/screenshot-01.jpeg",
+    "assets/screenshot/screenshot-02.jpeg",
+    "assets/screenshot/screenshot-03.jpeg",
+    "assets/screenshot/screenshot-04.jpeg",
+    "assets/screenshot/screenshot-05.jpeg"
+  ]
+}
+
+

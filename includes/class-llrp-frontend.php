@@ -9,13 +9,8 @@ class Llrp_Frontend {
      * Safe logging function - only logs in debug mode
      */
     private static function safe_log($message, $data = null) {
-        if (defined('WP_DEBUG') && WP_DEBUG) {
-            if ($data) {
-                error_log($message . ': ' . print_r($data, true));
-            } else {
-                error_log($message);
-            }
-        }
+        // Debug logging disabled for production
+        return;
     }
     
     /**
@@ -56,7 +51,7 @@ class Llrp_Frontend {
     }
     
     public static function init() {
-        add_action( 'wp_enqueue_scripts',      [ __CLASS__, 'enqueue_assets' ] );
+        add_action( 'wp_enqueue_scripts',      [ __CLASS__, 'enqueue_assets' ], 20 );
         add_action( 'wp_footer',               [ __CLASS__, 'render_popup_markup' ] );
         add_action( 'wp_ajax_nopriv_llrp_check_email',  [ __CLASS__, 'ajax_check_email' ] );
         add_action( 'wp_ajax_nopriv_llrp_lostpassword', [ __CLASS__, 'ajax_lostpassword' ] );
@@ -86,15 +81,38 @@ class Llrp_Frontend {
     }
 
  public static function enqueue_assets() {
-    // 1) garantir que o WooCommerce esteja ativo
+    // Garantir que o WooCommerce esteja ativo
     if ( ! class_exists( 'WooCommerce' ) ) {
         return;
     }
     
-    // 2) carregar no carrinho sempre, na minha conta e checkout só se não logado
+    // 2) verificar se checkout de convidado está habilitado
+    $guest_checkout_enabled = llrp_is_guest_checkout_enabled();
+    
+    // 3) Detecção robusta da página de minha conta (fallback para REQUEST_URI)
+    $is_my_account = is_account_page();
+    if ( ! $is_my_account && function_exists( 'wc_get_page_id' ) ) {
+        global $wp;
+        $myaccount_page_id = wc_get_page_id( 'myaccount' );
+        if ( $myaccount_page_id && is_page( $myaccount_page_id ) ) {
+            $is_my_account = true;
+        }
+    }
+    
+    // Fallback adicional: verificar URL se as funções WC falharem
+    if ( ! $is_my_account && isset( $_SERVER['REQUEST_URI'] ) ) {
+        $request_uri = sanitize_text_field( wp_unslash( $_SERVER['REQUEST_URI'] ) );
+        if ( strpos( $request_uri, 'my-account' ) !== false || 
+             strpos( $request_uri, 'minha-conta' ) !== false ) {
+            $is_my_account = true;
+        }
+    }
+    
+    // 4) carregar no carrinho sempre, na minha conta sempre, checkout só se não logado
+    // Se checkout de convidado estiver habilitado, não carregar no checkout
     $should_load = is_cart() || 
-                   ( is_account_page() && ! is_user_logged_in() ) ||
-                   ( is_checkout() && ! is_user_logged_in() );
+                   $is_my_account ||
+                   ( is_checkout() && ! is_user_logged_in() && ! $guest_checkout_enabled );
     
     if ( ! $should_load ) {
         return;
@@ -132,13 +150,14 @@ class Llrp_Frontend {
         'is_logged_in'          => is_user_logged_in() ? 1 : 0,
         'is_cart_page'          => is_cart() ? 1 : 0,
         'is_checkout_page'      => is_checkout() ? 1 : 0,
-        'is_account_page'       => is_account_page() ? 1 : 0,
+        'is_account_page'       => $is_my_account ? 1 : 0,
         'cpf_login_enabled'     => get_option( 'llrp_cpf_login_enabled' ),
         'cnpj_login_enabled'    => get_option( 'llrp_cnpj_login_enabled' ),
         'google_login_enabled'  => get_option( 'llrp_google_login_enabled' ),
         'google_client_id'      => get_option( 'llrp_google_client_id' ),
         'facebook_login_enabled' => get_option( 'llrp_facebook_login_enabled' ),
         'facebook_app_id'       => get_option( 'llrp_facebook_app_id' ),
+        'guest_checkout_enabled' => $guest_checkout_enabled ? 1 : 0,
         'debug_mode'            => defined( 'WP_DEBUG' ) && WP_DEBUG ? '1' : '0',
     ] );
 
@@ -220,6 +239,11 @@ class Llrp_Frontend {
             return;
         }
         
+        // Se checkout de convidado estiver habilitado, não renderizar popup no checkout
+        if ( is_checkout() && llrp_is_guest_checkout_enabled() ) {
+            return;
+        }
+        
         // Prevent multiple instances of the popup
         static $popup_rendered = false;
         if ( $popup_rendered ) {
@@ -270,6 +294,17 @@ class Llrp_Frontend {
                 ?>
                 <input type="text" id="llrp-identifier" placeholder="<?php echo esc_attr( $placeholder ); ?>">
                 <button id="llrp-email-submit"><?php echo esc_html( $b_email ); ?></button>
+                
+                <?php if ( llrp_is_guest_checkout_enabled() ) : ?>
+                    <div class="llrp-guest-checkout-option" style="margin-top: 15px; padding-top: 15px; border-top: 1px solid #e0e0e0;">
+                        <p style="margin: 0 0 10px 0; color: #666; font-size: 14px;">
+                            <?php esc_html_e( 'Não quero fazer cadastro', 'llrp' ); ?>
+                        </p>
+                        <button type="button" id="llrp-skip-to-checkout" class="llrp-skip-button" style="background: #6c757d; color: #fff; border: 1px solid #6c757d; padding: 8px 16px; border-radius: 4px; cursor: pointer; font-size: 14px;">
+                            <?php esc_html_e( 'Pular para o checkout', 'llrp' ); ?>
+                        </button>
+                    </div>
+                <?php endif; ?>
                 
                 <!-- Social Login Buttons for new users -->
                 <?php if ( ( get_option( 'llrp_google_login_enabled' ) && get_option( 'llrp_google_client_id' ) ) || ( get_option( 'llrp_facebook_login_enabled' ) && get_option( 'llrp_facebook_app_id' ) ) ) : ?>
@@ -482,8 +517,13 @@ class Llrp_Frontend {
             return;
         }
         
-        $has_social = ( get_option( 'llrp_google_login_enabled' ) && get_option( 'llrp_google_client_id' ) ) ||
-                      ( get_option( 'llrp_facebook_login_enabled' ) && get_option( 'llrp_facebook_app_id' ) );
+        $google_enabled = get_option( 'llrp_google_login_enabled' );
+        $google_client_id = get_option( 'llrp_google_client_id' );
+        $facebook_enabled = get_option( 'llrp_facebook_login_enabled' );
+        $facebook_app_id = get_option( 'llrp_facebook_app_id' );
+        
+        $has_social = ( $google_enabled && $google_client_id ) ||
+                      ( $facebook_enabled && $facebook_app_id );
         
         if ( ! $has_social ) {
             return;
@@ -729,7 +769,7 @@ class Llrp_Frontend {
             // Add JavaScript data
             wp_add_inline_script( 'llrp-frontend', '
                 jQuery(document).ready(function($) {
-                    console.log("🔄 LLRP: Direct checkout ' . $trigger_type . ' detected - triggering autofill");
+                    // Direct checkout autofill triggered
                     
                     // Trigger autofill with user data
                     setTimeout(function() {
@@ -746,7 +786,7 @@ class Llrp_Frontend {
                             // Trigger checkout update
                             $("form.checkout").trigger("update_checkout");
                             
-                            console.log("🔄 LLRP: Direct checkout autofill completed");
+                            // Direct checkout autofill completed
                         }
                     }, 1000);
                 });
@@ -777,14 +817,14 @@ class Llrp_Frontend {
                                            $('#billing_first_name').length && !$('#billing_first_name').val();
                     
                     if (isFormReallyEmpty) {
-                        console.log('🔄 LLRP: Logged-in user with truly empty checkout form detected, requesting autofill');
+                        // Logged-in user with empty checkout form detected, requesting autofill
                         
                         $.post(LLRP_Data.ajax_url, {
                             action: 'llrp_get_checkout_user_data',
                             nonce: LLRP_Data.nonce
                         }).done(function(response) {
                             if (response.success && response.data) {
-                                console.log('🔄 LLRP: Fallback autofill data received, filling form:', response.data);
+                                // Fallback autofill data received, filling form
                                 
                                 if (typeof fillCheckoutFormData === 'function') {
                                     fillCheckoutFormData(response.data);
@@ -801,15 +841,15 @@ class Llrp_Frontend {
                                     syncEmailFields(response.data.email);
                                 }
                                 
-                                console.log('🔄 LLRP: Fallback auto-fill completed');
+                                // Fallback auto-fill completed
                             }
                         }).fail(function() {
-                            console.log('🔄 LLRP: Fallback autofill request failed - no problem, continuing normally');
+                            // Fallback autofill request failed - no problem, continuing normally
                         });
                     } else if (emailField.length && emailField.val()) {
-                        console.log('🔄 LLRP: Checkout form already has email (' + emailField.val() + '), skipping fallback autofill');
+                        // Checkout form already has email, skipping fallback autofill
                     } else {
-                        console.log('🔄 LLRP: Checkout form partially filled, skipping fallback autofill');
+                        // Checkout form partially filled, skipping fallback autofill
                     }
                 }
             }, 3000); // Longer delay to avoid conflict with popup autofill
@@ -966,6 +1006,7 @@ class Llrp_Frontend {
         
         return $user_data;
     }
+    
 }
 
 Llrp_Frontend::init();

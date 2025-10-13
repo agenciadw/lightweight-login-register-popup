@@ -104,6 +104,34 @@ class Llrp_Admin {
         ?>
         <div class="wrap">
             <h1><?php esc_html_e( 'Lightweight Login & Register Popup', 'llrp' ); ?></h1>
+            
+            <?php
+            // Verificar status do checkout de convidado
+            $guest_checkout_enabled = llrp_is_guest_checkout_enabled();
+            if ( $guest_checkout_enabled ) {
+                ?>
+                <div class="notice notice-info">
+                    <p>
+                        <strong><?php esc_html_e( 'Checkout de Convidado Habilitado', 'llrp' ); ?></strong><br>
+                        <?php esc_html_e( 'O checkout de convidado está habilitado no WooCommerce. O plugin não irá interceptar os botões de checkout, permitindo que os usuários finalizem compras sem login.', 'llrp' ); ?>
+                    </p>
+                </div>
+                <?php
+            } else {
+                ?>
+                <div class="notice notice-warning">
+                    <p>
+                        <strong><?php esc_html_e( 'Checkout de Convidado Desabilitado', 'llrp' ); ?></strong><br>
+                        <?php esc_html_e( 'O checkout de convidado está desabilitado no WooCommerce. O plugin irá interceptar os botões de checkout para solicitar login/registro.', 'llrp' ); ?><br>
+                        <a href="<?php echo admin_url( 'admin.php?page=wc-settings&tab=checkout' ); ?>" class="button button-secondary">
+                            <?php esc_html_e( 'Configurar no WooCommerce', 'llrp' ); ?>
+                        </a>
+                    </p>
+                </div>
+                <?php
+            }
+            ?>
+            
             <form method="post" action="options.php">
                 <?php settings_fields( 'llrp_options' ); ?>
                 <table class="form-table">

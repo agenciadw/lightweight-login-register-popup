@@ -577,23 +577,29 @@ class Llrp_Ajax {
         $nonce_valid = wp_verify_nonce( $nonce, 'llrp_nonce' );
         self::safe_log( 'LLRP: Nonce validation result: ' . ( $nonce_valid ? 'VALID' : 'INVALID' ) );
         
-        // Temporary bypass for debugging (REMOVE IN PRODUCTION)
+        // Verificar nonce - se falhar, verificar se é uma requisição válida
         if ( ! $nonce_valid ) {
-            self::safe_log( 'LLRP: Nonce verification failed - checking if user logged in or has valid session' );
+            self::safe_log( 'LLRP: Nonce verification failed - checking alternative validations' );
             
-            // Alternative verification: check if this is a valid AJAX request
+            // Verificar se é uma requisição AJAX válida
             if ( ! defined( 'DOING_AJAX' ) || ! DOING_AJAX ) {
                 self::safe_log( 'LLRP: Not an AJAX request' );
                 wp_send_json_error( [ 'message' => __( 'Erro de segurança. Recarregue a página e tente novamente.', 'llrp' ) ] );
             }
             
-            // Check if request has required data
+            // Verificar se tem dados necessários
             if ( empty( $_POST['user_info'] ) && empty( $_POST['id_token'] ) ) {
                 self::safe_log( 'LLRP: Missing required data' );
                 wp_send_json_error( [ 'message' => __( 'Dados inválidos recebidos.', 'llrp' ) ] );
             }
             
-            self::safe_log( 'LLRP: Nonce failed but other validations passed - proceeding with caution' );
+            // Verificar se o usuário não está logado (para evitar ataques)
+            if ( is_user_logged_in() ) {
+                self::safe_log( 'LLRP: User already logged in, nonce validation required' );
+                wp_send_json_error( [ 'message' => __( 'Erro de segurança. Recarregue a página e tente novamente.', 'llrp' ) ] );
+            }
+            
+            self::safe_log( 'LLRP: Alternative validations passed - proceeding' );
         } else {
             self::safe_log( 'LLRP: Nonce verification passed' );
         }

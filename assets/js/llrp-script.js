@@ -7,25 +7,24 @@
       return;
     }
 
-    // Check for duplicate IDs that might conflict
+    // Check for popup elements (may not exist on My Account page)
     var $overlay = $("#llrp-overlay");
     var $popup = $("#llrp-popup");
+    var hasPopup = $overlay.length > 0 && $popup.length > 0;
 
-    // Ensure our elements exist and are unique
-    if ($overlay.length === 0) {
-      return;
-    }
+    // If popup exists, ensure elements are unique
+    if (hasPopup) {
+      if ($overlay.length > 1) {
+        $overlay = $overlay.first();
+      }
 
-    if ($popup.length === 0) {
-      return;
-    }
-
-    if ($overlay.length > 1) {
-      $overlay = $overlay.first();
-    }
-
-    if ($popup.length > 1) {
-      $popup = $popup.first();
+      if ($popup.length > 1) {
+        $popup = $popup.first();
+      }
+    } else {
+      // No popup (My Account page) - create dummy elements to avoid errors
+      $overlay = $('<div id="llrp-overlay-dummy"></div>');
+      $popup = $('<div id="llrp-popup-dummy"></div>');
     }
 
     var savedIdentifier = "";
@@ -37,7 +36,7 @@
       typeof LLRP_Data !== "undefined" && LLRP_Data.debug_mode === "1";
 
     function safeLog(message, data) {
-      // Silent operation for security - no console logs
+      // Debug logging disabled for production
       return;
     }
 
@@ -384,8 +383,10 @@
     }
 
     function closePopup() {
-      $overlay.addClass("hidden");
-      $popup.addClass("hidden");
+      if (hasPopup && $overlay.length > 0 && $popup.length > 0) {
+        $overlay.addClass("hidden");
+        $popup.addClass("hidden");
+      }
     }
 
     function hidePopup() {
@@ -393,15 +394,19 @@
     }
 
     function resetSteps() {
-      $popup.find(".llrp-step").addClass("hidden");
-      $popup.find(".llrp-step-email").removeClass("hidden");
-      $popup.find("input").val("");
+      if (hasPopup && $popup.length > 0) {
+        $popup.find(".llrp-step").addClass("hidden");
+        $popup.find(".llrp-step-email").removeClass("hidden");
+        $popup.find("input").val("");
+      }
       userEmail = ""; // Limpar o e-mail salvo
       clearFeedback();
     }
 
     function clearFeedback() {
-      $popup.find(".llrp-feedback").text("");
+      if (hasPopup && $popup.length > 0) {
+        $popup.find(".llrp-feedback").text("");
+      }
     }
 
     function hideCloseButtonIfCheckout() {
@@ -768,6 +773,29 @@
         });
     }
 
+    function handleSkipToCheckout() {
+      safeLog("🚀 LLRP: User chose to skip login and go to checkout");
+      
+      // Close the popup
+      closePopup();
+      
+      // Redirect to checkout page
+      if (LLRP_Data.is_cart_page === "1") {
+        // If we're on cart page, go to checkout
+        // Try to find checkout URL from existing links
+        var checkoutUrl = $('a[href*="checkout"], a[href*="finalizar-compra"]').first().attr('href');
+        if (checkoutUrl) {
+          window.location.href = checkoutUrl;
+        } else {
+          // Fallback URLs
+          window.location.href = "/checkout/";
+        }
+      } else {
+        // If we're already on checkout page, just close popup (user is already there)
+        safeLog("🚀 LLRP: Already on checkout page, popup closed");
+      }
+    }
+
     // Event Binding - Interceptação mais robusta do botão de checkout
     function interceptCheckoutButton(e) {
       try {
@@ -835,36 +863,40 @@
         }
       }
     );
-    $popup.on("click", ".llrp-close", closePopup);
-    $popup.on("click", ".llrp-back", resetSteps);
-    $popup.on("click", "#llrp-email-submit", handleIdentifierStep);
-    $popup.on("click", "#llrp-password-submit", handleLoginStep);
-    $popup.on("click", "#llrp-register-submit", handleRegisterStep);
-    $popup.on("click", "#llrp-register-cpf-submit", handleRegisterCpfStep);
-    $popup.on("click", "#llrp-show-password-login", function () {
-      showStep("login");
-    });
-    $popup.on("click", "#llrp-send-code", handleSendCode);
-    $popup.on("click", "#llrp-code-submit", handleCodeLogin);
-    $(document).on("click", ".llrp-resend-code", function (e) {
-      if ($(this).closest("#llrp-popup").length) {
-        e.preventDefault();
-        handleSendCode();
-      }
-    });
-    $(document).on("click", ".llrp-back-to-options", function (e) {
-      if ($(this).closest("#llrp-popup").length) {
-        e.preventDefault();
-        showStep("login-options");
-      }
-    });
+    // More popup event listeners (only if popup exists)
+    if (hasPopup) {
+      $popup.on("click", ".llrp-close", closePopup);
+      $popup.on("click", ".llrp-back", resetSteps);
+      $popup.on("click", "#llrp-email-submit", handleIdentifierStep);
+      $popup.on("click", "#llrp-password-submit", handleLoginStep);
+      $popup.on("click", "#llrp-register-submit", handleRegisterStep);
+      $popup.on("click", "#llrp-skip-to-checkout", handleSkipToCheckout);
+      $popup.on("click", "#llrp-register-cpf-submit", handleRegisterCpfStep);
+      $popup.on("click", "#llrp-show-password-login", function () {
+        showStep("login");
+      });
+      $popup.on("click", "#llrp-send-code", handleSendCode);
+      $popup.on("click", "#llrp-code-submit", handleCodeLogin);
+      $(document).on("click", ".llrp-resend-code", function (e) {
+        if ($(this).closest("#llrp-popup").length) {
+          e.preventDefault();
+          handleSendCode();
+        }
+      });
+      $(document).on("click", ".llrp-back-to-options", function (e) {
+        if ($(this).closest("#llrp-popup").length) {
+          e.preventDefault();
+          showStep("login-options");
+        }
+      });
 
-    $popup.on("click", ".llrp-forgot", function (e) {
-      e.preventDefault();
-      showStep("lost");
-    });
+      $popup.on("click", ".llrp-forgot", function (e) {
+        e.preventDefault();
+        showStep("lost");
+      });
 
-    $popup.on("click", "#llrp-lost-submit", handleLostStep);
+      $popup.on("click", "#llrp-lost-submit", handleLostStep);
+    }
 
     function handleLostStep() {
       var email = $("#llrp-lost-email").val().trim();
@@ -920,52 +952,98 @@
       e.target.value = value;
     }
 
-    $popup.on("input", "#llrp-identifier", applyIdentifierMask);
+    // Popup event listeners (only if popup exists)
+    if (hasPopup) {
+      $popup.on("input", "#llrp-identifier", applyIdentifierMask);
 
-    $popup.on("keypress", "input", function (e) {
-      if (e.which === 13) {
-        e.preventDefault();
-        var $step = $(this).closest(".llrp-step");
-        if ($step.hasClass("llrp-step-email")) {
-          handleIdentifierStep();
-        } else if ($step.hasClass("llrp-step-login")) {
-          handleLoginStep();
-        } else if ($step.hasClass("llrp-step-register")) {
-          handleRegisterStep();
-        } else if ($step.hasClass("llrp-step-code")) {
-          handleCodeLogin();
-        } else if ($step.hasClass("llrp-step-register-email")) {
-          handleRegisterCpfStep();
+      $popup.on("keypress", "input", function (e) {
+        if (e.which === 13) {
+          e.preventDefault();
+          var $step = $(this).closest(".llrp-step");
+          if ($step.hasClass("llrp-step-email")) {
+            handleIdentifierStep();
+          } else if ($step.hasClass("llrp-step-login")) {
+            handleLoginStep();
+          } else if ($step.hasClass("llrp-step-register")) {
+            handleRegisterStep();
+          } else if ($step.hasClass("llrp-step-code")) {
+            handleCodeLogin();
+          } else if ($step.hasClass("llrp-step-register-email")) {
+            handleRegisterCpfStep();
+          }
         }
-      }
-    });
+      });
 
-    // Initialize Social Login SDKs (logs removed for security)
+      // Social Login Event Bindings for popup
+      $popup.on(
+        "click",
+        "#llrp-google-login, #llrp-google-login-initial",
+        function(e) {
+          safeLog("LLRP: Google login button clicked in popup");
+          handleGoogleLogin(e);
+        }
+      );
+      $popup.on(
+        "click",
+        "#llrp-facebook-login, #llrp-facebook-login-initial",
+        handleFacebookLogin
+      );
+    }
 
-    initializeSocialLogin();
-
-    // Social Login Event Bindings for popup
-    $popup.on(
-      "click",
-      "#llrp-google-login, #llrp-google-login-initial",
-      handleGoogleLogin
-    );
-    $popup.on(
-      "click",
-      "#llrp-facebook-login, #llrp-facebook-login-initial",
-      handleFacebookLogin
-    );
+    // Initialize Social Login SDKs
+    if (LLRP_Data.google_login_enabled === "1" && LLRP_Data.google_client_id) {
+      var googleCheckAttempts = 0;
+      var googleCheckInterval = setInterval(function() {
+        googleCheckAttempts++;
+        
+        if (typeof google !== "undefined" && google.accounts && google.accounts.oauth2) {
+          clearInterval(googleCheckInterval);
+          initializeSocialLogin();
+        } else if (googleCheckAttempts > 50) {
+          clearInterval(googleCheckInterval);
+          initializeSocialLogin();
+        }
+      }, 100);
+    } else {
+      initializeSocialLogin();
+    }
 
     // Social Login Event Bindings for My Account page
+    
     $(document).on(
       "click",
       "#llrp-google-login-account, #llrp-google-register-account",
-      handleGoogleLogin
+      function(e) {
+        // If Google SDK is not loaded yet, wait for it
+        if (typeof google === "undefined") {
+          e.preventDefault();
+          
+          var waitAttempts = 0;
+          var waitInterval = setInterval(function() {
+            waitAttempts++;
+            
+            if (typeof google !== "undefined" && google.accounts && google.accounts.oauth2) {
+              clearInterval(waitInterval);
+              handleMyAccountGoogleLogin(e);
+            } else if (waitAttempts > 30) {
+              clearInterval(waitInterval);
+              alert("O SDK do Google não carregou. Por favor, recarregue a página e tente novamente.");
+            }
+          }, 200);
+          
+          return;
+        }
+        
+        handleMyAccountGoogleLogin(e);
+      }
     );
+    
     $(document).on(
       "click",
       "#llrp-facebook-login-account, #llrp-facebook-register-account",
-      handleFacebookLogin
+      function(e) {
+        handleMyAccountFacebookLogin(e);
+      }
     );
 
     // Social Login Functions
@@ -985,10 +1063,136 @@
       }
     }
 
+    // Handle Google login specifically for My Account page
+    function handleMyAccountGoogleLogin(e) {
+      e.preventDefault();
+      
+      if (LLRP_Data.google_login_enabled !== "1") {
+        alert("Login com Google não está habilitado nas configurações.");
+        return;
+      }
+
+      if (!LLRP_Data.google_client_id) {
+        alert("Google Client ID não configurado.");
+        return;
+      }
+
+      if (typeof google === "undefined") {
+        alert("Google SDK não carregado. Tente novamente.");
+        return;
+      }
+
+      if (!google.accounts || !google.accounts.oauth2) {
+        alert("Google OAuth2 não disponível. Verifique a configuração.");
+        return;
+      }
+
+      google.accounts.oauth2
+        .initTokenClient({
+          client_id: LLRP_Data.google_client_id,
+          scope: "email profile",
+          callback: (response) => {
+            if (response.access_token) {
+              fetch("https://www.googleapis.com/oauth2/v2/userinfo", {
+                headers: {
+                  Authorization: "Bearer " + response.access_token,
+                },
+              })
+                .then((response) => {
+                  return response.json();
+                })
+                .then((userInfo) => {
+                  if (!userInfo.email) {
+                    alert("Google não forneceu e-mail.");
+                    return;
+                  }
+
+                  processGoogleLogin(userInfo);
+                })
+                .catch((error) => {
+                  alert("Erro ao obter informações do Google.");
+                });
+            } else {
+              alert("Login com Google cancelado.");
+            }
+          },
+          error_callback: (error) => {
+            alert("Erro no login com Google. Tente novamente.");
+          },
+        })
+        .requestAccessToken();
+    }
+
+    // Handle Facebook login specifically for My Account page
+    function handleMyAccountFacebookLogin(e) {
+      e.preventDefault();
+      
+      if (LLRP_Data.facebook_login_enabled !== "1") {
+        alert("Login com Facebook não está habilitado nas configurações.");
+        return;
+      }
+
+      if (!LLRP_Data.facebook_app_id) {
+        alert("Facebook App ID não configurado.");
+        return;
+      }
+
+      if (typeof FB === "undefined") {
+        alert("Facebook SDK não carregado. Tente novamente.");
+        return;
+      }
+
+      FB.login(function(response) {
+        if (response.authResponse) {
+          $.post(LLRP_Data.ajax_url, {
+            action: "llrp_facebook_login",
+            access_token: response.authResponse.accessToken,
+            nonce: LLRP_Data.nonce,
+            from_account: LLRP_Data.is_account_page || "0",
+          })
+          .done(function (res) {
+            if (res.success) {
+              setTimeout(function() {
+                window.location.reload();
+              }, 500);
+            } else {
+              alert(res.data.message || "Erro ao fazer login com Facebook.");
+            }
+          })
+          .fail(function (xhr) {
+            alert("Erro de conexão. Tente novamente.");
+          });
+        } else {
+          alert("Login com Facebook cancelado.");
+        }
+      }, {scope: 'email'});
+    }
+
     function handleGoogleLogin(e) {
       e.preventDefault();
-      // Google login initiated (logs removed for security)
       clearFeedback();
+
+      // Debug: Check if Google login is enabled
+      if (LLRP_Data.google_login_enabled !== "1") {
+        safeLog("LLRP: Google login not enabled in settings");
+        showFeedback(
+          "llrp-feedback-email",
+          "Login com Google não está habilitado nas configurações."
+        );
+        return;
+      }
+
+      // Debug: Check if Google Client ID is available
+      if (!LLRP_Data.google_client_id) {
+        safeLog("LLRP: Google Client ID not configured");
+        showFeedback(
+          "llrp-feedback-email",
+          "Google Client ID não configurado."
+        );
+        return;
+      }
+
+      safeLog("LLRP: Google login attempt - Client ID: " + LLRP_Data.google_client_id);
 
       // Check if Google SDK is loaded
       if (typeof google === "undefined") {
@@ -1011,6 +1215,7 @@
       }
 
       safeLog("LLRP: Starting Google OAuth2 flow");
+      safeLog("LLRP: Google OAuth2 available: " + (google.accounts && google.accounts.oauth2 ? "YES" : "NO"));
 
       // Use Google OAuth popup flow
       google.accounts.oauth2
@@ -1018,6 +1223,7 @@
           client_id: LLRP_Data.google_client_id,
           scope: "email profile",
           callback: (response) => {
+            safeLog("LLRP: Google OAuth callback received");
             // Google OAuth callback received (details removed for security)
             if (response.access_token) {
               // Access token received, fetching user info
@@ -1109,11 +1315,11 @@
 
             // Smart redirect based on current page and Fluid Checkout
             if (LLRP_Data.is_account_page === "1") {
-              // On My Account page, use soft refresh to show logged-in state
-              safeLog(
-                "🔄 MY ACCOUNT: Using soft refresh for Interactivity API compatibility"
-              );
-              softRefresh();
+              // On My Account page, reload the page to show logged-in state
+              safeLog("🔄 MY ACCOUNT: Reloading page to show logged-in state");
+              setTimeout(function() {
+                window.location.reload();
+              }, 500);
             } else if (isFluidCheckoutActive()) {
               // For Fluid Checkout, use soft refresh for Interactivity API compatibility
               safeLog(
@@ -1207,11 +1413,11 @@
 
                   // Smart redirect based on current page and Fluid Checkout
                   if (LLRP_Data.is_account_page === "1") {
-                    // On My Account page, use soft refresh to show logged-in state
-                    safeLog(
-                      "🔄 MY ACCOUNT: Using soft refresh for Interactivity API compatibility"
-                    );
-                    softRefresh();
+                    // On My Account page, reload the page to show logged-in state
+                    safeLog("🔄 MY ACCOUNT: Reloading page to show logged-in state");
+                    setTimeout(function() {
+                      window.location.reload();
+                    }, 500);
                   } else if (isFluidCheckoutActive()) {
                     // For Fluid Checkout, use soft refresh for Interactivity API compatibility
                     safeLog(
@@ -1292,10 +1498,12 @@
     // Make the checkout button visible now that the JS is ready
     $(".checkout-button").css("visibility", "visible");
 
-    // Plugin initialization completed silently
+    // Plugin initialization completed
+    safeLog("LLRP: Plugin initialized with data:", LLRP_Data);
 
     // Auto-show popup if user accesses checkout page directly without being logged in
-    if (LLRP_Data.is_checkout_page === "1" && LLRP_Data.is_logged_in !== "1") {
+    // Mas não mostrar se checkout de convidado estiver habilitado
+    if (LLRP_Data.is_checkout_page === "1" && LLRP_Data.is_logged_in !== "1" && LLRP_Data.guest_checkout_enabled !== "1") {
       // Small delay to ensure page is fully loaded
       setTimeout(function () {
         openPopup();
@@ -1413,68 +1621,17 @@
       safeLog("LLRP: Cart fragments update completed");
     }
 
-    /**
-     * CRITICAL: Sync email fields to ensure account_email and billing_email are always identical
-     */
-    function syncEmailFields(email) {
-      if (!email) return;
-
-      safeLog(
-        "📧 CRITICAL: Syncing email fields - account_email ↔ billing_email:",
-        email
-      );
-
-      // All possible email field selectors
-      var emailSelectors = [
-        "#account_email",
-        "#billing_email",
-        'input[name="account_email"]',
-        'input[name="billing_email"]',
-        'input[name="email"]',
-        "#email",
-        ".email-field",
-      ];
-
-      emailSelectors.forEach(function (selector) {
-        var $field = $(selector);
-        if ($field.length) {
-          $field.val(email).trigger("change");
-          safeLog("📧 Email synced to field:", selector, "=", email);
-        }
-      });
-
-      // Setup real-time synchronization listeners
-      emailSelectors.forEach(function (selector) {
-        $(document).off("input.email-sync change.email-sync", selector);
-        $(document).on(
-          "input.email-sync change.email-sync",
-          selector,
-          function () {
-            var newEmail = $(this).val();
-            if (newEmail && newEmail !== email) {
-              safeLog(
-                "📧 Real-time sync triggered by:",
-                selector,
-                "→",
-                newEmail
-              );
-              syncEmailFields(newEmail);
-            }
-          }
-        );
-      });
-    }
 
     /**
      * Auto-fill checkout form with user data + CRITICAL email sync
      */
     /**
      * Sync email fields to ensure consistency across all email inputs
+     * @param {string} email - Email address to sync
      */
     function syncEmailFields(email) {
       if (!email) return;
 
-      // Find all possible email fields and fill them
       var emailSelectors = [
         'input[name="email"]',
         'input[id="email"]',
@@ -1489,114 +1646,87 @@
         var $field = $(selector);
         if ($field.length > 0) {
           $field.val(email);
-          // Trigger change event to ensure other plugins detect the change
           $field.trigger("change").trigger("input").trigger("keyup");
         }
       });
     }
 
+    /**
+     * Auto-fill checkout form with user data
+     * @param {Object} userData - User data object
+     */
     function fillCheckoutFormData(userData) {
       if (!userData || typeof userData !== "object") {
         return;
       }
 
-      // CRITICAL: Email must go to BOTH account_email AND billing_email
-      var userEmail =
-        userData.email ||
-        userData.billing_email ||
-        userData.account_email ||
-        "";
+      var userEmail = userData.email || userData.billing_email || userData.account_email || "";
+      
       if (userEmail) {
         syncEmailFields(userEmail);
       }
 
-      // Common field mappings
-      var fieldMappings = {
-        // CRITICAL: Both email fields must have same value
+      var fieldMappings = getFieldMappings(userData, userEmail);
+      fillFormFields(fieldMappings);
+      triggerCheckoutEvents(userEmail);
+    }
+
+    /**
+     * Get field mappings for checkout form
+     * @param {Object} userData - User data
+     * @param {string} userEmail - User email
+     * @returns {Object} Field mappings
+     */
+    function getFieldMappings(userData, userEmail) {
+      return {
+        // Email fields
         account_email: userEmail,
         billing_email: userEmail,
         email: userEmail,
 
         // Billing fields
-        billing_first_name:
-          userData.first_name || userData.billing_first_name || "",
-        billing_last_name:
-          userData.last_name || userData.billing_last_name || "",
+        billing_first_name: userData.first_name || userData.billing_first_name || "",
+        billing_last_name: userData.last_name || userData.billing_last_name || "",
         billing_phone: userData.phone || userData.billing_phone || "",
         billing_address_1: userData.address || userData.billing_address_1 || "",
-        billing_address_2:
-          userData.address_2 || userData.billing_address_2 || "",
+        billing_address_2: userData.address_2 || userData.billing_address_2 || "",
         billing_city: userData.city || userData.billing_city || "",
         billing_state: userData.state || userData.billing_state || "",
-        billing_postcode:
-          userData.postcode || userData.billing_postcode || userData.cep || "",
+        billing_postcode: userData.postcode || userData.billing_postcode || userData.cep || "",
         billing_country: userData.country || userData.billing_country || "BR",
         billing_cpf: userData.cpf || userData.billing_cpf || "",
         billing_cnpj: userData.cnpj || userData.billing_cnpj || "",
 
         // Brazilian Market plugin compatibility
         billing_number: userData.number || userData.billing_number || "",
-        billing_neighborhood:
-          userData.neighborhood || userData.billing_neighborhood || "",
-        billing_cellphone:
-          userData.cellphone || userData.billing_cellphone || "",
-        billing_birthdate:
-          userData.birthdate || userData.billing_birthdate || "",
+        billing_neighborhood: userData.neighborhood || userData.billing_neighborhood || "",
+        billing_cellphone: userData.cellphone || userData.billing_cellphone || "",
+        billing_birthdate: userData.birthdate || userData.billing_birthdate || "",
         billing_sex: userData.sex || userData.billing_sex || "",
-        billing_company_cnpj:
-          userData.company_cnpj || userData.billing_company_cnpj || "",
+        billing_company_cnpj: userData.company_cnpj || userData.billing_company_cnpj || "",
         billing_ie: userData.ie || userData.billing_ie || "",
         billing_rg: userData.rg || userData.billing_rg || "",
 
         // Shipping fields (copy from billing)
-        shipping_first_name:
-          userData.first_name ||
-          userData.shipping_first_name ||
-          userData.billing_first_name ||
-          "",
-        shipping_last_name:
-          userData.last_name ||
-          userData.shipping_last_name ||
-          userData.billing_last_name ||
-          "",
-        shipping_address_1:
-          userData.address ||
-          userData.shipping_address_1 ||
-          userData.billing_address_1 ||
-          "",
-        shipping_address_2:
-          userData.address_2 ||
-          userData.shipping_address_2 ||
-          userData.billing_address_2 ||
-          "",
-        shipping_city:
-          userData.city ||
-          userData.shipping_city ||
-          userData.billing_city ||
-          "",
-        shipping_state:
-          userData.state ||
-          userData.shipping_state ||
-          userData.billing_state ||
-          "",
-        shipping_postcode:
-          userData.postcode ||
-          userData.shipping_postcode ||
-          userData.billing_postcode ||
-          userData.cep ||
-          "",
-        shipping_country:
-          userData.country ||
-          userData.shipping_country ||
-          userData.billing_country ||
-          "BR",
+        shipping_first_name: userData.first_name || userData.shipping_first_name || userData.billing_first_name || "",
+        shipping_last_name: userData.last_name || userData.shipping_last_name || userData.billing_last_name || "",
+        shipping_address_1: userData.address || userData.shipping_address_1 || userData.billing_address_1 || "",
+        shipping_address_2: userData.address_2 || userData.shipping_address_2 || userData.billing_address_2 || "",
+        shipping_city: userData.city || userData.shipping_city || userData.billing_city || "",
+        shipping_state: userData.state || userData.shipping_state || userData.billing_state || "",
+        shipping_postcode: userData.postcode || userData.shipping_postcode || userData.billing_postcode || userData.cep || "",
+        shipping_country: userData.country || userData.shipping_country || userData.billing_country || "BR",
       };
+    }
 
-      // Fill form fields
+    /**
+     * Fill form fields with mapped data
+     * @param {Object} fieldMappings - Field mappings object
+     */
+    function fillFormFields(fieldMappings) {
       Object.keys(fieldMappings).forEach(function (fieldName) {
         var value = fieldMappings[fieldName];
         if (value) {
-          // Try different field selectors
           var selectors = [
             "#" + fieldName,
             'input[name="' + fieldName + '"]',
@@ -1608,25 +1738,24 @@
             var $field = $(selector);
             if ($field.length && !$field.val()) {
               $field.val(value);
-              // Trigger multiple events to ensure compatibility
-              $field
-                .trigger("change")
-                .trigger("input")
-                .trigger("keyup")
-                .trigger("blur");
+              $field.trigger("change").trigger("input").trigger("keyup").trigger("blur");
             }
           });
         }
       });
+    }
 
-      // CRITICAL: Additional email sync with delay to ensure DOM is ready
+    /**
+     * Trigger checkout events and email sync
+     * @param {string} userEmail - User email
+     */
+    function triggerCheckoutEvents(userEmail) {
       setTimeout(function () {
         if (userEmail) {
           syncEmailFields(userEmail);
         }
       }, 100);
 
-      // Trigger events to ensure other plugins/themes update
       setTimeout(function () {
         $("form.checkout").trigger("update_checkout");
         $(document.body).trigger("updated_checkout");
