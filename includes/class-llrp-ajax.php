@@ -11,6 +11,136 @@ class Llrp_Ajax {
          // Silent operation for security - no logs
          return;
      }
+     
+     /**
+      * Valida captcha (Turnstile ou reCAPTCHA)
+      * @return bool|WP_Error True se válido, WP_Error se inválido
+      */
+     private static function validate_captcha() {
+         $captcha_type = get_option( 'llrp_captcha_type', 'none' );
+         
+         // Se não está configurado, retorna sucesso
+         if ( $captcha_type === 'none' || empty( $captcha_type ) ) {
+             return true;
+         }
+         
+         // Verifica se o token foi enviado
+         $captcha_token = sanitize_text_field( wp_unslash( $_POST['captcha_token'] ?? '' ) );
+         
+         if ( empty( $captcha_token ) ) {
+             return new WP_Error( 'captcha_missing', __( 'Por favor, complete a verificação de segurança.', 'llrp' ) );
+         }
+         
+         // Valida de acordo com o tipo
+         if ( $captcha_type === 'turnstile' ) {
+             return self::validate_turnstile( $captcha_token );
+         } elseif ( in_array( $captcha_type, ['recaptcha_v2_checkbox', 'recaptcha_v2_invisible', 'recaptcha_v3'] ) ) {
+             return self::validate_recaptcha( $captcha_token, $captcha_type );
+         }
+         
+         return true;
+     }
+     
+     /**
+      * Valida Cloudflare Turnstile
+      */
+     private static function validate_turnstile( $token ) {
+         $secret_key = get_option( 'llrp_turnstile_secret_key' );
+         
+         if ( empty( $secret_key ) ) {
+             return new WP_Error( 'captcha_config', __( 'Turnstile não está configurado corretamente.', 'llrp' ) );
+         }
+         
+         $response = wp_remote_post( 'https://challenges.cloudflare.com/turnstile/v0/siteverify', [
+             'body' => [
+                 'secret' => $secret_key,
+                 'response' => $token,
+                 'remoteip' => $_SERVER['REMOTE_ADDR'] ?? '',
+             ],
+             'timeout' => 15,
+         ] );
+         
+         if ( is_wp_error( $response ) ) {
+             return new WP_Error( 'captcha_error', __( 'Erro ao validar captcha. Tente novamente.', 'llrp' ) );
+         }
+         
+         $body = json_decode( wp_remote_retrieve_body( $response ), true );
+         
+         if ( empty( $body['success'] ) ) {
+             return new WP_Error( 'captcha_failed', __( 'Verificação de segurança falhou. Tente novamente.', 'llrp' ) );
+         }
+         
+         return true;
+     }
+     
+     /**
+      * Valida Google reCAPTCHA
+      */
+     private static function validate_recaptcha( $token, $type ) {
+         $secret_key = get_option( 'llrp_recaptcha_secret_key' );
+         
+         if ( empty( $secret_key ) ) {
+             return new WP_Error( 'captcha_config', __( 'Erro de configuração: reCAPTCHA Secret Key não está configurada.', 'llrp' ) );
+         }
+         
+         $response = wp_remote_post( 'https://www.google.com/recaptcha/api/siteverify', [
+             'body' => [
+                 'secret' => $secret_key,
+                 'response' => $token,
+                 'remoteip' => $_SERVER['REMOTE_ADDR'] ?? '',
+             ],
+             'timeout' => 15,
+         ] );
+         
+         if ( is_wp_error( $response ) ) {
+             return new WP_Error( 'captcha_error', __( 'Erro ao validar captcha. Tente novamente.', 'llrp' ) );
+         }
+         
+         $body = json_decode( wp_remote_retrieve_body( $response ), true );
+         
+         if ( empty( $body['success'] ) ) {
+             $error_codes = isset( $body['error-codes'] ) ? $body['error-codes'] : ['unknown'];
+             $error_string = implode( ', ', $error_codes );
+             
+             // Mensagens mais específicas baseadas no código de erro
+             $error_messages = [
+                 'missing-input-secret' => __( 'Erro de configuração: Secret key não fornecida', 'llrp' ),
+                 'invalid-input-secret' => __( 'Erro de configuração: Secret key inválida', 'llrp' ),
+                 'missing-input-response' => __( 'Token do captcha não recebido', 'llrp' ),
+                 'invalid-input-response' => __( 'Token do captcha inválido ou expirado', 'llrp' ),
+                 'bad-request' => __( 'Requisição malformada', 'llrp' ),
+                 'timeout-or-duplicate' => __( 'Token expirado ou já usado', 'llrp' ),
+             ];
+             
+             $user_message = __( 'Verificação de segurança falhou.', 'llrp' );
+             if ( isset( $error_codes[0] ) && isset( $error_messages[ $error_codes[0] ] ) ) {
+                 $user_message = $error_messages[ $error_codes[0] ];
+             }
+             
+             // Em desenvolvimento, mostra o código de erro
+             if ( defined( 'WP_DEBUG' ) && WP_DEBUG ) {
+                 $user_message .= ' [' . $error_string . ']';
+             }
+             
+             return new WP_Error( 'captcha_failed', $user_message );
+         }
+         
+         // Para reCAPTCHA v3, verifica o score
+         if ( $type === 'recaptcha_v3' ) {
+             $min_score = floatval( get_option( 'llrp_recaptcha_v3_score', 0.5 ) );
+             $score = floatval( $body['score'] ?? 0 );
+             
+             if ( $score < $min_score ) {
+                 $message = __( 'Verificação de segurança falhou. Score muito baixo.', 'llrp' );
+                 if ( defined( 'WP_DEBUG' ) && WP_DEBUG ) {
+                     $message .= ' [Score: ' . $score . ' / Mínimo: ' . $min_score . ']';
+                 }
+                 return new WP_Error( 'captcha_score_low', $message );
+             }
+         }
+         
+         return true;
+     }
     
     public static function init() {
         // Hooks para usuários não logados
@@ -41,6 +171,12 @@ class Llrp_Ajax {
                 self::safe_log( 'LLRP: Nonce verification failed for check_user. Nonce: ' . $nonce );
                 wp_send_json_error( [ 'message' => __( 'Erro de segurança. Recarregue a página e tente novamente.', 'llrp' ) ] );
             }
+        }
+        
+        // Valida captcha
+        $captcha_validation = self::validate_captcha();
+        if ( is_wp_error( $captcha_validation ) ) {
+            wp_send_json_error( [ 'message' => $captcha_validation->get_error_message() ] );
         }
         
         $identifier = sanitize_text_field( wp_unslash( $_POST['identifier'] ?? '' ) );
@@ -279,6 +415,12 @@ class Llrp_Ajax {
             }
         }
         
+        // Valida captcha
+        $captcha_validation = self::validate_captcha();
+        if ( is_wp_error( $captcha_validation ) ) {
+            wp_send_json_error( [ 'message' => $captcha_validation->get_error_message() ] );
+        }
+        
         $identifier = sanitize_text_field( wp_unslash( $_POST['identifier'] ?? '' ) );
         $password = isset( $_POST['password'] ) ? wp_unslash( $_POST['password'] ) : '';
 
@@ -330,6 +472,12 @@ class Llrp_Ajax {
         if ( ! self::validate_direct_registration_request() ) {
             self::safe_log( 'LLRP: Direct registration validation failed. IP: ' . self::get_client_ip() );
             wp_send_json_error( [ 'message' => __( 'Erro de segurança. Recarregue a página e tente novamente.', 'llrp' ) ] );
+        }
+        
+        // Valida captcha
+        $captcha_validation = self::validate_captcha();
+        if ( is_wp_error( $captcha_validation ) ) {
+            wp_send_json_error( [ 'message' => $captcha_validation->get_error_message() ] );
         }
         
         // Temporarily disable any potential nonce checks from other plugins

@@ -6,6 +6,12 @@ if ( ! defined( 'ABSPATH' ) ) {
 class Llrp_Frontend {
     
     /**
+     * Cache estático para opções do plugin
+     * Evita múltiplas queries ao banco
+     */
+    private static $options_cache = null;
+    
+    /**
      * Safe logging function - only logs in debug mode
      */
     private static function safe_log($message, $data = null) {
@@ -40,14 +46,178 @@ class Llrp_Frontend {
         
         // Check WooCommerce settings for Interactivity API features
         if ( function_exists( 'wc_get_setting' ) ) {
-            // Check if cart fragments are disabled (sign of Interactivity API)
-            $cart_fragments_setting = get_option( 'woocommerce_cart_redirect_after_add' );
-            if ( $cart_fragments_setting === 'no' && function_exists( 'wc_get_cart_fragments' ) ) {
-                return true;
-            }
+            // Interactivity API check removed - no longer needed
         }
         
         return false;
+    }
+    
+    /**
+     * Carrega todas as opções de uma vez e armazena em cache
+     * Reduz de 64 queries para 1 única query ao banco
+     */
+    private static function get_plugin_options() {
+        // Se já está em cache, retorna direto
+        if ( self::$options_cache !== null ) {
+            return self::$options_cache;
+        }
+        
+        // Tenta pegar do transient (cache de 1 hora)
+        $cached = get_transient( 'llrp_plugin_options' );
+        if ( $cached !== false ) {
+            self::$options_cache = $cached;
+            return $cached;
+        }
+        
+        // Lista de todas as opções usadas pelo plugin
+        $option_keys = [
+            // Login social
+            'llrp_google_login_enabled',
+            'llrp_google_client_id',
+            'llrp_facebook_login_enabled',
+            'llrp_facebook_app_id',
+            
+            // Login CPF/CNPJ
+            'llrp_cpf_login_enabled',
+            'llrp_cnpj_login_enabled',
+            
+            // WhatsApp
+            'llrp_whatsapp_enabled',
+            'llrp_whatsapp_sender_phone',
+            
+            // Captcha
+            'llrp_captcha_type',
+            'llrp_turnstile_site_key',
+            'llrp_turnstile_secret_key',
+            'llrp_recaptcha_site_key',
+            'llrp_recaptcha_secret_key',
+            'llrp_recaptcha_v3_score',
+            
+            // Cores
+            'llrp_color_bg',
+            'llrp_color_overlay',
+            'llrp_color_header_bg',
+            'llrp_color_text',
+            'llrp_color_link',
+            'llrp_color_link_hover',
+            'llrp_color_btn_bg',
+            'llrp_color_btn_bg_hover',
+            'llrp_color_btn_border',
+            'llrp_color_btn_border_hover',
+            'llrp_color_btn_text',
+            'llrp_color_btn_text_hover',
+            'llrp_color_btn_code_bg',
+            'llrp_color_btn_code_bg_hover',
+            'llrp_color_btn_code_border',
+            'llrp_color_btn_code_border_hover',
+            'llrp_color_btn_code_text',
+            'llrp_color_btn_code_text_hover',
+            
+            // Fontes
+            'llrp_font_family',
+            'llrp_font_size_h2',
+            'llrp_font_size_p',
+            'llrp_font_size_label',
+            'llrp_font_size_feedback',
+            'llrp_font_size_input',
+            'llrp_font_size_button',
+            
+            // Textos do popup
+            'llrp_header_email',
+            'llrp_text_email',
+            'llrp_placeholder_email',
+            'llrp_button_email',
+            'llrp_text_login',
+            'llrp_placeholder_password',
+            'llrp_text_remember',
+            'llrp_button_login',
+            'llrp_header_register',
+            'llrp_text_register',
+            'llrp_placeholder_register',
+            'llrp_button_register',
+        ];
+        
+        // Carrega todas as opções de uma vez usando apenas 1 query
+        global $wpdb;
+        $placeholders = implode( ',', array_fill( 0, count( $option_keys ), '%s' ) );
+        $query = $wpdb->prepare(
+            "SELECT option_name, option_value FROM {$wpdb->options} WHERE option_name IN ($placeholders)",
+            $option_keys
+        );
+        
+        $results = $wpdb->get_results( $query );
+        
+        // Monta array de opções com valores padrão
+        $options = [];
+        foreach ( $option_keys as $key ) {
+            $options[$key] = self::get_default_value( $key );
+        }
+        
+        // Sobrescreve com valores do banco
+        foreach ( $results as $row ) {
+            $options[$row->option_name] = maybe_unserialize( $row->option_value );
+        }
+        
+        // Armazena em cache (memória e transient)
+        self::$options_cache = $options;
+        set_transient( 'llrp_plugin_options', $options, HOUR_IN_SECONDS );
+        
+        return $options;
+    }
+    
+    /**
+     * Retorna valor padrão para cada opção
+     */
+    private static function get_default_value( $key ) {
+        $defaults = [
+            'llrp_color_bg' => '#ffffff',
+            'llrp_color_overlay' => 'rgba(0,0,0,0.5)',
+            'llrp_color_header_bg' => '#ffffff',
+            'llrp_color_text' => '#1a1a1a',
+            'llrp_color_link' => '#791b0a',
+            'llrp_color_link_hover' => '#686868',
+            'llrp_color_btn_bg' => '#385b02',
+            'llrp_color_btn_bg_hover' => '#91b381',
+            'llrp_color_btn_text' => '#ffffff',
+            'llrp_color_btn_code_bg' => '#2271b1',
+            'llrp_color_btn_code_bg_hover' => '#1e639a',
+            'llrp_color_btn_code_text' => '#ffffff',
+            'llrp_font_family' => 'inherit',
+            'llrp_font_size_h2' => '1.5',
+            'llrp_font_size_p' => '1',
+            'llrp_font_size_label' => '0.9',
+            'llrp_font_size_feedback' => '0.85',
+            'llrp_font_size_input' => '1',
+            'llrp_font_size_button' => '1',
+        ];
+        
+        return isset( $defaults[$key] ) ? $defaults[$key] : '';
+    }
+    
+    /**
+     * Helper para pegar opção do cache
+     */
+    private static function get_option_cached( $key, $default = '' ) {
+        $options = self::get_plugin_options();
+        return isset( $options[$key] ) ? $options[$key] : $default;
+    }
+    
+    /**
+     * Limpa o cache quando opções são atualizadas
+     */
+    public static function clear_options_cache() {
+        self::$options_cache = null;
+        delete_transient( 'llrp_plugin_options' );
+    }
+    
+    /**
+     * Limpa cache quando opções do plugin são atualizadas
+     */
+    public static function maybe_clear_cache_on_option_update( $option, $old_value, $value ) {
+        // Se é uma opção do plugin LLRP, limpa o cache
+        if ( strpos( $option, 'llrp_' ) === 0 ) {
+            self::clear_options_cache();
+        }
     }
     
     public static function init() {
@@ -78,6 +248,9 @@ class Llrp_Frontend {
         
         // Additional hook to catch when user is already logged in on checkout
         add_action( 'woocommerce_before_checkout_form', [ __CLASS__, 'force_checkout_autofill_if_logged_in' ] );
+        
+        // Hook para limpar cache quando opções são salvas
+        add_action( 'update_option', [ __CLASS__, 'maybe_clear_cache_on_option_update' ], 10, 3 );
     }
 
  public static function enqueue_assets() {
@@ -118,21 +291,39 @@ class Llrp_Frontend {
         return;
     }
 
+    // OTIMIZAÇÃO: Carrega todas as opções de uma vez
+    $options = self::get_plugin_options();
+    
     // 3) enqueue de estilos e scripts (inclui wc-cart-fragments para evento added_to_cart)
     wp_enqueue_style(  'llrp-frontend', LLRP_PLUGIN_URL . 'assets/css/llrp-style.css', [], LLRP_VERSION );
     
     $script_dependencies = [ 'jquery', 'wc-cart-fragments' ];
     
     // Enqueue Google Sign-In SDK if enabled
-    if ( get_option( 'llrp_google_login_enabled' ) && get_option( 'llrp_google_client_id' ) ) {
+    if ( $options['llrp_google_login_enabled'] && $options['llrp_google_client_id'] ) {
         wp_enqueue_script( 'google-signin', 'https://accounts.google.com/gsi/client', [], null, true );
         $script_dependencies[] = 'google-signin';
     }
     
     // Enqueue Facebook SDK if enabled
-    if ( get_option( 'llrp_facebook_login_enabled' ) && get_option( 'llrp_facebook_app_id' ) ) {
+    if ( $options['llrp_facebook_login_enabled'] && $options['llrp_facebook_app_id'] ) {
         wp_enqueue_script( 'facebook-sdk', 'https://connect.facebook.net/pt_BR/sdk.js', [], null, true );
         $script_dependencies[] = 'facebook-sdk';
+    }
+    
+    // Enqueue Captcha scripts if enabled
+    $captcha_type = $options['llrp_captcha_type'] ?: 'none';
+    
+    if ( $captcha_type === 'turnstile' && $options['llrp_turnstile_site_key'] ) {
+        wp_enqueue_script( 'cloudflare-turnstile', 'https://challenges.cloudflare.com/turnstile/v0/api.js', [], null, true );
+        $script_dependencies[] = 'cloudflare-turnstile';
+    } elseif ( in_array( $captcha_type, ['recaptcha_v2_checkbox', 'recaptcha_v2_invisible', 'recaptcha_v3'] ) && $options['llrp_recaptcha_site_key'] ) {
+        if ( $captcha_type === 'recaptcha_v3' ) {
+            wp_enqueue_script( 'google-recaptcha-v3', 'https://www.google.com/recaptcha/api.js?render=' . esc_attr( $options['llrp_recaptcha_site_key'] ), [], null, true );
+        } else {
+            wp_enqueue_script( 'google-recaptcha-v2', 'https://www.google.com/recaptcha/api.js', [], null, true );
+        }
+        $script_dependencies[] = ( $captcha_type === 'recaptcha_v3' ) ? 'google-recaptcha-v3' : 'google-recaptcha-v2';
     }
     
     wp_enqueue_script( 'llrp-frontend',
@@ -151,14 +342,16 @@ class Llrp_Frontend {
         'is_cart_page'          => is_cart() ? 1 : 0,
         'is_checkout_page'      => is_checkout() ? 1 : 0,
         'is_account_page'       => $is_my_account ? 1 : 0,
-        'cpf_login_enabled'     => get_option( 'llrp_cpf_login_enabled' ),
-        'cnpj_login_enabled'    => get_option( 'llrp_cnpj_login_enabled' ),
-        'google_login_enabled'  => get_option( 'llrp_google_login_enabled' ),
-        'google_client_id'      => get_option( 'llrp_google_client_id' ),
-        'facebook_login_enabled' => get_option( 'llrp_facebook_login_enabled' ),
-        'facebook_app_id'       => get_option( 'llrp_facebook_app_id' ),
+        'cpf_login_enabled'     => $options['llrp_cpf_login_enabled'],
+        'cnpj_login_enabled'    => $options['llrp_cnpj_login_enabled'],
+        'google_login_enabled'  => $options['llrp_google_login_enabled'],
+        'google_client_id'      => $options['llrp_google_client_id'],
+        'facebook_login_enabled' => $options['llrp_facebook_login_enabled'],
+        'facebook_app_id'       => $options['llrp_facebook_app_id'],
         'guest_checkout_enabled' => $guest_checkout_enabled ? 1 : 0,
         'debug_mode'            => defined( 'WP_DEBUG' ) && WP_DEBUG ? '1' : '0',
+        'captcha_type'          => $captcha_type,
+        'captcha_site_key'      => ( $captcha_type === 'turnstile' ) ? $options['llrp_turnstile_site_key'] : $options['llrp_recaptcha_site_key'],
     ] );
 
         // Enqueue frontend styles and scripts
@@ -174,25 +367,25 @@ class Llrp_Frontend {
         ] );
 
         // Dynamic CSS variables
-        $bg                = sanitize_text_field( get_option( 'llrp_color_bg', '#ffffff' ) );
-        $overlay           = sanitize_text_field( get_option( 'llrp_color_overlay', 'rgba(0,0,0,0.5)' ) );
-        $header_bg         = sanitize_text_field( get_option( 'llrp_color_header_bg', '#ffffff' ) );
-        $text_col          = sanitize_text_field( get_option( 'llrp_color_text', '#1a1a1a' ) );
-        $link_col          = sanitize_text_field( get_option( 'llrp_color_link', '#791b0a' ) );
-        $link_h_col        = sanitize_text_field( get_option( 'llrp_color_link_hover', '#686868' ) );
-        $btn_bg            = sanitize_text_field( get_option( 'llrp_color_btn_bg', '#385b02' ) );
-        $btn_bg_h          = sanitize_text_field( get_option( 'llrp_color_btn_bg_hover', '#91b381' ) );
-        $btn_bd            = sanitize_text_field( get_option( 'llrp_color_btn_border', $btn_bg ) );
-        $btn_bd_h          = sanitize_text_field( get_option( 'llrp_color_btn_border_hover', $btn_bg_h ) );
-        $btn_txt           = sanitize_text_field( get_option( 'llrp_color_btn_text', '#ffffff' ) );
-        $btn_txt_h         = sanitize_text_field( get_option( 'llrp_color_btn_text_hover', $btn_txt ) );
-        $font_family       = sanitize_text_field( get_option( 'llrp_font_family', 'inherit' ) );
-        $font_size_h2      = floatval( get_option( 'llrp_font_size_h2', '1.5' ) );
-        $font_size_p       = floatval( get_option( 'llrp_font_size_p', '1' ) );
-        $font_size_label   = floatval( get_option( 'llrp_font_size_label', '0.9' ) );
-        $font_size_feedback= floatval( get_option( 'llrp_font_size_feedback', '0.85' ) );
-        $font_size_input   = floatval( get_option( 'llrp_font_size_input', '1' ) );
-        $font_size_button  = floatval( get_option( 'llrp_font_size_button', '1' ) );
+        $bg                = sanitize_text_field( $options['llrp_color_bg'] ?: '#ffffff' );
+        $overlay           = sanitize_text_field( $options['llrp_color_overlay'] ?: 'rgba(0,0,0,0.5)' );
+        $header_bg         = sanitize_text_field( $options['llrp_color_header_bg'] ?: '#ffffff' );
+        $text_col          = sanitize_text_field( $options['llrp_color_text'] ?: '#1a1a1a' );
+        $link_col          = sanitize_text_field( $options['llrp_color_link'] ?: '#791b0a' );
+        $link_h_col        = sanitize_text_field( $options['llrp_color_link_hover'] ?: '#686868' );
+        $btn_bg            = sanitize_text_field( $options['llrp_color_btn_bg'] ?: '#385b02' );
+        $btn_bg_h          = sanitize_text_field( $options['llrp_color_btn_bg_hover'] ?: '#91b381' );
+        $btn_bd            = sanitize_text_field( $options['llrp_color_btn_border'] ?: $btn_bg );
+        $btn_bd_h          = sanitize_text_field( $options['llrp_color_btn_border_hover'] ?: $btn_bg_h );
+        $btn_txt           = sanitize_text_field( $options['llrp_color_btn_text'] ?: '#ffffff' );
+        $btn_txt_h         = sanitize_text_field( $options['llrp_color_btn_text_hover'] ?: $btn_txt );
+        $font_family       = sanitize_text_field( $options['llrp_font_family'] ?: 'inherit' );
+        $font_size_h2      = floatval( $options['llrp_font_size_h2'] ?: '1.5' );
+        $font_size_p       = floatval( $options['llrp_font_size_p'] ?: '1' );
+        $font_size_label   = floatval( $options['llrp_font_size_label'] ?: '0.9' );
+        $font_size_feedback= floatval( $options['llrp_font_size_feedback'] ?: '0.85' );
+        $font_size_input   = floatval( $options['llrp_font_size_input'] ?: '1' );
+        $font_size_button  = floatval( $options['llrp_font_size_button'] ?: '1' );
 
         // Build and add inline CSS
         $css  = ".llrp-overlay { background: {$overlay} !important; }";
@@ -214,12 +407,12 @@ class Llrp_Frontend {
         $css .= ".llrp-login-options label { display: inline-flex !important; align-items: center !important; white-space: nowrap !important; }";
         $css .= ".llrp-login-options label input { width: 15px !important; height: 15px !important; margin-right: 8px !important; }";
         $css .= "@media (max-width: 768px) { .llrp-login-options { flex-direction: column !important; align-items: flex-start !important; gap: 10px !important; } .llrp-login-options label { align-items: flex-start !important; justify-content: flex-start !important; text-align: left !important; } }";
-        $btn_code_bg      = sanitize_hex_color( get_option( 'llrp_color_btn_code_bg', '#2271b1' ) );
-        $btn_code_bg_h    = sanitize_hex_color( get_option( 'llrp_color_btn_code_bg_hover', '#1e639a' ) );
-        $btn_code_bd      = sanitize_hex_color( get_option( 'llrp_color_btn_code_border', $btn_code_bg ) );
-        $btn_code_bd_h    = sanitize_hex_color( get_option( 'llrp_color_btn_code_border_hover', $btn_code_bg_h ) );
-        $btn_code_txt     = sanitize_hex_color( get_option( 'llrp_color_btn_code_text', '#ffffff' ) );
-        $btn_code_txt_h   = sanitize_hex_color( get_option( 'llrp_color_btn_code_text_hover', '#ffffff' ) );
+        $btn_code_bg      = sanitize_hex_color( $options['llrp_color_btn_code_bg'] ?: '#2271b1' );
+        $btn_code_bg_h    = sanitize_hex_color( $options['llrp_color_btn_code_bg_hover'] ?: '#1e639a' );
+        $btn_code_bd      = sanitize_hex_color( $options['llrp_color_btn_code_border'] ?: $btn_code_bg );
+        $btn_code_bd_h    = sanitize_hex_color( $options['llrp_color_btn_code_border_hover'] ?: $btn_code_bg_h );
+        $btn_code_txt     = sanitize_hex_color( $options['llrp_color_btn_code_text'] ?: '#ffffff' );
+        $btn_code_txt_h   = sanitize_hex_color( $options['llrp_color_btn_code_text_hover'] ?: '#ffffff' );
         $css .= "#llrp-send-code { background: {$btn_code_bg} !important; color: {$btn_code_txt} !important; border: 1px solid {$btn_code_bd} !important; }";
         $css .= "#llrp-send-code:hover { background: {$btn_code_bg_h} !important; border-color: {$btn_code_bd_h} !important; color: {$btn_code_txt_h} !important; }";
         
@@ -251,21 +444,24 @@ class Llrp_Frontend {
         }
         $popup_rendered = true;
 
+        // OTIMIZAÇÃO: Carrega todas as opções de uma vez
+        $options = self::get_plugin_options();
+
         // Prepare step texts
-        $h_email  = get_option( 'llrp_header_email' )    ?: __( 'Finalize o pedido', 'llrp' );
-        $t_email  = get_option( 'llrp_text_email' )      ?: __( 'Digite seu e-mail abaixo para continuar', 'llrp' );
-        $ph_email = get_option( 'llrp_placeholder_email' ) ?: __( 'Insira seu e-mail', 'llrp' );
-        $b_email  = get_option( 'llrp_button_email' )    ?: __( 'Continuar', 'llrp' );
+        $h_email  = $options['llrp_header_email']    ?: __( 'Finalize o pedido', 'llrp' );
+        $t_email  = $options['llrp_text_email']      ?: __( 'Digite seu e-mail abaixo para continuar', 'llrp' );
+        $ph_email = $options['llrp_placeholder_email'] ?: __( 'Insira seu e-mail', 'llrp' );
+        $b_email  = $options['llrp_button_email']    ?: __( 'Continuar', 'llrp' );
 
-        $t_login  = get_option( 'llrp_text_login' )        ?: __( 'Digite sua senha para continuar a compra.', 'llrp' );
-        $ph_pass  = get_option( 'llrp_placeholder_password' ) ?: __( 'Digite sua senha aqui', 'llrp' );
-        $txt_rem  = get_option( 'llrp_text_remember' )     ?: __( 'Lembrar meu acesso', 'llrp' );
-        $b_login  = get_option( 'llrp_button_login' )      ?: __( 'Acessar', 'llrp' );
+        $t_login  = $options['llrp_text_login']        ?: __( 'Digite sua senha para continuar a compra.', 'llrp' );
+        $ph_pass  = $options['llrp_placeholder_password'] ?: __( 'Digite sua senha aqui', 'llrp' );
+        $txt_rem  = $options['llrp_text_remember']     ?: __( 'Lembrar meu acesso', 'llrp' );
+        $b_login  = $options['llrp_button_login']      ?: __( 'Acessar', 'llrp' );
 
-        $h_reg    = get_option( 'llrp_header_register' )   ?: __( 'Novo por aqui? Crie sua conta!', 'llrp' );
-        $t_reg    = get_option( 'llrp_text_register' )     ?: __( 'Você ainda não tem uma conta. Não se preocupe, você pode criar e finalizar sua compra.', 'llrp' );
-        $ph_reg   = get_option( 'llrp_placeholder_register' ) ?: __( 'Insira uma senha para sua conta', 'llrp' );
-        $b_reg    = get_option( 'llrp_button_register' )   ?: __( 'Cadastrar e finalizar compra', 'llrp' );
+        $h_reg    = $options['llrp_header_register']   ?: __( 'Novo por aqui? Crie sua conta!', 'llrp' );
+        $t_reg    = $options['llrp_text_register']     ?: __( 'Você ainda não tem uma conta. Não se preocupe, você pode criar e finalizar sua compra.', 'llrp' );
+        $ph_reg   = $options['llrp_placeholder_register'] ?: __( 'Insira uma senha para sua conta', 'llrp' );
+        $b_reg    = $options['llrp_button_register']   ?: __( 'Cadastrar e finalizar compra', 'llrp' );
 
         $h_lost   = __( 'Recuperar a senha', 'llrp' );
         $t_lost   = __( 'Sem problemas. Digite seu e-mail e enviaremos instruções para redefinir sua senha.', 'llrp' );
@@ -281,8 +477,8 @@ class Llrp_Frontend {
                 <h2><?php echo esc_html( $h_email ); ?></h2>
                 <p><?php echo esc_html( $t_email ); ?></p>
                 <?php
-                $cpf_enabled = get_option( 'llrp_cpf_login_enabled' );
-                $cnpj_enabled = get_option( 'llrp_cnpj_login_enabled' );
+                $cpf_enabled = $options['llrp_cpf_login_enabled'];
+                $cnpj_enabled = $options['llrp_cnpj_login_enabled'];
                 $placeholder_parts = [ __( 'E-mail', 'llrp' ) ];
                 if ( $cpf_enabled ) {
                     $placeholder_parts[] = __( 'CPF', 'llrp' );
@@ -293,6 +489,10 @@ class Llrp_Frontend {
                 $placeholder = implode( ', ', $placeholder_parts );
                 ?>
                 <input type="text" id="llrp-identifier" placeholder="<?php echo esc_attr( $placeholder ); ?>">
+                
+                <!-- Captcha container for email step -->
+                <div id="llrp-captcha-email" class="llrp-captcha-container" style="margin: 15px 0;"></div>
+                
                 <button id="llrp-email-submit"><?php echo esc_html( $b_email ); ?></button>
                 
                 <?php if ( llrp_is_guest_checkout_enabled() ) : ?>
@@ -307,12 +507,12 @@ class Llrp_Frontend {
                 <?php endif; ?>
                 
                 <!-- Social Login Buttons for new users -->
-                <?php if ( ( get_option( 'llrp_google_login_enabled' ) && get_option( 'llrp_google_client_id' ) ) || ( get_option( 'llrp_facebook_login_enabled' ) && get_option( 'llrp_facebook_app_id' ) ) ) : ?>
+                <?php if ( ( $options['llrp_google_login_enabled'] && $options['llrp_google_client_id'] ) || ( $options['llrp_facebook_login_enabled'] && $options['llrp_facebook_app_id'] ) ) : ?>
                     <div class="llrp-social-separator">
                         <span><?php esc_html_e( 'ou', 'llrp' ); ?></span>
                     </div>
                     
-                    <?php if ( get_option( 'llrp_google_login_enabled' ) && get_option( 'llrp_google_client_id' ) ) : ?>
+                    <?php if ( $options['llrp_google_login_enabled'] && $options['llrp_google_client_id'] ) : ?>
                         <button id="llrp-google-login-initial" class="llrp-social-button llrp-google-button">
                             <svg class="llrp-social-icon" width="20" height="20" viewBox="0 0 24 24">
                                 <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/>
@@ -324,7 +524,7 @@ class Llrp_Frontend {
                         </button>
                     <?php endif; ?>
                     
-                    <?php if ( get_option( 'llrp_facebook_login_enabled' ) && get_option( 'llrp_facebook_app_id' ) ) : ?>
+                    <?php if ( $options['llrp_facebook_login_enabled'] && $options['llrp_facebook_app_id'] ) : ?>
                         <button id="llrp-facebook-login-initial" class="llrp-social-button llrp-facebook-button">
                             <svg class="llrp-social-icon" width="20" height="20" viewBox="0 0 24 24">
                                 <path fill="#1877F2" d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z"/>
@@ -350,13 +550,13 @@ class Llrp_Frontend {
                 <p><?php esc_html_e( 'Como você gostaria de fazer login?', 'llrp' ); ?></p>
                 <button id="llrp-show-password-login"><?php esc_html_e( 'Login com Senha', 'llrp' ); ?></button>
                 <?php
-                $whatsapp_enabled = get_option( 'llrp_whatsapp_enabled' ) && get_option( 'llrp_whatsapp_sender_phone' ) && function_exists('joinotify_send_whatsapp_message_text');
+                $whatsapp_enabled = $options['llrp_whatsapp_enabled'] && $options['llrp_whatsapp_sender_phone'] && function_exists('joinotify_send_whatsapp_message_text');
                 $send_code_button_text = $whatsapp_enabled ? __( 'Receber código por WhatsApp', 'llrp' ) : __( 'Receber código por e-mail', 'llrp' );
                 ?>
                 <button id="llrp-send-code"><?php echo esc_html( $send_code_button_text ); ?></button>
                 
                 <!-- Social Login Buttons -->
-                <?php if ( get_option( 'llrp_google_login_enabled' ) && get_option( 'llrp_google_client_id' ) ) : ?>
+                <?php if ( $options['llrp_google_login_enabled'] && $options['llrp_google_client_id'] ) : ?>
                     <div class="llrp-social-separator">
                         <span><?php esc_html_e( 'ou', 'llrp' ); ?></span>
                     </div>
@@ -371,7 +571,7 @@ class Llrp_Frontend {
                     </button>
                 <?php endif; ?>
                 
-                <?php if ( get_option( 'llrp_facebook_login_enabled' ) && get_option( 'llrp_facebook_app_id' ) ) : ?>
+                <?php if ( $options['llrp_facebook_login_enabled'] && $options['llrp_facebook_app_id'] ) : ?>
                     <button id="llrp-facebook-login" class="llrp-social-button llrp-facebook-button">
                         <svg class="llrp-social-icon" width="20" height="20" viewBox="0 0 24 24">
                             <path fill="#1877F2" d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z"/>
@@ -396,6 +596,10 @@ class Llrp_Frontend {
                 </div>
                 <p><?php echo esc_html( $t_login ); ?></p>
                 <input type="password" id="llrp-password" placeholder="<?php echo esc_attr( $ph_pass ); ?>">
+                
+                <!-- Captcha container for login step -->
+                <div id="llrp-captcha-login" class="llrp-captcha-container" style="margin: 15px 0;"></div>
+                
                 <div class="llrp-login-options">
                     <label><input type="checkbox" id="llrp-remember"> <?php echo esc_html( $txt_rem ); ?></label>
                     <a href="#" class="llrp-forgot"><?php esc_html_e( 'Esqueceu sua senha?', 'llrp' ); ?></a>
@@ -409,6 +613,10 @@ class Llrp_Frontend {
                 <h2><?php echo esc_html( $h_reg ); ?></h2>
                 <p><?php echo esc_html( $t_reg ); ?></p>
                 <input type="password" id="llrp-register-password" placeholder="<?php echo esc_attr( $ph_reg ); ?>">
+                
+                <!-- Captcha container for register step -->
+                <div id="llrp-captcha-register" class="llrp-captcha-container" style="margin: 15px 0;"></div>
+                
                 <button id="llrp-register-submit"><?php echo esc_html( $b_reg ); ?></button>
                 <div class="llrp-feedback llrp-feedback-register"></div>
                 <p><a href="#" class="llrp-back">&larr; <?php esc_html_e( 'Voltar', 'llrp' ); ?></a></p>
@@ -517,10 +725,13 @@ class Llrp_Frontend {
             return;
         }
         
-        $google_enabled = get_option( 'llrp_google_login_enabled' );
-        $google_client_id = get_option( 'llrp_google_client_id' );
-        $facebook_enabled = get_option( 'llrp_facebook_login_enabled' );
-        $facebook_app_id = get_option( 'llrp_facebook_app_id' );
+        // OTIMIZAÇÃO: Carrega todas as opções de uma vez
+        $options = self::get_plugin_options();
+        
+        $google_enabled = $options['llrp_google_login_enabled'];
+        $google_client_id = $options['llrp_google_client_id'];
+        $facebook_enabled = $options['llrp_facebook_login_enabled'];
+        $facebook_app_id = $options['llrp_facebook_app_id'];
         
         $has_social = ( $google_enabled && $google_client_id ) ||
                       ( $facebook_enabled && $facebook_app_id );
@@ -534,7 +745,7 @@ class Llrp_Frontend {
                 <span><?php esc_html_e( 'ou', 'llrp' ); ?></span>
             </div>
             
-            <?php if ( get_option( 'llrp_google_login_enabled' ) && get_option( 'llrp_google_client_id' ) ) : ?>
+            <?php if ( $options['llrp_google_login_enabled'] && $options['llrp_google_client_id'] ) : ?>
                 <button type="button" id="llrp-google-login-account" class="llrp-social-button llrp-google-button">
                     <svg class="llrp-social-icon" width="20" height="20" viewBox="0 0 24 24">
                         <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/>
@@ -546,7 +757,7 @@ class Llrp_Frontend {
                 </button>
             <?php endif; ?>
             
-            <?php if ( get_option( 'llrp_facebook_login_enabled' ) && get_option( 'llrp_facebook_app_id' ) ) : ?>
+            <?php if ( $options['llrp_facebook_login_enabled'] && $options['llrp_facebook_app_id'] ) : ?>
                 <button type="button" id="llrp-facebook-login-account" class="llrp-social-button llrp-facebook-button">
                     <svg class="llrp-social-icon" width="20" height="20" viewBox="0 0 24 24">
                         <path fill="#1877F2" d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z"/>
@@ -566,8 +777,11 @@ class Llrp_Frontend {
             return;
         }
         
-        $has_social = ( get_option( 'llrp_google_login_enabled' ) && get_option( 'llrp_google_client_id' ) ) ||
-                      ( get_option( 'llrp_facebook_login_enabled' ) && get_option( 'llrp_facebook_app_id' ) );
+        // OTIMIZAÇÃO: Carrega todas as opções de uma vez
+        $options = self::get_plugin_options();
+        
+        $has_social = ( $options['llrp_google_login_enabled'] && $options['llrp_google_client_id'] ) ||
+                      ( $options['llrp_facebook_login_enabled'] && $options['llrp_facebook_app_id'] );
         
         if ( ! $has_social ) {
             return;
@@ -578,7 +792,7 @@ class Llrp_Frontend {
                 <span><?php esc_html_e( 'ou cadastre-se com', 'llrp' ); ?></span>
             </div>
             
-            <?php if ( get_option( 'llrp_google_login_enabled' ) && get_option( 'llrp_google_client_id' ) ) : ?>
+            <?php if ( $options['llrp_google_login_enabled'] && $options['llrp_google_client_id'] ) : ?>
                 <button type="button" id="llrp-google-register-account" class="llrp-social-button llrp-google-button">
                     <svg class="llrp-social-icon" width="20" height="20" viewBox="0 0 24 24">
                         <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/>
@@ -590,7 +804,7 @@ class Llrp_Frontend {
                 </button>
             <?php endif; ?>
             
-            <?php if ( get_option( 'llrp_facebook_login_enabled' ) && get_option( 'llrp_facebook_app_id' ) ) : ?>
+            <?php if ( $options['llrp_facebook_login_enabled'] && $options['llrp_facebook_app_id'] ) : ?>
                 <button type="button" id="llrp-facebook-register-account" class="llrp-social-button llrp-facebook-button">
                     <svg class="llrp-social-icon" width="20" height="20" viewBox="0 0 24 24">
                         <path fill="#1877F2" d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z"/>

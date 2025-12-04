@@ -6,6 +6,371 @@
     if (typeof LLRP_Data === "undefined") {
       return;
     }
+    
+    // ==========================================
+    // CAPTCHA INTEGRATION
+    // ==========================================
+    
+    var captchaWidgets = {
+      email: null,
+      login: null,
+      register: null
+    };
+    
+    var captchaRendered = {
+      email: false,
+      login: false,
+      register: false
+    };
+    
+    /**
+     * Destroi widget de captcha existente
+     */
+    function destroyCaptcha(widgetName) {
+      var captchaType = LLRP_Data.captcha_type || 'none';
+      var widgetId = captchaWidgets[widgetName];
+      
+      if (widgetId === null || widgetId === undefined) {
+        return;
+      }
+      
+      try {
+        if (captchaType === 'turnstile' && typeof turnstile !== 'undefined') {
+          turnstile.remove(widgetId);
+        } else if (captchaType.startsWith('recaptcha') && typeof grecaptcha !== 'undefined') {
+          // reCAPTCHA não tem método de destruição, apenas reset
+          // Vamos limpar o container manualmente
+          var containerId = 'llrp-captcha-' + widgetName;
+          $('#' + containerId).empty();
+        }
+      } catch (e) {
+        safeLog('Erro ao destruir captcha:', e);
+      }
+      
+      captchaWidgets[widgetName] = null;
+      captchaRendered[widgetName] = false;
+    }
+    
+    /**
+     * Inicializa captcha no container especificado
+     */
+    function initCaptcha(containerId) {
+      var captchaType = LLRP_Data.captcha_type || 'none';
+      var siteKey = LLRP_Data.captcha_site_key || '';
+      
+      if (captchaType === 'none' || !siteKey) {
+        return;
+      }
+      
+      var $container = $('#' + containerId);
+      if (!$container.length || !$container.is(':visible')) {
+        return;
+      }
+      
+      var widgetName = containerId.replace('llrp-captcha-', '');
+      
+      // Se já foi renderizado neste step, apenas faz reset
+      if (captchaRendered[widgetName] && captchaWidgets[widgetName] !== null) {
+        resetCaptcha(widgetName);
+        return;
+      }
+      
+      // Destrói widget existente antes de criar novo
+      if (captchaWidgets[widgetName] !== null) {
+        destroyCaptcha(widgetName);
+      }
+      
+      // Limpa o container
+      $container.empty();
+      
+      try {
+        if (captchaType === 'turnstile') {
+          // Cloudflare Turnstile
+          if (typeof turnstile !== 'undefined') {
+            captchaWidgets[widgetName] = turnstile.render($container[0], {
+              sitekey: siteKey,
+              theme: 'light',
+              callback: function(token) {
+                safeLog('✅ Turnstile validated');
+              }
+            });
+            captchaRendered[widgetName] = true;
+          }
+        } else if (captchaType === 'recaptcha_v2_checkbox') {
+          // reCAPTCHA v2 Checkbox
+          if (typeof grecaptcha !== 'undefined' && grecaptcha.render) {
+            grecaptcha.ready(function() {
+              try {
+                captchaWidgets[widgetName] = grecaptcha.render($container[0], {
+                  sitekey: siteKey,
+                  theme: 'light',
+                  callback: function(response) {
+                    safeLog('✅ reCAPTCHA v2 checkbox validated');
+                  },
+                  'expired-callback': function() {
+                    resetCaptcha(widgetName);
+                  },
+                  'error-callback': function() {
+                    safeLog('❌ reCAPTCHA v2 checkbox error');
+                  }
+                });
+                captchaRendered[widgetName] = true;
+              } catch (e) {
+                console.error('Erro ao renderizar reCAPTCHA v2 checkbox:', e);
+                captchaRendered[widgetName] = false;
+              }
+            });
+          }
+        } else if (captchaType === 'recaptcha_v2_invisible') {
+          // reCAPTCHA v2 Invisível
+          if (typeof grecaptcha !== 'undefined' && grecaptcha.render) {
+            grecaptcha.ready(function() {
+              captchaWidgets[widgetName] = grecaptcha.render($container[0], {
+                sitekey: siteKey,
+                size: 'invisible',
+                callback: function(token) {
+                  safeLog('✅ reCAPTCHA v2 invisible validated');
+                }
+              });
+              captchaRendered[widgetName] = true;
+            });
+          }
+        }
+        // reCAPTCHA v3 não precisa de renderização explícita
+      } catch (e) {
+        console.error('Erro ao inicializar captcha:', e);
+        captchaRendered[widgetName] = false;
+      }
+    }
+    
+    /**
+     * Obtém token do captcha para o step especificado
+     */
+    function getCaptchaToken(step) {
+      return new Promise(function(resolve, reject) {
+        var captchaType = LLRP_Data.captcha_type || 'none';
+        var siteKey = LLRP_Data.captcha_site_key || '';
+        
+        if (captchaType === 'none') {
+          resolve('');
+          return;
+        }
+        
+        try {
+          if (captchaType === 'turnstile') {
+            var widgetId = captchaWidgets[step];
+            if (typeof turnstile !== 'undefined' && widgetId !== null) {
+              var token = turnstile.getResponse(widgetId);
+              if (token) {
+                resolve(token);
+              } else {
+                reject(new Error('Por favor, complete a verificação de segurança.'));
+              }
+            } else {
+              reject(new Error('Captcha não inicializado.'));
+            }
+          } else if (captchaType === 'recaptcha_v2_checkbox') {
+            // Espera o widget estar pronto
+            var checkWidget = function() {
+              var widgetId = captchaWidgets[step];
+              
+              if (typeof grecaptcha === 'undefined') {
+                reject(new Error('reCAPTCHA não carregado. Recarregue a página.'));
+                return;
+              }
+              
+              if (widgetId === null || widgetId === undefined) {
+                // Aguarda até 5 segundos para o widget ser inicializado
+                var attempts = 0;
+                var checkInterval = setInterval(function() {
+                  widgetId = captchaWidgets[step];
+                  attempts++;
+                  
+                  if (widgetId !== null && widgetId !== undefined) {
+                    clearInterval(checkInterval);
+                    tryGetToken(widgetId);
+                  } else if (attempts >= 50) { // 50 * 100ms = 5 segundos
+                    clearInterval(checkInterval);
+                    reject(new Error('Captcha não inicializado. Recarregue a página.'));
+                  }
+                }, 100);
+                return;
+              }
+              
+              tryGetToken(widgetId);
+            };
+            
+            var tryGetToken = function(widgetId) {
+              try {
+                var token = grecaptcha.getResponse(widgetId);
+                
+                if (token && token.length > 0) {
+                  resolve(token);
+                } else {
+                  reject(new Error('Por favor, marque a caixa "Não sou um robô".'));
+                }
+              } catch (e) {
+                reject(new Error('Erro ao validar captcha. Tente novamente.'));
+              }
+            };
+            
+            checkWidget();
+          } else if (captchaType === 'recaptcha_v2_invisible') {
+            var widgetId = captchaWidgets[step];
+            if (typeof grecaptcha !== 'undefined' && widgetId !== null) {
+              grecaptcha.execute(widgetId);
+              // O token será obtido no callback
+              var checkToken = setInterval(function() {
+                var token = grecaptcha.getResponse(widgetId);
+                if (token) {
+                  clearInterval(checkToken);
+                  resolve(token);
+                }
+              }, 100);
+              
+              // Timeout após 30 segundos
+              setTimeout(function() {
+                clearInterval(checkToken);
+                reject(new Error('Timeout na verificação de segurança.'));
+              }, 30000);
+            } else {
+              reject(new Error('Captcha não inicializado.'));
+            }
+          } else if (captchaType === 'recaptcha_v3') {
+            if (typeof grecaptcha !== 'undefined' && grecaptcha.execute) {
+              grecaptcha.execute(siteKey, {action: 'login'}).then(function(token) {
+                resolve(token);
+              }).catch(function(error) {
+                reject(error);
+              });
+            } else {
+              reject(new Error('reCAPTCHA v3 não disponível.'));
+            }
+          }
+        } catch (e) {
+          reject(e);
+        }
+      });
+    }
+    
+    /**
+     * Reseta o captcha para permitir nova tentativa
+     */
+    function resetCaptcha(step) {
+      var captchaType = LLRP_Data.captcha_type || 'none';
+      var widgetId = captchaWidgets[step];
+      
+      if (widgetId === null || widgetId === undefined) {
+        return;
+      }
+      
+      try {
+        if (captchaType === 'turnstile' && typeof turnstile !== 'undefined') {
+          turnstile.reset(widgetId);
+        } else if (captchaType.startsWith('recaptcha') && typeof grecaptcha !== 'undefined') {
+          // Verifica se o widget ainda existe no DOM
+          var containerId = 'llrp-captcha-' + step;
+          var $container = $('#' + containerId);
+          
+          if ($container.length && $container.children().length > 0) {
+            grecaptcha.reset(widgetId);
+          } else {
+            // Se o container foi limpo, marca para re-renderizar
+            captchaRendered[step] = false;
+            captchaWidgets[step] = null;
+          }
+        }
+      } catch (e) {
+        safeLog('Erro ao resetar captcha:', e);
+        // Se falhou, marca para re-renderizar
+        captchaRendered[step] = false;
+        captchaWidgets[step] = null;
+      }
+    }
+    
+    /**
+     * Limpa todos os captchas ao fechar o popup
+     */
+    function cleanupAllCaptchas() {
+      destroyCaptcha('email');
+      destroyCaptcha('login');
+      destroyCaptcha('register');
+    }
+    
+    // ==========================================
+    // FIM CAPTCHA INTEGRATION
+    // ==========================================
+    
+    // ==========================================
+    // CLEANTALK ANTI-SPAM COMPATIBILITY
+    // ==========================================
+    
+    /**
+     * Coleta campos do CleanTalk para incluir nas requisições AJAX
+     * Isso garante compatibilidade com o plugin Anti-Spam by CleanTalk
+     */
+    function getCleanTalkFields() {
+      var ctFields = {};
+      
+      // Lista de campos que o CleanTalk pode adicionar
+      var ctFieldNames = [
+        'ct_checkjs',
+        'ct_bot_detector_event_token',
+        'apbct_visible_fields',
+        'apbct_visible_fields_count',
+        'ct_timezone',
+        'ct_ps_timestamp',
+        'ct_fkp_timestamp',
+        'ct_pointer_data',
+        'ct_has_scrolled'
+      ];
+      
+      // Procura por campos ocultos do CleanTalk no DOM
+      $('input[type="hidden"]').each(function() {
+        var name = $(this).attr('name');
+        if (name && (name.indexOf('ct_') === 0 || name.indexOf('apbct_') === 0)) {
+          ctFields[name] = $(this).val();
+        }
+      });
+      
+      // Tenta coletar campos específicos por nome
+      ctFieldNames.forEach(function(fieldName) {
+        var $field = $('input[name="' + fieldName + '"]');
+        if ($field.length) {
+          ctFields[fieldName] = $field.val();
+        }
+      });
+      
+      // Adiciona ct_checkjs se existir a função global
+      if (typeof ctSetCookie === 'function') {
+        try {
+          ctSetCookie('ct_checkjs', '1');
+          ctFields.ct_checkjs = '1';
+        } catch (e) {
+          // Ignora erro
+        }
+      }
+      
+      return ctFields;
+    }
+    
+    /**
+     * Adiciona campos do CleanTalk a um objeto de dados
+     */
+    function addCleanTalkFields(data) {
+      var ctFields = getCleanTalkFields();
+      
+      // Merge dos campos do CleanTalk com os dados existentes
+      if (Object.keys(ctFields).length > 0) {
+        $.extend(data, ctFields);
+      }
+      
+      return data;
+    }
+    
+    // ==========================================
+    // FIM CLEANTALK COMPATIBILITY
+    // ==========================================
 
     // Check for popup elements (may not exist on My Account page)
     var $overlay = $("#llrp-overlay");
@@ -386,6 +751,8 @@
       if (hasPopup && $overlay.length > 0 && $popup.length > 0) {
         $overlay.addClass("hidden");
         $popup.addClass("hidden");
+        // Limpa todos os captchas ao fechar
+        cleanupAllCaptchas();
       }
     }
 
@@ -401,6 +768,11 @@
       }
       userEmail = ""; // Limpar o e-mail salvo
       clearFeedback();
+      
+      // Inicializa captcha no step inicial
+      setTimeout(function() {
+        initCaptcha('llrp-captcha-email');
+      }, 200);
     }
 
     function clearFeedback() {
@@ -457,6 +829,20 @@
       }
       $popup.find(".llrp-step").addClass("hidden");
       $popup.find(".llrp-step-" + step).removeClass("hidden");
+      
+      // Inicializa captcha para o step atual
+      var captchaMap = {
+        'email': 'llrp-captcha-email',
+        'login': 'llrp-captcha-login',
+        'register': 'llrp-captcha-register'
+      };
+      
+      if (captchaMap[step]) {
+        // Aguarda um pouco para garantir que o DOM foi atualizado
+        setTimeout(function() {
+          initCaptcha(captchaMap[step]);
+        }, 100);
+      }
     }
 
     function handleIdentifierStep() {
@@ -467,11 +853,18 @@
         return;
       }
 
-      $.post(LLRP_Data.ajax_url, {
-        action: "llrp_check_user",
-        identifier: savedIdentifier,
-        nonce: LLRP_Data.nonce,
-      }).done(function (res) {
+      // Obter token do captcha antes de enviar
+      getCaptchaToken('email').then(function(captchaToken) {
+        // Prepara dados e adiciona campos do CleanTalk
+        var postData = {
+          action: "llrp_check_user",
+          identifier: savedIdentifier,
+          nonce: LLRP_Data.nonce,
+          captcha_token: captchaToken
+        };
+        postData = addCleanTalkFields(postData);
+        
+        $.post(LLRP_Data.ajax_url, postData).done(function (res) {
         if (res.success) {
           if (res.data.exists) {
             $(".llrp-user-name").text(res.data.username);
@@ -487,8 +880,23 @@
             }
           }
         } else {
-          showFeedback("llrp-feedback-email", res.data.message);
+          var errorMsg = "Erro ao verificar usuário.";
+          if (res.data && res.data.message) {
+            errorMsg = res.data.message;
+          }
+          showFeedback("llrp-feedback-email", errorMsg);
+          resetCaptcha('email');
         }
+      }).fail(function() {
+        showFeedback("llrp-feedback-email", "Erro de conexão. Tente novamente.");
+        resetCaptcha('email');
+      });
+      }).catch(function(error) {
+        var errorMsg = "Erro ao validar captcha.";
+        if (error && error.message) {
+          errorMsg = error.message;
+        }
+        showFeedback("llrp-feedback-email", errorMsg);
       });
     }
 
@@ -511,13 +919,16 @@
       }
 
       // Use direct AJAX for registration (no nonce dependency)
-      $.post(LLRP_Data.ajax_url, {
+      var postData = {
         action: "llrp_register",
         identifier: savedIdentifier,
         email: email,
-        password: password,
+        password: password
         // Remove nonce dependency for registration
-      })
+      };
+      postData = addCleanTalkFields(postData);
+      
+      $.post(LLRP_Data.ajax_url, postData)
         .done(function (res) {
           if (res.success) {
             safeLog(
@@ -580,11 +991,14 @@
 
     function handleSendCode() {
       clearFeedback();
-      $.post(LLRP_Data.ajax_url, {
+      var postData = {
         action: "llrp_send_login_code",
         identifier: savedIdentifier,
-        nonce: LLRP_Data.nonce,
-      }).done(function (res) {
+        nonce: LLRP_Data.nonce
+      };
+      postData = addCleanTalkFields(postData);
+      
+      $.post(LLRP_Data.ajax_url, postData).done(function (res) {
         if (res.success) {
           deliveryMethod = res.data.delivery_method;
           showFeedback("llrp-feedback-code", res.data.message, true);
@@ -601,12 +1015,15 @@
         showFeedback("llrp-feedback-code", "Por favor, insira o código.");
         return;
       }
-      $.post(LLRP_Data.ajax_url, {
+      var postData = {
         action: "llrp_code_login",
         identifier: savedIdentifier,
         code: code,
-        nonce: LLRP_Data.nonce,
-      }).done(function (res) {
+        nonce: LLRP_Data.nonce
+      };
+      postData = addCleanTalkFields(postData);
+      
+      $.post(LLRP_Data.ajax_url, postData).done(function (res) {
         if (res.success) {
           safeLog(
             "🛒 CRITICAL: Code login successful - restoring cart IMMEDIATELY"
@@ -650,12 +1067,20 @@
         showFeedback("llrp-feedback-login", "Por favor, insira sua senha.");
         return;
       }
-      $.post(LLRP_Data.ajax_url, {
-        action: "llrp_login_with_password",
-        identifier: savedIdentifier,
-        password: password,
-        nonce: LLRP_Data.nonce,
-      }).done(function (res) {
+      
+      // Obter token do captcha antes de enviar
+      getCaptchaToken('login').then(function(captchaToken) {
+        // Prepara dados e adiciona campos do CleanTalk
+        var postData = {
+          action: "llrp_login_with_password",
+          identifier: savedIdentifier,
+          password: password,
+          nonce: LLRP_Data.nonce,
+          captcha_token: captchaToken
+        };
+        postData = addCleanTalkFields(postData);
+        
+        $.post(LLRP_Data.ajax_url, postData).done(function (res) {
         if (res.success) {
           safeLog(
             "🛒 CRITICAL: Password login successful - restoring cart IMMEDIATELY"
@@ -709,7 +1134,18 @@
           }
         } else {
           showFeedback("llrp-feedback-login", res.data.message);
+          resetCaptcha('login');
         }
+      }).fail(function() {
+        showFeedback("llrp-feedback-login", "Erro de conexão. Tente novamente.");
+        resetCaptcha('login');
+      });
+      }).catch(function(error) {
+        var errorMsg = "Erro ao validar captcha.";
+        if (error && error.message) {
+          errorMsg = error.message;
+        }
+        showFeedback("llrp-feedback-login", errorMsg);
       });
     }
 
@@ -720,14 +1156,20 @@
         return;
       }
 
-      // Use direct AJAX for registration (no nonce dependency)
-      $.post(LLRP_Data.ajax_url, {
-        action: "llrp_register",
-        identifier: savedIdentifier,
-        password: password,
-        // Remove nonce dependency for registration
-      })
-        .done(function (res) {
+      // Obter token do captcha antes de enviar
+      getCaptchaToken('register').then(function(captchaToken) {
+        // Use direct AJAX for registration (no nonce dependency)
+        var postData = {
+          action: "llrp_register",
+          identifier: savedIdentifier,
+          password: password,
+          captcha_token: captchaToken
+          // Remove nonce dependency for registration
+        };
+        postData = addCleanTalkFields(postData);
+        
+        $.post(LLRP_Data.ajax_url, postData)
+          .done(function (res) {
           if (res.success) {
             safeLog(
               "🛒 CRITICAL: Registration successful - restoring cart IMMEDIATELY"
@@ -762,6 +1204,7 @@
             }
           } else {
             showFeedback("llrp-feedback-register", res.data.message);
+            resetCaptcha('register');
           }
         })
         .fail(function (xhr) {
@@ -770,7 +1213,15 @@
             "llrp-feedback-register",
             "Erro de conexão. Tente novamente."
           );
+          resetCaptcha('register');
         });
+      }).catch(function(error) {
+        var errorMsg = "Erro ao validar captcha.";
+        if (error && error.message) {
+          errorMsg = error.message;
+        }
+        showFeedback("llrp-feedback-register", errorMsg);
+      });
     }
 
     function handleSkipToCheckout() {
@@ -904,11 +1355,14 @@
         showFeedback("llrp-feedback-lost", "Por favor, insira seu e-mail.");
         return;
       }
-      $.post(LLRP_Data.ajax_url, {
+      var postData = {
         action: "llrp_lostpassword",
         email: email,
-        nonce: LLRP_Data.nonce,
-      }).done(function (res) {
+        nonce: LLRP_Data.nonce
+      };
+      postData = addCleanTalkFields(postData);
+      
+      $.post(LLRP_Data.ajax_url, postData).done(function (res) {
         if (res.success) {
           showFeedback("llrp-feedback-lost", res.data.message, true);
         } else {

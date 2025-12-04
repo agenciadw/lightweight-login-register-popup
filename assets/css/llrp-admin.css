@@ -1,0 +1,663 @@
+/* ==========================================
+   LLRP Admin Panel - Modern UI
+   ========================================== */
+
+.llrp-admin-wrap {
+    margin-top: 20px;
+}
+
+.llrp-admin-title {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    font-size: 28px;
+    font-weight: 600;
+    margin-bottom: 20px;
+    color: #1d2327;
+}
+
+.llrp-admin-title .dashicons {
+    font-size: 32px;
+    width: 32px;
+    height: 32px;
+    color: #2271b1;
+}
+
+.llrp-version {
+    font-size: 14px;
+    font-weight: 400;
+    color: #646970;
+    background: #f0f0f1;
+    padding: 4px 12px;
+    border-radius: 12px;
+}
+
+/* ==========================================
+   Notices
+   ========================================== */
+
+.llrp-notice {
+    display: flex;
+    align-items: flex-start;
+    gap: 15px;
+    padding: 15px !important;
+    border-left: 4px solid;
+    margin: 20px 0 !important;
+}
+
+.llrp-notice-icon {
+    flex-shrink: 0;
+}
+
+.llrp-notice-icon .dashicons {
+    font-size: 24px;
+    width: 24px;
+    height: 24px;
+}
+
+.llrp-notice-content {
+    flex: 1;
+}
+
+.llrp-notice-content strong {
+    display: block;
+    margin-bottom: 5px;
+    font-size: 14px;
+}
+
+.llrp-notice-content p {
+    margin: 5px 0;
+}
+
+.llrp-notice .button {
+    margin-top: 10px;
+}
+
+/* ==========================================
+   Navigation Tabs
+   ========================================== */
+
+.llrp-nav-tabs {
+    display: flex;
+    gap: 5px;
+    background: #fff;
+    border-bottom: 1px solid #dcdcde;
+    margin: 0 0 25px 0;
+    padding: 0;
+}
+
+.llrp-nav-tab {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 12px 20px;
+    color: #50575e;
+    text-decoration: none;
+    border-bottom: 3px solid transparent;
+    transition: all 0.2s ease;
+    font-weight: 500;
+}
+
+.llrp-nav-tab:hover {
+    color: #2271b1;
+    background: #f6f7f7;
+}
+
+.llrp-nav-tab.active {
+    color: #2271b1;
+    border-bottom-color: #2271b1;
+    background: #f6f7f7;
+}
+
+.llrp-nav-tab .dashicons {
+    font-size: 18px;
+    width: 18px;
+    height: 18px;
+}
+
+/* ==========================================
+   Cards
+   ========================================== */
+
+.llrp-card {
+    background: #fff;
+    border: 1px solid #dcdcde;
+    border-radius: 8px;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
+    margin-bottom: 20px;
+    overflow: hidden;
+}
+
+.llrp-card-header {
+    padding: 20px 25px;
+    border-bottom: 1px solid #f0f0f1;
+    background: #fafafa;
+}
+
+.llrp-card-header h2 {
+    margin: 0 0 5px 0;
+    font-size: 18px;
+    font-weight: 600;
+    color: #1d2327;
+}
+
+.llrp-card-header p {
+    margin: 0;
+    color: #646970;
+    font-size: 13px;
+}
+
+.llrp-card-body {
+    padding: 25px;
+}
+
+.llrp-card-title-with-icon {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    flex: 1;
+}
+
+.llrp-card-title-with-icon h2 {
+    margin: 0;
+    font-size: 18px;
+}
+
+.llrp-card-title-with-icon svg {
+    flex-shrink: 0;
+}
+
+/* Cards Row */
+.llrp-cards-row {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(450px, 1fr));
+    gap: 20px;
+    margin-bottom: 20px;
+}
+
+.llrp-card-half {
+    margin-bottom: 0;
+}
+
+/* ==========================================
+   Fields
+   ========================================== */
+
+.llrp-field {
+    margin-bottom: 20px;
+}
+
+.llrp-field label {
+    display: block;
+    margin-bottom: 8px;
+    font-weight: 500;
+    color: #1d2327;
+    font-size: 14px;
+}
+
+.llrp-field input[type="text"],
+.llrp-field input[type="password"],
+.llrp-field input[type="number"],
+.llrp-field select,
+.llrp-field textarea {
+    font-size: 14px;
+    padding: 8px 12px;
+    border: 1px solid #8c8f94;
+    border-radius: 4px;
+    transition: border-color 0.2s ease;
+}
+
+.llrp-field input:focus,
+.llrp-field select:focus,
+.llrp-field textarea:focus {
+    border-color: #2271b1;
+    outline: none;
+    box-shadow: 0 0 0 1px #2271b1;
+}
+
+.llrp-input-small {
+    width: 100px;
+}
+
+.llrp-input-medium {
+    width: 300px;
+    max-width: 100%;
+}
+
+.llrp-input-large {
+    width: 100%;
+    max-width: 500px;
+}
+
+.llrp-select-large {
+    width: 100%;
+    max-width: 400px;
+}
+
+.llrp-textarea {
+    width: 100%;
+    max-width: 600px;
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Oxygen-Sans, Ubuntu, Cantarell, "Helvetica Neue", sans-serif;
+}
+
+.llrp-field .description {
+    margin: 8px 0 0 0;
+    color: #646970;
+    font-size: 13px;
+}
+
+.llrp-required {
+    color: #d63638;
+    font-weight: 700;
+}
+
+/* Field Groups */
+.llrp-field-group {
+    margin-bottom: 30px;
+    padding-bottom: 30px;
+    border-bottom: 1px solid #f0f0f1;
+}
+
+.llrp-field-group:last-child {
+    border-bottom: none;
+    margin-bottom: 0;
+    padding-bottom: 0;
+}
+
+.llrp-field-group-title {
+    font-size: 16px;
+    font-weight: 600;
+    margin: 0 0 20px 0;
+    color: #1d2327;
+    padding-bottom: 10px;
+    border-bottom: 2px solid #f0f0f1;
+}
+
+/* ==========================================
+   Color Picker
+   ========================================== */
+
+.llrp-color-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+    gap: 20px;
+}
+
+.llrp-color-field-wrapper {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.llrp-color-label {
+    font-weight: 500;
+    color: #1d2327;
+    font-size: 13px;
+}
+
+.llrp-color-input-wrapper {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.llrp-color-input-wrapper input {
+    flex: 1;
+    max-width: 120px;
+}
+
+.llrp-color-preview {
+    width: 32px;
+    height: 32px;
+    border: 2px solid #dcdcde;
+    border-radius: 4px;
+    cursor: pointer;
+    box-shadow: inset 0 0 0 1px rgba(0,0,0,0.1);
+}
+
+/* ==========================================
+   Toggle Switch
+   ========================================== */
+
+.llrp-toggle-field {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 15px 20px;
+    background: #f9f9f9;
+    border: 1px solid #dcdcde;
+    border-radius: 6px;
+    margin-bottom: 15px;
+    transition: background 0.2s ease;
+}
+
+.llrp-toggle-field:hover {
+    background: #f0f0f1;
+}
+
+.llrp-toggle-content {
+    flex: 1;
+}
+
+.llrp-toggle-content label {
+    cursor: pointer;
+}
+
+.llrp-toggle-content strong {
+    display: block;
+    margin-bottom: 4px;
+    font-size: 14px;
+    color: #1d2327;
+}
+
+.llrp-toggle-content .description {
+    margin: 0;
+    color: #646970;
+    font-size: 13px;
+}
+
+/* Switch */
+.llrp-switch {
+    position: relative;
+    display: inline-block;
+    width: 48px;
+    height: 26px;
+    flex-shrink: 0;
+}
+
+.llrp-switch input {
+    opacity: 0;
+    width: 0;
+    height: 0;
+}
+
+.llrp-switch-slider {
+    position: absolute;
+    cursor: pointer;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-color: #8c8f94;
+    transition: 0.3s;
+    border-radius: 26px;
+}
+
+.llrp-switch-slider:before {
+    position: absolute;
+    content: "";
+    height: 18px;
+    width: 18px;
+    left: 4px;
+    bottom: 4px;
+    background-color: white;
+    transition: 0.3s;
+    border-radius: 50%;
+}
+
+.llrp-switch input:checked + .llrp-switch-slider {
+    background-color: #2271b1;
+}
+
+.llrp-switch input:checked + .llrp-switch-slider:before {
+    transform: translateX(22px);
+}
+
+/* ==========================================
+   Help Boxes
+   ========================================== */
+
+.llrp-help-box {
+    background: #f0f6fc;
+    border: 1px solid #c3ddf5;
+    border-radius: 6px;
+    padding: 15px;
+    margin-top: 15px;
+}
+
+.llrp-help-box p {
+    margin: 0 0 10px 0;
+    color: #1d2327;
+}
+
+.llrp-help-box ol,
+.llrp-help-box ul {
+    margin: 10px 0;
+    padding-left: 25px;
+    color: #3c434a;
+}
+
+.llrp-help-box li {
+    margin: 5px 0;
+    font-size: 13px;
+}
+
+.llrp-warning-box {
+    display: flex;
+    align-items: flex-start;
+    gap: 12px;
+    background: #fcf9e8;
+    border: 1px solid #f0e8c8;
+    border-radius: 6px;
+    padding: 15px;
+    margin-bottom: 15px;
+}
+
+.llrp-warning-box .dashicons {
+    color: #dba617;
+    font-size: 20px;
+    width: 20px;
+    height: 20px;
+    flex-shrink: 0;
+}
+
+.llrp-warning-box strong {
+    display: block;
+    margin-bottom: 4px;
+}
+
+.llrp-warning-box p {
+    margin: 0;
+    color: #3c434a;
+}
+
+/* ==========================================
+   Links
+   ========================================== */
+
+.llrp-link-external {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    color: #2271b1;
+    text-decoration: none;
+    font-weight: 500;
+    font-size: 13px;
+    transition: color 0.2s ease;
+}
+
+.llrp-link-external:hover {
+    color: #135e96;
+}
+
+.llrp-link-external .dashicons {
+    font-size: 16px;
+    width: 16px;
+    height: 16px;
+}
+
+/* ==========================================
+   Tooltip
+   ========================================== */
+
+.llrp-tooltip {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 18px;
+    height: 18px;
+    background: #646970;
+    color: #fff;
+    border-radius: 50%;
+    font-size: 12px;
+    font-weight: 700;
+    cursor: help;
+    margin-left: 6px;
+    position: relative;
+}
+
+.llrp-tooltip:hover::after {
+    content: attr(data-tip);
+    position: absolute;
+    bottom: 100%;
+    left: 50%;
+    transform: translateX(-50%);
+    background: #1d2327;
+    color: #fff;
+    padding: 8px 12px;
+    border-radius: 4px;
+    font-size: 12px;
+    font-weight: 400;
+    white-space: nowrap;
+    z-index: 1000;
+    margin-bottom: 8px;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+}
+
+.llrp-tooltip:hover::before {
+    content: "";
+    position: absolute;
+    bottom: 100%;
+    left: 50%;
+    transform: translateX(-50%);
+    border: 6px solid transparent;
+    border-top-color: #1d2327;
+    margin-bottom: 2px;
+}
+
+/* ==========================================
+   Save Bar
+   ========================================== */
+
+.llrp-save-bar {
+    position: sticky;
+    bottom: 0;
+    background: #fff;
+    border-top: 1px solid #dcdcde;
+    padding: 15px 25px;
+    margin: 0 -20px -20px -20px;
+    box-shadow: 0 -2px 10px rgba(0,0,0,0.05);
+    z-index: 100;
+}
+
+.llrp-save-bar .button-primary {
+    padding: 8px 24px;
+    height: auto;
+    font-size: 14px;
+}
+
+/* ==========================================
+   Captcha Sections
+   ========================================== */
+
+.llrp-captcha-section {
+    margin-top: 20px;
+    padding-top: 20px;
+    border-top: 2px solid #f0f0f1;
+}
+
+/* ==========================================
+   Responsive
+   ========================================== */
+
+@media (max-width: 1024px) {
+    .llrp-cards-row {
+        grid-template-columns: 1fr;
+    }
+    
+    .llrp-color-grid {
+        grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+    }
+}
+
+@media (max-width: 768px) {
+    .llrp-nav-tabs {
+        flex-wrap: wrap;
+    }
+    
+    .llrp-nav-tab {
+        flex: 1;
+        min-width: 120px;
+        justify-content: center;
+    }
+    
+    .llrp-toggle-field {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 15px;
+    }
+    
+    .llrp-admin-title {
+        flex-wrap: wrap;
+    }
+}
+
+/* ==========================================
+   Color Picker Enhancements
+   ========================================== */
+
+.wp-picker-container {
+    display: inline-block;
+}
+
+.wp-picker-holder {
+    position: absolute;
+    z-index: 100;
+}
+
+/* ==========================================
+   Animations
+   ========================================== */
+
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+        transform: translateY(10px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.llrp-tab-content {
+    animation: fadeIn 0.3s ease;
+}
+
+/* ==========================================
+   Utility Classes
+   ========================================== */
+
+.llrp-mt-0 { margin-top: 0 !important; }
+.llrp-mb-0 { margin-bottom: 0 !important; }
+.llrp-mt-1 { margin-top: 10px !important; }
+.llrp-mb-1 { margin-bottom: 10px !important; }
+.llrp-mt-2 { margin-top: 20px !important; }
+.llrp-mb-2 { margin-bottom: 20px !important; }
+
+.llrp-text-muted {
+    color: #646970;
+}
+
+.llrp-text-success {
+    color: #00a32a;
+}
+
+.llrp-text-warning {
+    color: #dba617;
+}
+
+.llrp-text-error {
+    color: #d63638;
+}
+

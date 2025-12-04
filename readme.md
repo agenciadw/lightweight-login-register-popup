@@ -1,6 +1,6 @@
-# Lightweight Login & Register Popup v1.1.0
+# Lightweight Login & Register Popup v1.2.0
 
-![Plugin Version](https://img.shields.io/badge/version-1.1.0-blue.svg)
+![Plugin Version](https://img.shields.io/badge/version-1.2.0-blue.svg)
 ![WordPress](https://img.shields.io/badge/WordPress-6.6+-green.svg)
 ![WooCommerce](https://img.shields.io/badge/WooCommerce-8.0+-orange.svg)
 ![PHP](https://img.shields.io/badge/PHP-7.4+-purple.svg)
@@ -19,6 +19,7 @@ Popup inteligente para WooCommerce com suporte a checkout de convidado, login so
 - **CPF/CNPJ**: Suporte a identificadores brasileiros
 - **Login Social**: Integração com Google e Facebook
 - **Código por E-mail/WhatsApp**: Sistema de código de verificação
+- **Proteção Anti-Bot**: Cloudflare Turnstile e Google reCAPTCHA (v2 Checkbox, v2 Invisível, v3)
 
 ### 🛒 Persistência de Carrinho
 - **Backup Automático**: Salva carrinho antes de login/registro
@@ -85,10 +86,11 @@ Popup inteligente para WooCommerce com suporte a checkout de convidado, login so
 
 ## 🔌 Compatibilidade
 
-### Plugins de Checkout
+### Plugins de Checkout e Anti-Spam
 - ✅ **Fluid Checkout**: Compatibilidade total
 - ✅ **Brazilian Market**: Integração completa
 - ✅ **WooCommerce Blocks**: Suporte nativo
+- ✅ **CleanTalk Anti-Spam**: Compatibilidade total com injeção automática de campos
 - ✅ **Outros plugins**: Compatibilidade geral
 
 ### Temas
@@ -105,11 +107,15 @@ Popup inteligente para WooCommerce com suporte a checkout de convidado, login so
 ## 📱 Recursos Técnicos
 
 ### Performance
+- **Ultra Otimizado**: Redução de 64 queries para 1 única query ao banco de dados
+- **Sistema de Cache**: Cache estático em memória + transients persistentes
 - **Carregamento Condicional**: Assets carregados apenas quando necessário
 - **Código Otimizado**: Clean code e estrutura modular
 - **Cache Friendly**: Compatível com sistemas de cache
 
 ### Segurança
+- **Proteção Anti-Bot**: Cloudflare Turnstile e Google reCAPTCHA (v2/v3)
+- **CleanTalk Compatible**: Integração automática com anti-spam
 - **Nonces**: Verificação de segurança em todas as requisições
 - **Sanitização**: Todos os dados sanitizados
 - **Validação**: Validação rigorosa de entradas
@@ -143,19 +149,29 @@ lightweight-login-register-popup/
 
 ## 📊 Changelog
 
-### v1.1.0 (Dezembro 2024)
+### v1.2.0 (Dezembro 2025)
+- ✅ **Otimização de Queries**: Redução de 64 para 1 query ao banco de dados
+- ✅ **Sistema de Cache**: Cache estático + transients para máxima performance
+- ✅ **Captcha Completo**: Suporte a Cloudflare Turnstile e Google reCAPTCHA (v2/v3)
+- ✅ **Admin UI/UX**: Interface administrativa completamente reformulada com abas
+- ✅ **Preservação de Dados**: Campos hidden automáticos para não perder configurações
+- ✅ **CleanTalk Compatible**: Compatibilidade total com anti-spam CleanTalk
+- ✅ **Mensagens Inteligentes**: Erros específicos para facilitar debug
+- ✅ **Botão de Teste**: Teste de configuração de captcha direto no admin
+
+### v1.1.0 (Novembro 2025)
 - ✅ Reestruturação e clean code
 - ✅ Organização de pastas
 - ✅ Documentação atualizada
 - ✅ Performance otimizada
 
-### v1.0.4 (Dezembro 2024)
+### v1.0.4 (Novembro 2025)
 - ✅ Checkout de convidado inteligente
 - ✅ Detecção automática de configurações
 - ✅ Opção "Pular para o checkout"
 - ✅ Correção de popup duplicado
 
-### v1.0.3 (Dezembro 2024)
+### v1.0.3 (Outubro 2025)
 - ✅ Login social (Google/Facebook)
 - ✅ Login com CPF/CNPJ
 - ✅ Integração WhatsApp

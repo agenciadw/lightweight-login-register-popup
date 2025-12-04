@@ -1,8 +1,67 @@
 # CHANGELOG - Lightweight Login & Register Popup
 
+## 🚀 **Versão 1.2.0** - Otimização e Segurança
+
+### Data: Dezembro de 2025
+
+### 🎯 Destaques da Versão
+
+- ⚡ **Performance Crítica:** Redução de 64 para 1 query ao banco de dados
+- 🛡️ **Proteção Anti-Bot:** Suporte completo a Cloudflare Turnstile e Google reCAPTCHA
+- 🎨 **Admin Reformulado:** Interface em abas com UX moderna
+- 🔒 **Preservação de Dados:** Sistema de campos hidden automáticos
+- 🤝 **CleanTalk Compatible:** Integração automática com anti-spam
+
+### ✨ Principais Funcionalidades
+
+#### Sistema de Cache Avançado
+- Cache estático em memória (runtime)
+- Cache persistente com transients (1 hora)
+- Auto-limpeza ao atualizar opções
+- **Resultado:** De 64 queries para 1 única query
+
+#### Proteção Anti-Bot
+- **Cloudflare Turnstile:** Gratuito, rápido e moderno
+- **reCAPTCHA v2 Checkbox:** Desafio manual
+- **reCAPTCHA v2 Invisível:** Transparente
+- **reCAPTCHA v3:** Score-based (0.0 - 1.0)
+- Renderização dinâmica por step
+- Validação backend robusta
+
+#### Interface Admin Redesenhada
+- Sistema de abas intuitivo
+- Cards visuais modernos
+- Color pickers integrados
+- Validação em tempo real
+- Botão "Testar Configuração"
+
+#### Compatibilidade CleanTalk
+- Detecção automática de campos
+- Injeção em todas as requisições AJAX
+- Zero configuração necessária
+
+### 🐛 Correções
+- ✅ Caixa de diálogo "Sair do site?" após salvar
+- ✅ Perda de dados ao alternar entre abas
+- ✅ Erro reCAPTCHA "Already Rendered"
+- ✅ reCAPTCHA v2 Checkbox não validando
+- ✅ Token invisível não capturado
+
+### 📦 Arquivos Modificados
+- `includes/class-llrp-frontend.php` - Sistema de cache
+- `includes/class-llrp-ajax.php` - Validação de captcha
+- `includes/class-llrp-admin.php` - Interface redesenhada
+- `assets/js/llrp-script.js` - Captcha e CleanTalk
+- `assets/js/llrp-admin.js` - Admin interativo
+- `assets/css/llrp-admin.css` - Novos estilos
+
+[📖 Changelog Detalhado v1.2.0](./CHANGELOG_v1.2.0.md)
+
+---
+
 ## 🎉 **Versão 1.0.0** - Lançamento Oficial
 
-### Data: 19 de setembro de 2025
+### Data: Setembro de 2025
 
 ---
 
