@@ -407,6 +407,37 @@ class Llrp_Frontend {
         $css .= ".llrp-login-options label { display: inline-flex !important; align-items: center !important; white-space: nowrap !important; }";
         $css .= ".llrp-login-options label input { width: 15px !important; height: 15px !important; margin-right: 8px !important; }";
         $css .= "@media (max-width: 768px) { .llrp-login-options { flex-direction: column !important; align-items: flex-start !important; gap: 10px !important; } .llrp-login-options label { align-items: flex-start !important; justify-content: flex-start !important; text-align: left !important; } }";
+        // Botão Pular para Checkout
+        $btn_skip_bg      = sanitize_hex_color( $options['llrp_color_btn_skip_bg'] ?: '#6c757d' );
+        $btn_skip_bg_h    = sanitize_hex_color( $options['llrp_color_btn_skip_bg_hover'] ?: '#5a6268' );
+        $btn_skip_bd      = sanitize_hex_color( $options['llrp_color_btn_skip_border'] ?: $btn_skip_bg );
+        $btn_skip_bd_h    = sanitize_hex_color( $options['llrp_color_btn_skip_border_hover'] ?: $btn_skip_bg_h );
+        $btn_skip_txt     = sanitize_hex_color( $options['llrp_color_btn_skip_text'] ?: '#ffffff' );
+        $btn_skip_txt_h   = sanitize_hex_color( $options['llrp_color_btn_skip_text_hover'] ?: '#ffffff' );
+        $css .= "#llrp-skip-to-checkout, .llrp-skip-button { background: {$btn_skip_bg} !important; color: {$btn_skip_txt} !important; border: 1px solid {$btn_skip_bd} !important; }";
+        $css .= "#llrp-skip-to-checkout:hover, .llrp-skip-button:hover { background: {$btn_skip_bg_h} !important; border-color: {$btn_skip_bd_h} !important; color: {$btn_skip_txt_h} !important; }";
+        
+        // Botão Google
+        $btn_google_bg    = sanitize_hex_color( $options['llrp_color_btn_google_bg'] ?: '#ffffff' );
+        $btn_google_bg_h  = sanitize_hex_color( $options['llrp_color_btn_google_bg_hover'] ?: '#f8f9fa' );
+        $btn_google_bd    = sanitize_hex_color( $options['llrp_color_btn_google_border'] ?: '#dadce0' );
+        $btn_google_bd_h  = sanitize_hex_color( $options['llrp_color_btn_google_border_hover'] ?: '#d2d4d8' );
+        $btn_google_txt   = sanitize_hex_color( $options['llrp_color_btn_google_text'] ?: '#3c4043' );
+        $btn_google_txt_h = sanitize_hex_color( $options['llrp_color_btn_google_text_hover'] ?: '#202124' );
+        $css .= ".llrp-google-button { background: {$btn_google_bg} !important; color: {$btn_google_txt} !important; border: 1px solid {$btn_google_bd} !important; }";
+        $css .= ".llrp-google-button:hover { background: {$btn_google_bg_h} !important; border-color: {$btn_google_bd_h} !important; color: {$btn_google_txt_h} !important; }";
+        
+        // Botão Facebook
+        $btn_facebook_bg    = sanitize_hex_color( $options['llrp_color_btn_facebook_bg'] ?: '#1877f2' );
+        $btn_facebook_bg_h  = sanitize_hex_color( $options['llrp_color_btn_facebook_bg_hover'] ?: '#166fe5' );
+        $btn_facebook_bd    = sanitize_hex_color( $options['llrp_color_btn_facebook_border'] ?: $btn_facebook_bg );
+        $btn_facebook_bd_h  = sanitize_hex_color( $options['llrp_color_btn_facebook_border_hover'] ?: $btn_facebook_bg_h );
+        $btn_facebook_txt   = sanitize_hex_color( $options['llrp_color_btn_facebook_text'] ?: '#ffffff' );
+        $btn_facebook_txt_h = sanitize_hex_color( $options['llrp_color_btn_facebook_text_hover'] ?: '#ffffff' );
+        $css .= ".llrp-facebook-button { background: {$btn_facebook_bg} !important; color: {$btn_facebook_txt} !important; border: 1px solid {$btn_facebook_bd} !important; }";
+        $css .= ".llrp-facebook-button:hover { background: {$btn_facebook_bg_h} !important; border-color: {$btn_facebook_bd_h} !important; color: {$btn_facebook_txt_h} !important; }";
+        
+        // Botão de Código (WhatsApp/E-mail)
         $btn_code_bg      = sanitize_hex_color( $options['llrp_color_btn_code_bg'] ?: '#2271b1' );
         $btn_code_bg_h    = sanitize_hex_color( $options['llrp_color_btn_code_bg_hover'] ?: '#1e639a' );
         $btn_code_bd      = sanitize_hex_color( $options['llrp_color_btn_code_border'] ?: $btn_code_bg );
@@ -416,8 +447,6 @@ class Llrp_Frontend {
         $css .= "#llrp-send-code { background: {$btn_code_bg} !important; color: {$btn_code_txt} !important; border: 1px solid {$btn_code_bd} !important; }";
         $css .= "#llrp-send-code:hover { background: {$btn_code_bg_h} !important; border-color: {$btn_code_bd_h} !important; color: {$btn_code_txt_h} !important; }";
         
-
-
         wp_add_inline_style( 'llrp-frontend', $css );
     }
 
@@ -500,7 +529,7 @@ class Llrp_Frontend {
                         <p style="margin: 0 0 10px 0; color: #666; font-size: 14px;">
                             <?php esc_html_e( 'Não quero fazer cadastro', 'llrp' ); ?>
                         </p>
-                        <button type="button" id="llrp-skip-to-checkout" class="llrp-skip-button" style="background: #6c757d; color: #fff; border: 1px solid #6c757d; padding: 8px 16px; border-radius: 4px; cursor: pointer; font-size: 14px;">
+                        <button type="button" id="llrp-skip-to-checkout" class="llrp-skip-button" style="padding: 8px 16px; border-radius: 4px; cursor: pointer; font-size: 14px;">
                             <?php esc_html_e( 'Pular para o checkout', 'llrp' ); ?>
                         </button>
                     </div>

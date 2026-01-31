@@ -187,13 +187,34 @@ class Llrp_Ajax {
         $user = self::get_user_by_identifier( $identifier );
 
         if ( $user ) {
-            wp_send_json_success( [
+            // Verificar status da senha
+            $password_status = Llrp_Password_Expiration::check_password_status( $user->ID );
+            
+            $response_data = [
                 'exists'   => true,
                 'username' => $user->display_name ?: $user->user_login,
                 'email'    => $user->user_email,
                 'avatar'   => get_avatar_url( $user->ID, [ 'size' => 140 ] ),
                 'has_phone' => !empty(get_user_meta($user->ID, 'billing_phone', true)),
-            ] );
+                'password_expired' => $password_status['expired'],
+                'password_warning' => $password_status['warning'],
+            ];
+            
+            if ( $password_status['warning'] && isset( $password_status['days_until_expiration'] ) ) {
+                $response_data['password_warning_days'] = $password_status['days_until_expiration'];
+            }
+            
+            if ( $password_status['expired'] ) {
+                if ( $password_status['reason'] === 'time' ) {
+                    $response_data['password_expired_reason'] = __( 'Sua senha expirou e precisa ser trocada.', 'llrp' );
+                } elseif ( $password_status['reason'] === 'inactivity' ) {
+                    $response_data['password_expired_reason'] = __( 'Sua senha expirou por inatividade e precisa ser trocada.', 'llrp' );
+                } elseif ( $password_status['reason'] === 'imported' ) {
+                    $response_data['password_expired_reason'] = __( 'Por segurança, você precisa criar uma nova senha antes de continuar.', 'llrp' );
+                }
+            }
+            
+            wp_send_json_success( $response_data );
         } else {
             $is_email = is_email($identifier);
             wp_send_json_success( [
@@ -381,7 +402,13 @@ class Llrp_Ajax {
         wp_set_current_user( $user->ID, $user->user_login );
         wp_set_auth_cookie( $user->ID, true );
         
+        // Atualizar data do último login
+        update_user_meta( $user->ID, '_llrp_last_login', time() );
+        
         self::safe_log('🛒 LLRP: User authenticated successfully');
+        
+        // Verificar se a senha expirou
+        $password_status = Llrp_Password_Expiration::check_password_status( $user->ID );
 
         // Trigger cart fragments update for Fluid Checkout compatibility
         self::trigger_cart_fragments_update();
@@ -397,12 +424,28 @@ class Llrp_Ajax {
         // SMART REDIRECT: Based on referrer or current context
         $redirect_url = self::get_smart_redirect_url();
         
-        wp_send_json_success( [ 
+        $response_data = [ 
             'redirect' => $redirect_url,
             'user_logged_in' => true,
             'cart_fragments' => self::get_cart_fragments(),
-            'user_data' => self::get_user_checkout_data($user->ID)
-        ] );
+            'user_data' => self::get_user_checkout_data($user->ID),
+            'password_expired' => $password_status['expired'],
+        ];
+        
+        // Se a senha expirou, adicionar informações extras
+        if ( $password_status['expired'] ) {
+            if ( $password_status['reason'] === 'time' ) {
+                $response_data['password_expired_message'] = __( 'Sua senha expirou. Você será redirecionado para trocar sua senha.', 'llrp' );
+            } elseif ( $password_status['reason'] === 'inactivity' ) {
+                $response_data['password_expired_message'] = __( 'Sua senha expirou por inatividade. Você será redirecionado para trocar sua senha.', 'llrp' );
+            } elseif ( $password_status['reason'] === 'imported' ) {
+                $response_data['password_expired_message'] = __( 'Por segurança, você precisa criar uma nova senha. Você será redirecionado.', 'llrp' );
+            }
+            // Redirecionar para a página de editar conta
+            $response_data['redirect'] = wc_get_account_endpoint_url( 'edit-account' );
+        }
+        
+        wp_send_json_success( $response_data );
     }
 
     public static function ajax_login_with_password() {
@@ -443,7 +486,13 @@ class Llrp_Ajax {
             wp_send_json_error([ 'message' => __( 'Credenciais inválidas.', 'llrp' ) ]);
         }
         
+        // Atualizar data do último login
+        update_user_meta( $user_signon->ID, '_llrp_last_login', time() );
+        
         self::safe_log('🛒 LLRP: Password login successful');
+        
+        // Verificar se a senha expirou
+        $password_status = Llrp_Password_Expiration::check_password_status( $user_signon->ID );
 
         // Trigger cart fragments update for Fluid Checkout compatibility
         self::trigger_cart_fragments_update();
@@ -459,12 +508,28 @@ class Llrp_Ajax {
         // SMART REDIRECT: Based on referrer or current context
         $redirect_url = self::get_smart_redirect_url();
         
-        wp_send_json_success([ 
+        $response_data = [ 
             'redirect' => $redirect_url,
             'user_logged_in' => true,
             'cart_fragments' => self::get_cart_fragments(),
-            'user_data' => self::get_user_checkout_data($user_signon->ID)
-        ]);
+            'user_data' => self::get_user_checkout_data($user_signon->ID),
+            'password_expired' => $password_status['expired'],
+        ];
+        
+        // Se a senha expirou, adicionar informações extras
+        if ( $password_status['expired'] ) {
+            if ( $password_status['reason'] === 'time' ) {
+                $response_data['password_expired_message'] = __( 'Sua senha expirou. Você será redirecionado para trocar sua senha.', 'llrp' );
+            } elseif ( $password_status['reason'] === 'inactivity' ) {
+                $response_data['password_expired_message'] = __( 'Sua senha expirou por inatividade. Você será redirecionado para trocar sua senha.', 'llrp' );
+            } elseif ( $password_status['reason'] === 'imported' ) {
+                $response_data['password_expired_message'] = __( 'Por segurança, você precisa criar uma nova senha. Você será redirecionado.', 'llrp' );
+            }
+            // Redirecionar para a página de editar conta
+            $response_data['redirect'] = wc_get_account_endpoint_url( 'edit-account' );
+        }
+        
+        wp_send_json_success( $response_data );
     }
 
     public static function ajax_register() {
@@ -570,6 +635,10 @@ class Llrp_Ajax {
                     update_user_meta( $user_id, 'billing_cnpj', $sanitized_identifier );
                 }
             }
+            
+            // Definir data da última troca de senha e último login
+            update_user_meta( $user_id, '_llrp_last_password_change', time() );
+            update_user_meta( $user_id, '_llrp_last_login', time() );
 
             // Trigger WooCommerce customer registration hooks manually
             do_action( 'woocommerce_created_customer', $user_id, array( 'user_login' => $username, 'user_email' => $email ), $password );
@@ -1000,6 +1069,9 @@ class Llrp_Ajax {
                 update_user_meta( $user->ID, '_llrp_' . $provider . '_id', $user_data['social_id'] );
             }
             
+            // Atualizar data do último login
+            update_user_meta( $user->ID, '_llrp_last_login', time() );
+            
             self::safe_log( 'LLRP: Returning existing user ID: ' . $user->ID );
             return $user->ID;
         }
@@ -1058,6 +1130,10 @@ class Llrp_Ajax {
             if ( ! empty( $user_data['picture'] ) ) {
                 update_user_meta( $user_id, '_llrp_' . $provider . '_picture', $user_data['picture'] );
             }
+            
+            // Definir data da última troca de senha e último login
+            update_user_meta( $user_id, '_llrp_last_password_change', time() );
+            update_user_meta( $user_id, '_llrp_last_login', time() );
             
             return $user_id;
             

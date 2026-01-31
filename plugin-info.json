@@ -1,8 +1,8 @@
 {
   "name": "Lightweight Login & Register Popup",
   "slug": "lightweight-login-register-popup",
-  "version": "1.2.0",
-  "description": "Popup ultra-otimizado para WooCommerce com proteção anti-bot, login social, CPF/CNPJ e performance excepcional. Sistema de cache reduz queries de 64 para 1. Suporte a Cloudflare Turnstile e Google reCAPTCHA.",
+  "version": "1.4.1",
+  "description": "Popup ultra-otimizado para WooCommerce com proteção anti-bot, login social, CPF/CNPJ, sistema de expiração de senha e performance excepcional. Sistema de cache reduz queries de 64 para 1. Suporte a Cloudflare Turnstile e Google reCAPTCHA.",
   "author": "David William da Costa",
   "author_uri": "https://github.com/agenciadw",
   "plugin_uri": "https://github.com/agenciadw/lightweight-login-register-popup",
@@ -20,16 +20,18 @@
     "Ultra Performance (64 queries → 1 query)",
     "Sistema de Cache Inteligente",
     "Proteção Anti-Bot (Turnstile/reCAPTCHA)",
+    "Sistema de Expiração de Senha (Tempo/Inatividade)",
+    "Forçar Troca de Senha para Usuários Importados",
     "Login Social (Google/Facebook)",
     "Login com CPF/CNPJ",
     "Persistência de Carrinho",
     "Auto-preenchimento Inteligente",
     "Interface Admin Moderna com Abas",
+    "Customização Individual de Cores dos Botões",
     "Compatível com CleanTalk Anti-Spam",
     "Compatibilidade com Fluid Checkout",
     "Compatibilidade com Brazilian Market",
     "Design Responsivo",
-    "Customização Total",
     "Sistema de Códigos por E-mail/WhatsApp"
   ],
   "compatibility": {
@@ -43,6 +45,9 @@
     "themes": [
       "Storefront",
       "Astra",
+      "Woodmart",
+      "Flatsome",
+      "Porto",
       "GeneratePress",
       "OceanWP",
       "Custom Themes"

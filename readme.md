@@ -1,11 +1,13 @@
-# Lightweight Login & Register Popup v1.2.0
+# Lightweight Login & Register Popup v1.4.1
 
-![Plugin Version](https://img.shields.io/badge/version-1.2.0-blue.svg)
+![Plugin Version](https://img.shields.io/badge/version-1.4.1-blue.svg)
+![WooCommerce Compatible](https://img.shields.io/badge/WooCommerce-9.x-96588a.svg)
+![WordPress Compatible](https://img.shields.io/badge/WordPress-6.x-21759b.svg)
 ![WordPress](https://img.shields.io/badge/WordPress-6.6+-green.svg)
 ![WooCommerce](https://img.shields.io/badge/WooCommerce-8.0+-orange.svg)
 ![PHP](https://img.shields.io/badge/PHP-7.4+-purple.svg)
 
-Popup inteligente para WooCommerce com suporte a checkout de convidado, login social, persistência de carrinho e compatibilidade total com plugins de checkout populares.
+Popup inteligente para WooCommerce com suporte a checkout de convidado, login social, persistência de carrinho, **sistema de expiração de senha** e compatibilidade total com plugins de checkout populares.
 
 ## 🚀 Funcionalidades Principais
 
@@ -20,6 +22,14 @@ Popup inteligente para WooCommerce com suporte a checkout de convidado, login so
 - **Login Social**: Integração com Google e Facebook
 - **Código por E-mail/WhatsApp**: Sistema de código de verificação
 - **Proteção Anti-Bot**: Cloudflare Turnstile e Google reCAPTCHA (v2 Checkbox, v2 Invisível, v3)
+
+### 🔒 Sistema de Expiração de Senha
+- **Expiração por Tempo**: Força troca de senha após X dias configuráveis (padrão: 90 dias)
+- **Expiração por Inatividade**: Protege contas sem uso recente (padrão: 30 dias)
+- **Usuários Importados**: Força troca de senha para usuários migrados de outras plataformas
+- **Avisos Progressivos**: Notificações 7 dias antes da expiração
+- **Modal Bloqueador**: Impede acesso até a troca quando expirado
+- **Verificação Automática**: Login, Minha Conta e Checkout
 
 ### 🛒 Persistência de Carrinho
 - **Backup Automático**: Salva carrinho antes de login/registro
@@ -71,6 +81,14 @@ Popup inteligente para WooCommerce com suporte a checkout de convidado, login so
 ### WhatsApp (Opcional)
 - **Integração**: Requer plugin Joinotify
 - **Códigos**: Envio de códigos via WhatsApp
+
+### Expiração de Senha
+- **Expiração por Tempo**: Configure o prazo em dias (1-365 dias)
+- **Expiração por Inatividade**: Configure dias de inatividade (1-365 dias)
+- **Usuários Importados**: Force troca no primeiro login para usuários migrados
+- **Avisos**: Sistema de notificação progressiva
+- [📖 **Documentação Completa**](docs/PASSWORD_EXPIRATION.md)
+- [📖 **Guia de Usuários Importados**](docs/IMPORTED_USERS.md)
 
 ## 🎯 Como Funciona
 

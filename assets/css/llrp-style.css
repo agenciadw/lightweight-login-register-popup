@@ -55,11 +55,9 @@
 .llrp-step button {
   width: 100%;
   padding: 10px;
-  background: #385b02;
-  border: none;
   border-radius: 4px;
-  color: #fff;
   cursor: pointer;
+  /* Cores aplicadas dinamicamente via inline CSS do admin */
 }
 .llrp-step label {
   display: block;
@@ -196,15 +194,12 @@
   z-index: 2;
 }
 
-/* Social buttons */
+/* Social buttons - Cores customizáveis no admin */
 .llrp-social-button {
   width: 100% !important;
   padding: 12px 16px !important;
   margin-bottom: 10px !important;
-  border: 1px solid #ddd !important;
   border-radius: 6px !important;
-  background: #fff !important;
-  color: #333 !important;
   cursor: pointer !important;
   font-size: 14px !important;
   font-weight: 500 !important;
@@ -219,7 +214,6 @@
 }
 
 .llrp-social-button:hover {
-  border-color: #ccc !important;
   box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1) !important;
   transform: translateY(-1px) !important;
 }
@@ -229,39 +223,16 @@
   box-shadow: 0 1px 2px rgba(0, 0, 0, 0.1) !important;
 }
 
-/* Google button */
-.llrp-google-button {
-  border-color: #dadce0 !important;
-}
-
-.llrp-google-button:hover {
-  background: #f8f9fa !important;
-  border-color: #dadce0 !important;
-}
-
+/* Google button - Cores customizáveis no admin */
 .llrp-google-button:focus {
-  border-color: #4285f4 !important;
   outline: none !important;
+  box-shadow: 0 0 0 2px rgba(66, 133, 244, 0.3) !important;
 }
 
-/* Facebook button */
-.llrp-facebook-button {
-  background: #fff !important;
-  border-color: #1877f2 !important;
-  color: #1877f2 !important;
-}
-
-.llrp-facebook-button:hover {
-  background: #f0f4ff !important;
-  border-color: #1877f2 !important;
-  color: #1877f2 !important;
-}
-
+/* Facebook button - Cores customizáveis no admin */
 .llrp-facebook-button:focus {
-  border-color: #1565c0 !important;
-  background: #fff !important;
-  color: #1565c0 !important;
   outline: none !important;
+  box-shadow: 0 0 0 2px rgba(24, 119, 242, 0.3) !important;
 }
 
 /* Social icons */
@@ -319,6 +290,7 @@
 .llrp-my-account-social-login,
 .llrp-my-account-social-register {
   margin-top: 20px;
+  border-inline-start: none !important;  
 }
 
 .llrp-my-account-social-login .llrp-social-button,
@@ -344,34 +316,7 @@
   margin: 15px 0;
 }
 
-/* Ensure Facebook button styling is consistent in My Account */
-.llrp-my-account-social-login .llrp-facebook-button,
-.llrp-my-account-social-register .llrp-facebook-button {
-  background: #fff !important;
-  border: 1px solid #1877f2 !important;
-  color: #1877f2 !important;
-}
-
-.llrp-my-account-social-login .llrp-facebook-button:hover,
-.llrp-my-account-social-register .llrp-facebook-button:hover {
-  background: #f0f4ff !important;
-  border-color: #1877f2 !important;
-  color: #1877f2 !important;
-}
-
-/* Ensure Google button styling is consistent in My Account */
-.llrp-my-account-social-login .llrp-google-button,
-.llrp-my-account-social-register .llrp-google-button {
-  background: #fff !important;
-  border: 1px solid #dadce0 !important;
-  color: #333 !important;
-}
-
-.llrp-my-account-social-login .llrp-google-button:hover,
-.llrp-my-account-social-register .llrp-google-button:hover {
-  background: #f8f9fa !important;
-  border-color: #dadce0 !important;
-}
+/* My Account - Botões sociais usam cores customizáveis do admin */
 
 /* WooCommerce notice styles for My Account */
 .llrp-my-account-social-login .woocommerce-error,

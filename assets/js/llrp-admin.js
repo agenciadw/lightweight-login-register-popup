@@ -67,6 +67,30 @@ jQuery(document).ready(function ($) {
   $("#llrp_captcha_type").trigger("change");
 
   // ==========================================
+  // Password Expiration Toggles
+  // ==========================================
+
+  $("#llrp_password_expiration_enabled").on("change", function () {
+    if ($(this).is(":checked")) {
+      $("#llrp_password_expiration_days_field").fadeIn(300);
+    } else {
+      $("#llrp_password_expiration_days_field").fadeOut(300);
+    }
+  });
+
+  $("#llrp_password_expiration_inactivity_enabled").on("change", function () {
+    if ($(this).is(":checked")) {
+      $("#llrp_password_expiration_inactivity_days_field").fadeIn(300);
+    } else {
+      $("#llrp_password_expiration_inactivity_days_field").fadeOut(300);
+    }
+  });
+
+  // Trigger initial state for password expiration fields
+  $("#llrp_password_expiration_enabled").trigger("change");
+  $("#llrp_password_expiration_inactivity_enabled").trigger("change");
+
+  // ==========================================
   // Form Validation
   // ==========================================
 

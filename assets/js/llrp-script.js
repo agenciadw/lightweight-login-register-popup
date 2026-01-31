@@ -805,6 +805,12 @@
     }
 
     function showStep(step) {
+      // Limpar avisos e botões customizados ao mudar de step (exceto se estiver indo para login-options)
+      if (step !== "login-options") {
+        $("#llrp-password-expired-warning, #llrp-password-warning-notice, #llrp-recover-password-btn").remove();
+        $("#llrp-show-password-login").show(); // Restaurar botão de senha ao voltar
+      }
+      
       if (step === "code") {
         if (deliveryMethod === "whatsapp") {
           $popup.find(".llrp-step-code h2").text("Verifique seu WhatsApp");
@@ -871,7 +877,59 @@
             $(".llrp-user-email").text(res.data.email);
             userEmail = res.data.email; // Salvar o e-mail na variável global
             $(".llrp-avatar").attr("src", res.data.avatar);
+            
+            // Mudar para o próximo step
             showStep("login-options");
+            
+            // Verificar se senha expirou ou está próxima de expirar (APÓS mudar de step)
+            if (res.data.password_expired) {
+              // Mostrar aviso destacado na tela de opções de login
+              var warningHtml = '<div id="llrp-password-expired-warning" style="background: #fff3cd; border: 1px solid #ffc107; padding: 15px; border-radius: 4px; margin: 15px 0;">' +
+                '<div style="display: flex; align-items: start; gap: 10px;">' +
+                '<span style="font-size: 24px;">⚠️</span>' +
+                '<div>' +
+                '<strong style="color: #856404; font-size: 16px; display: block; margin-bottom: 5px;">Atenção: Senha Expirada</strong>' +
+                '<p style="color: #856404; margin: 0 0 8px 0;">' + res.data.password_expired_reason + '</p>' +
+                '<small style="color: #856404;">Para continuar, você precisa criar uma nova senha através da recuperação.</small>' +
+                '</div>' +
+                '</div>' +
+                '</div>';
+              
+              // Adicionar no topo da tela de opções de login
+              $(".llrp-step-login-options").prepend(warningHtml);
+              
+              // Esconder o botão de "Login com Senha"
+              $("#llrp-show-password-login").hide();
+              
+              // Adicionar botão de "Recuperar Senha" (se ainda não existe)
+              if (!$("#llrp-recover-password-btn").length) {
+                var recoverBtnHtml = '<button id="llrp-recover-password-btn" style="background: #d32f2f; border-color: #d32f2f; color: #fff;">' +
+                  '<span style="margin-right: 5px;">🔐</span> Recuperar Senha' +
+                  '</button>';
+                $("#llrp-show-password-login").after(recoverBtnHtml);
+                
+                // Handler para o botão de recuperar senha
+                $("#llrp-recover-password-btn").on("click", function() {
+                  showStep("lost");
+                  // Preencher o e-mail automaticamente no campo de recuperação
+                  $("#llrp-lost-email").val(userEmail);
+                });
+              }
+            } else if (res.data.password_warning && res.data.password_warning_days) {
+              // Mostrar o botão de senha normalmente se for apenas aviso
+              $("#llrp-show-password-login").show();
+              $("#llrp-recover-password-btn").remove();
+              
+              var warningMsg = "⚠️ Sua senha expira em " + res.data.password_warning_days + " dia" + (res.data.password_warning_days > 1 ? "s" : "") + ". Troque sua senha em breve.";
+              var warningHtml = '<div id="llrp-password-warning-notice" style="background: #e3f2fd; border: 1px solid #2196f3; padding: 12px; border-radius: 4px; margin: 15px 0; color: #1565c0;">' +
+                warningMsg +
+                '</div>';
+              $(".llrp-step-login-options").prepend(warningHtml);
+            } else {
+              // Senha OK - mostrar botão normal
+              $("#llrp-show-password-login").show();
+              $("#llrp-recover-password-btn").remove();
+            }
           } else {
             if (res.data.needs_email) {
               showStep("register-email");
@@ -1042,6 +1100,15 @@
             fillCheckoutFormData(res.data.user_data);
           }
 
+          // Verificar se senha expirou
+          if (res.data.password_expired && res.data.password_expired_message) {
+            showFeedback("llrp-feedback-code", "⚠️ " + res.data.password_expired_message, true);
+            setTimeout(function () {
+              window.location.href = res.data.redirect;
+            }, 2000);
+            return;
+          }
+
           // Check if Fluid Checkout is active and handle accordingly
           safeLog("LLRP: Checking Fluid Checkout status after code login...");
           if (isFluidCheckoutActive()) {
@@ -1103,6 +1170,15 @@
             setTimeout(function () {
               fillCheckoutFormData(res.data.user_data);
             }, 300);
+          }
+
+          // Verificar se senha expirou
+          if (res.data.password_expired && res.data.password_expired_message) {
+            showFeedback("llrp-feedback-login", "⚠️ " + res.data.password_expired_message, true);
+            setTimeout(function () {
+              window.location.href = res.data.redirect;
+            }, 2000);
+            return;
           }
 
           // SAFE REDIRECT: Check if we need to redirect or stay on current page
@@ -1247,71 +1323,110 @@
       }
     }
 
-    // Event Binding - Interceptação mais robusta do botão de checkout
+    // Event Binding - Interceptação OBRIGATÓRIA do botão de checkout
+    // SEMPRE mostra popup quando usuário não está logado e clica em checkout
+    function isCheckoutPage() {
+      return (
+        window.location.href.includes("checkout") ||
+        window.location.href.includes("finalizar-compra")
+      );
+    }
+
+    function shouldInterceptCheckoutClick(el) {
+      if (!el) return false;
+      var $el = $(el);
+      // Não interceptar formulário de checkout (submit de pagamento)
+      if ($el.closest('form[name="checkout"]').length > 0) return false;
+      // Não interceptar outros plugins de checkout
+      if ($el.closest(".mp-checkout, .fc-checkout, .stripe-checkout, .mp-custom-checkout").length > 0) return false;
+      // Não interceptar botão submit em form
+      if ($el.closest("form").length && $el.attr("type") === "submit") return false;
+      return true;
+    }
+
     function interceptCheckoutButton(e) {
       try {
         safeLog("🔗 LLRP: Checkout button clicked, intercepting...");
 
-        // Verificar se devemos interceptar este elemento
         var $target = $(e.target);
 
         // Não interceptar se for um botão de submit em formulário de checkout
         if ($target.closest('form[name="checkout"]').length > 0) {
-          return true; // Permitir comportamento normal
+          return true;
         }
 
         // Não interceptar elementos de outros plugins de checkout
-        if (
-          $target.closest(".mp-checkout, .fc-checkout, .stripe-checkout")
-            .length > 0
-        ) {
-          return true; // Permitir comportamento normal
+        if ($target.closest(".mp-checkout, .fc-checkout, .stripe-checkout").length > 0) {
+          return true;
         }
 
-        // SEMPRE prevenir o comportamento padrão primeiro
+        // CRITICAL: Prevenir imediatamente para evitar navegação
         e.preventDefault();
         e.stopPropagation();
+        e.stopImmediatePropagation();
 
         // Abrir o popup que fará a verificação dinâmica
         openPopup(e);
 
-        // Retornar false para garantir que o evento não continue
         return false;
       } catch (error) {
-        // Em caso de erro, permitir comportamento padrão
+        safeLog("🔗 LLRP: Error in interceptCheckoutButton:", error);
         return true;
       }
     }
 
-    // Usar event delegation para garantir que funcione com elementos dinâmicos
-    // Mas verificar se não é um botão de submit de formulário para evitar conflitos
-    $(document).on("click.llrp", ".checkout-button", function (e) {
-      // Evitar interceptar botões de formulário que podem estar processando checkout
-      if (
-        $(e.target).closest("form").length &&
-        $(e.target).attr("type") === "submit"
-      ) {
-        return; // Deixar o comportamento padrão para submits de formulário
+    // CRITICAL: Usar CAPTURE phase para executar ANTES de qualquer outro handler
+    // Intercepta QUALQUER clique em botão de checkout quando o popup existe (usuário não logado)
+    document.addEventListener(
+      "click",
+      function (e) {
+        // Se não tem popup, não interceptar (usuário logado ou página sem popup)
+        if (!hasPopup || !$overlay.length || !$popup.length) return;
+
+        // Se já estamos na página de checkout, não interceptar
+        if (isCheckoutPage()) return;
+
+        var target = e.target.closest
+          ? e.target.closest(
+              'a[href*="checkout"], a[href*="finalizar-compra"], a.checkout-button, .checkout-button, .wc-proceed-to-checkout a, .button.checkout'
+            )
+          : $(e.target).closest(
+              'a[href*="checkout"], a[href*="finalizar-compra"], a.checkout-button, .checkout-button, .wc-proceed-to-checkout a, .button.checkout'
+            )[0];
+
+        if (!target) return;
+
+        safeLog("🔗 LLRP: Captured click on checkout button (capture phase)");
+
+        if (shouldInterceptCheckoutClick(target)) {
+          safeLog("🔗 LLRP: Intercepting and showing popup");
+          e.preventDefault();
+          e.stopPropagation();
+          e.stopImmediatePropagation();
+          openPopup(e);
+        }
+      },
+      true
+    );
+
+    // Fallback: event delegation jQuery (para elementos dinâmicos)
+    $(document).on("click.llrp", ".checkout-button, .button.checkout", function (e) {
+      if (!hasPopup) return;
+      if (isCheckoutPage()) return;
+      if ($(e.target).closest("form").length && $(e.target).attr("type") === "submit") {
+        return;
       }
       return interceptCheckoutButton(e);
     });
 
-    // Também interceptar outros seletores comuns de botões de checkout
     $(document).on(
       "click.llrp",
-      'a[href*="checkout"], a[href*="finalizar-compra"]',
+      'a[href*="checkout"], a[href*="finalizar-compra"], .wc-proceed-to-checkout a',
       function (e) {
-        // Só interceptar se não estivermos na página de checkout
-        if (
-          !window.location.href.includes("checkout") &&
-          !window.location.href.includes("finalizar-compra")
-        ) {
-          // Verificar se não é um elemento de um plugin de checkout diferente
-          if ($(e.target).closest(".mp-custom-checkout").length) {
-            return; // Não interferir com outros plugins de checkout
-          }
-          return interceptCheckoutButton(e);
-        }
+        if (!hasPopup) return;
+        if (isCheckoutPage()) return;
+        if ($(e.target).closest(".mp-custom-checkout").length) return;
+        return interceptCheckoutButton(e);
       }
     );
     // More popup event listeners (only if popup exists)

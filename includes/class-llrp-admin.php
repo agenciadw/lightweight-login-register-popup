@@ -88,6 +88,24 @@ class Llrp_Admin {
             'color_btn_border_hover'    => 'sanitize_hex_color',
             'color_btn_text'            => 'sanitize_hex_color',
             'color_btn_text_hover'      => 'sanitize_hex_color',
+            'color_btn_skip_bg'         => 'sanitize_hex_color',
+            'color_btn_skip_bg_hover'   => 'sanitize_hex_color',
+            'color_btn_skip_border'     => 'sanitize_hex_color',
+            'color_btn_skip_border_hover' => 'sanitize_hex_color',
+            'color_btn_skip_text'       => 'sanitize_hex_color',
+            'color_btn_skip_text_hover' => 'sanitize_hex_color',
+            'color_btn_google_bg'       => 'sanitize_hex_color',
+            'color_btn_google_bg_hover' => 'sanitize_hex_color',
+            'color_btn_google_border'   => 'sanitize_hex_color',
+            'color_btn_google_border_hover' => 'sanitize_hex_color',
+            'color_btn_google_text'     => 'sanitize_hex_color',
+            'color_btn_google_text_hover' => 'sanitize_hex_color',
+            'color_btn_facebook_bg'     => 'sanitize_hex_color',
+            'color_btn_facebook_bg_hover' => 'sanitize_hex_color',
+            'color_btn_facebook_border' => 'sanitize_hex_color',
+            'color_btn_facebook_border_hover' => 'sanitize_hex_color',
+            'color_btn_facebook_text'   => 'sanitize_hex_color',
+            'color_btn_facebook_text_hover' => 'sanitize_hex_color',
             'color_btn_code_bg'         => 'sanitize_hex_color',
             'color_btn_code_bg_hover'   => 'sanitize_hex_color',
             'color_btn_code_border'     => 'sanitize_hex_color',
@@ -117,6 +135,13 @@ class Llrp_Admin {
             'whatsapp_enabled'          => 'absint',
             'whatsapp_sender_phone'     => 'sanitize_text_field',
             'whatsapp_interactive_buttons' => 'absint',
+            
+            // Password Expiration
+            'password_expiration_enabled'     => 'absint',
+            'password_expiration_days'        => 'absint',
+            'password_expiration_inactivity_enabled' => 'absint',
+            'password_expiration_inactivity_days'    => 'absint',
+            'password_force_imported_users'   => 'absint',
         ];
 
         foreach ( $settings as $field => $sanitize_callback ) {
@@ -252,6 +277,12 @@ class Llrp_Admin {
                 'color_bg', 'color_overlay', 'color_header_bg', 'color_text',
                 'color_link', 'color_link_hover', 'color_btn_bg', 'color_btn_bg_hover',
                 'color_btn_border', 'color_btn_border_hover', 'color_btn_text', 'color_btn_text_hover',
+                'color_btn_skip_bg', 'color_btn_skip_bg_hover', 'color_btn_skip_border',
+                'color_btn_skip_border_hover', 'color_btn_skip_text', 'color_btn_skip_text_hover',
+                'color_btn_google_bg', 'color_btn_google_bg_hover', 'color_btn_google_border',
+                'color_btn_google_border_hover', 'color_btn_google_text', 'color_btn_google_text_hover',
+                'color_btn_facebook_bg', 'color_btn_facebook_bg_hover', 'color_btn_facebook_border',
+                'color_btn_facebook_border_hover', 'color_btn_facebook_text', 'color_btn_facebook_text_hover',
                 'color_btn_code_bg', 'color_btn_code_bg_hover', 'color_btn_code_border',
                 'color_btn_code_border_hover', 'color_btn_code_text', 'color_btn_code_text_hover'
             ],
@@ -265,7 +296,10 @@ class Llrp_Admin {
             ],
             'advanced' => [
                 'cpf_login_enabled', 'cnpj_login_enabled',
-                'whatsapp_enabled', 'whatsapp_sender_phone', 'whatsapp_interactive_buttons'
+                'whatsapp_enabled', 'whatsapp_sender_phone', 'whatsapp_interactive_buttons',
+                'password_expiration_enabled', 'password_expiration_days',
+                'password_expiration_inactivity_enabled', 'password_expiration_inactivity_days',
+                'password_force_imported_users'
             ]
         ];
         
@@ -282,7 +316,9 @@ class Llrp_Admin {
                 if ( in_array( $field, [
                     'google_login_enabled', 'facebook_login_enabled',
                     'cpf_login_enabled', 'cnpj_login_enabled',
-                    'whatsapp_enabled', 'whatsapp_interactive_buttons'
+                    'whatsapp_enabled', 'whatsapp_interactive_buttons',
+                    'password_expiration_enabled', 'password_expiration_inactivity_enabled',
+                    'password_force_imported_users'
                 ] ) ) {
                     echo '<input type="hidden" name="llrp_' . esc_attr( $field ) . '" value="' . esc_attr( $value ? 1 : 0 ) . '" />';
                 } else {
@@ -494,7 +530,8 @@ class Llrp_Admin {
                 </div>
                 
                 <div class="llrp-field-group">
-                    <h3 class="llrp-field-group-title"><?php esc_html_e( 'Botão Principal', 'llrp' ); ?></h3>
+                    <h3 class="llrp-field-group-title"><?php esc_html_e( 'Botão Continuar', 'llrp' ); ?></h3>
+                    <p class="description" style="margin-top: -10px; margin-bottom: 15px;"><?php esc_html_e( 'Botão principal "Continuar" na tela inicial', 'llrp' ); ?></p>
                     <div class="llrp-color-grid">
                         <?php
                         self::render_color_field( 'color_btn_bg', __( 'Fundo', 'llrp' ), '#385b02' );
@@ -508,7 +545,53 @@ class Llrp_Admin {
                 </div>
                 
                 <div class="llrp-field-group">
+                    <h3 class="llrp-field-group-title"><?php esc_html_e( 'Botão Pular para Checkout', 'llrp' ); ?></h3>
+                    <p class="description" style="margin-top: -10px; margin-bottom: 15px;"><?php esc_html_e( 'Botão "Pular para o checkout" (checkout de convidado)', 'llrp' ); ?></p>
+                    <div class="llrp-color-grid">
+                        <?php
+                        self::render_color_field( 'color_btn_skip_bg', __( 'Fundo', 'llrp' ), '#6c757d' );
+                        self::render_color_field( 'color_btn_skip_bg_hover', __( 'Fundo (Hover)', 'llrp' ), '#5a6268' );
+                        self::render_color_field( 'color_btn_skip_border', __( 'Borda', 'llrp' ), '#6c757d' );
+                        self::render_color_field( 'color_btn_skip_border_hover', __( 'Borda (Hover)', 'llrp' ), '#5a6268' );
+                        self::render_color_field( 'color_btn_skip_text', __( 'Texto', 'llrp' ), '#ffffff' );
+                        self::render_color_field( 'color_btn_skip_text_hover', __( 'Texto (Hover)', 'llrp' ), '#ffffff' );
+                        ?>
+                    </div>
+                </div>
+                
+                <div class="llrp-field-group">
+                    <h3 class="llrp-field-group-title"><?php esc_html_e( 'Botão Google', 'llrp' ); ?></h3>
+                    <p class="description" style="margin-top: -10px; margin-bottom: 15px;"><?php esc_html_e( 'Botão "Continuar com Google"', 'llrp' ); ?></p>
+                    <div class="llrp-color-grid">
+                        <?php
+                        self::render_color_field( 'color_btn_google_bg', __( 'Fundo', 'llrp' ), '#ffffff' );
+                        self::render_color_field( 'color_btn_google_bg_hover', __( 'Fundo (Hover)', 'llrp' ), '#f8f9fa' );
+                        self::render_color_field( 'color_btn_google_border', __( 'Borda', 'llrp' ), '#dadce0' );
+                        self::render_color_field( 'color_btn_google_border_hover', __( 'Borda (Hover)', 'llrp' ), '#d2d4d8' );
+                        self::render_color_field( 'color_btn_google_text', __( 'Texto', 'llrp' ), '#3c4043' );
+                        self::render_color_field( 'color_btn_google_text_hover', __( 'Texto (Hover)', 'llrp' ), '#202124' );
+                        ?>
+                    </div>
+                </div>
+                
+                <div class="llrp-field-group">
+                    <h3 class="llrp-field-group-title"><?php esc_html_e( 'Botão Facebook', 'llrp' ); ?></h3>
+                    <p class="description" style="margin-top: -10px; margin-bottom: 15px;"><?php esc_html_e( 'Botão "Continuar com Facebook"', 'llrp' ); ?></p>
+                    <div class="llrp-color-grid">
+                        <?php
+                        self::render_color_field( 'color_btn_facebook_bg', __( 'Fundo', 'llrp' ), '#1877f2' );
+                        self::render_color_field( 'color_btn_facebook_bg_hover', __( 'Fundo (Hover)', 'llrp' ), '#166fe5' );
+                        self::render_color_field( 'color_btn_facebook_border', __( 'Borda', 'llrp' ), '#1877f2' );
+                        self::render_color_field( 'color_btn_facebook_border_hover', __( 'Borda (Hover)', 'llrp' ), '#166fe5' );
+                        self::render_color_field( 'color_btn_facebook_text', __( 'Texto', 'llrp' ), '#ffffff' );
+                        self::render_color_field( 'color_btn_facebook_text_hover', __( 'Texto (Hover)', 'llrp' ), '#ffffff' );
+                        ?>
+                    </div>
+                </div>
+                
+                <div class="llrp-field-group">
                     <h3 class="llrp-field-group-title"><?php esc_html_e( 'Botão de Código (WhatsApp/E-mail)', 'llrp' ); ?></h3>
+                    <p class="description" style="margin-top: -10px; margin-bottom: 15px;"><?php esc_html_e( 'Botões de envio de código por WhatsApp ou E-mail', 'llrp' ); ?></p>
                     <div class="llrp-color-grid">
                         <?php
                         self::render_color_field( 'color_btn_code_bg', __( 'Fundo', 'llrp' ), '#2271b1' );
@@ -907,6 +990,96 @@ class Llrp_Admin {
                 </div>
             </div>
         </div>
+        
+        <div class="llrp-card">
+            <div class="llrp-card-header">
+                <h2><?php esc_html_e( 'Expiração de Senha', 'llrp' ); ?></h2>
+                <p><?php esc_html_e( 'Forçar usuários a trocar a senha periodicamente para maior segurança', 'llrp' ); ?></p>
+            </div>
+            <div class="llrp-card-body">
+                <div class="llrp-toggle-field">
+                    <div class="llrp-toggle-content">
+                        <label for="llrp_password_expiration_enabled">
+                            <strong><?php esc_html_e( 'Habilitar Expiração de Senha', 'llrp' ); ?></strong>
+                            <p class="description"><?php esc_html_e( 'Força os usuários a trocar a senha após um período definido', 'llrp' ); ?></p>
+                        </label>
+                    </div>
+                    <label class="llrp-switch">
+                        <input type="hidden" name="llrp_password_expiration_enabled" value="0" />
+                        <input type="checkbox" id="llrp_password_expiration_enabled" name="llrp_password_expiration_enabled" value="1" <?php checked( get_option( 'llrp_password_expiration_enabled' ), 1 ); ?> />
+                        <span class="llrp-switch-slider"></span>
+                    </label>
+                </div>
+                
+                <div class="llrp-field" id="llrp_password_expiration_days_field" style="display: <?php echo get_option( 'llrp_password_expiration_enabled' ) ? 'block' : 'none'; ?>;">
+                    <label for="llrp_password_expiration_days">
+                        <?php esc_html_e( 'Prazo para Troca de Senha (dias)', 'llrp' ); ?>
+                    </label>
+                    <input type="number" 
+                           id="llrp_password_expiration_days" 
+                           name="llrp_password_expiration_days" 
+                           value="<?php echo esc_attr( get_option( 'llrp_password_expiration_days', 90 ) ); ?>" 
+                           min="1" 
+                           max="365"
+                           class="llrp-input-medium" />
+                    <p class="description"><?php esc_html_e( 'Número de dias até a senha expirar e precisar ser trocada. Padrão: 90 dias', 'llrp' ); ?></p>
+                </div>
+                
+                <div class="llrp-toggle-field" style="margin-top: 20px;">
+                    <div class="llrp-toggle-content">
+                        <label for="llrp_password_expiration_inactivity_enabled">
+                            <strong><?php esc_html_e( 'Forçar Troca por Inatividade', 'llrp' ); ?></strong>
+                            <p class="description"><?php esc_html_e( 'Força troca de senha quando o usuário não faz login há muito tempo', 'llrp' ); ?></p>
+                        </label>
+                    </div>
+                    <label class="llrp-switch">
+                        <input type="hidden" name="llrp_password_expiration_inactivity_enabled" value="0" />
+                        <input type="checkbox" id="llrp_password_expiration_inactivity_enabled" name="llrp_password_expiration_inactivity_enabled" value="1" <?php checked( get_option( 'llrp_password_expiration_inactivity_enabled' ), 1 ); ?> />
+                        <span class="llrp-switch-slider"></span>
+                    </label>
+                </div>
+                
+                <div class="llrp-field" id="llrp_password_expiration_inactivity_days_field" style="display: <?php echo get_option( 'llrp_password_expiration_inactivity_enabled' ) ? 'block' : 'none'; ?>;">
+                    <label for="llrp_password_expiration_inactivity_days">
+                        <?php esc_html_e( 'Dias de Inatividade para Forçar Troca', 'llrp' ); ?>
+                    </label>
+                    <input type="number" 
+                           id="llrp_password_expiration_inactivity_days" 
+                           name="llrp_password_expiration_inactivity_days" 
+                           value="<?php echo esc_attr( get_option( 'llrp_password_expiration_inactivity_days', 30 ) ); ?>" 
+                           min="1" 
+                           max="365"
+                           class="llrp-input-medium" />
+                    <p class="description"><?php esc_html_e( 'Forçar troca de senha se o usuário não fizer login nos últimos X dias. Padrão: 30 dias', 'llrp' ); ?></p>
+                </div>
+                
+                <div class="llrp-toggle-field" style="margin-top: 20px;">
+                    <div class="llrp-toggle-content">
+                        <label for="llrp_password_force_imported_users">
+                            <strong><?php esc_html_e( 'Forçar Troca para Usuários Importados', 'llrp' ); ?></strong>
+                            <p class="description"><?php esc_html_e( 'Força troca de senha no primeiro login para usuários que foram importados de outras plataformas', 'llrp' ); ?></p>
+                        </label>
+                    </div>
+                    <label class="llrp-switch">
+                        <input type="hidden" name="llrp_password_force_imported_users" value="0" />
+                        <input type="checkbox" id="llrp_password_force_imported_users" name="llrp_password_force_imported_users" value="1" <?php checked( get_option( 'llrp_password_force_imported_users' ), 1 ); ?> />
+                        <span class="llrp-switch-slider"></span>
+                    </label>
+                </div>
+                
+                <div class="llrp-help-box" style="margin-top: 20px;">
+                    <p><strong>ℹ️ <?php esc_html_e( 'Como funciona:', 'llrp' ); ?></strong></p>
+                    <ul style="margin-left: 20px;">
+                        <li><?php esc_html_e( 'O sistema verifica automaticamente na tela de login, checkout e minha conta', 'llrp' ); ?></li>
+                        <li><?php esc_html_e( 'Avisos são exibidos antes da senha expirar (7 dias antes)', 'llrp' ); ?></li>
+                        <li><?php esc_html_e( 'Quando a senha expira, o usuário é obrigado a trocar antes de continuar', 'llrp' ); ?></li>
+                        <li><?php esc_html_e( 'A data da última troca é registrada automaticamente', 'llrp' ); ?></li>
+                        <li><?php esc_html_e( 'Usuários importados sem data de troca registrada serão forçados a trocar no primeiro login (se habilitado)', 'llrp' ); ?></li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+        
         <?php
     }
 

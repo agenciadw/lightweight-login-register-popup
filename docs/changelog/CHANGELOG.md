@@ -1,5 +1,138 @@
 # CHANGELOG - Lightweight Login & Register Popup
 
+## 🔧 **Versão 1.4.1** - Correção de Interceptação de Checkout
+
+### Data: 30 de Janeiro de 2026
+
+### 🎯 Destaques da Versão
+
+- 🔧 **Correção Crítica:** Popup agora abre SEMPRE ao clicar em "Finalizar Compra"
+- 🗑️ **Removido:** Opção "Controle do Botão de Checkout" (causava conflitos)
+- 🚀 **Melhor Interceptação:** Usa capture phase para garantir popup antes de navegação
+
+### 🐛 Correções
+
+- **Popup não abria:** Ao clicar em "Finalizar Compra" no carrinho, navegava direto para checkout
+- **Interceptação aprimorada:** `document.addEventListener(..., true)` (capture phase)
+- **Múltiplos seletores:** `.wc-proceed-to-checkout a`, `a[href*="finalizar-compra"]`, etc.
+- **stopImmediatePropagation:** Impede outros handlers de executar
+
+### 🗑️ Removido
+
+- **Opção "Controle do Botão de Checkout":** Removida por causar conflitos
+- **CSS de ocultação:** Removido do frontend
+- **Documentação:** `docs/HIDE_CHECKOUT_BUTTON.md` deletado
+
+### 📝 Arquivos Modificados
+
+- `lightweight-login-register-popup.php` → v1.4.1
+- `includes/class-llrp-admin.php` → Removida opção `hide_checkout_button`
+- `includes/class-llrp-frontend.php` → Removido CSS de ocultação
+- `assets/js/llrp-script.js` → Interceptação com capture phase
+- `plugin-info.json` → v1.4.1
+- `readme.md` → Removida seção de controle de checkout
+
+---
+
+## 🛍️ **Versão 1.4.0** - Melhorias de UX para Senha Expirada
+
+### Data: 30 de Janeiro de 2026
+
+### 🎯 Destaques da Versão
+
+- 🔐 **Botão "Recuperar Senha":** Substituição inteligente quando senha expirada
+- 🎨 **Melhor UX:** Fluxo simplificado para recuperação de senha expirada
+- 🔄 **Cache Busting:** Versão atualizada força recarga dos assets
+
+### ✨ Novos Recursos
+
+#### Melhorias no Sistema de Senha Expirada
+- **Botão Dinâmico:** "Login com Senha" é substituído por "🔐 Recuperar Senha" (vermelho)
+- **Pré-preenchimento:** E-mail automaticamente preenchido na recuperação
+- **Mensagens Contextuais:** Avisos específicos para cada tipo de expiração
+- **Limpeza de Estado:** Remove avisos/botões ao trocar steps
+- **Evita Duplicação:** Sistema previne múltiplos elementos
+
+### 🔧 Melhorias
+
+#### JavaScript
+- Lógica aprimorada em `showStep()` para limpeza de estado
+- Gerenciamento inteligente de visibilidade de botões
+- Prevenção de duplicação de elementos temporários
+
+### 🐛 Correções
+
+- Aviso de senha expirada agora aparece corretamente no popup
+- Ordem de execução corrigida: `showStep()` → adicionar aviso
+- Botões não duplicam mais ao navegar entre steps
+
+---
+
+## 🔒 **Versão 1.3.0** - Sistema de Expiração de Senha
+
+### Data: Janeiro 2026
+
+### 🎯 Destaques da Versão
+
+- 🔐 **Expiração por Tempo:** Força troca de senha após X dias configuráveis
+- ⏰ **Expiração por Inatividade:** Protege contas sem uso recente
+- ⚠️ **Avisos Progressivos:** Notificações 7 dias antes da expiração
+- 🚫 **Modal Bloqueador:** Impede acesso até a troca quando expirado
+- 🎨 **Interface Completa:** Configuração visual no admin
+
+### ✨ Principais Funcionalidades
+
+#### Sistema de Expiração Configurável
+- Expiração por tempo (1-365 dias, padrão: 90 dias)
+- Expiração por inatividade (1-365 dias, padrão: 30 dias)
+- Ativação independente de cada funcionalidade
+- Avisos começam 7 dias antes da expiração
+
+#### Verificações Automáticas
+- ✅ Popup de login - Aviso ao detectar usuário
+- ✅ Página Minha Conta - Banner e modal
+- ✅ Checkout - Bloqueia finalização se senha expirada
+- ✅ Após qualquer tipo de login - Atualiza datas
+
+#### Modal de Troca Forçada
+- Design responsivo e moderno
+- Validação em tempo real
+- Campos: Senha Atual, Nova Senha, Confirmar
+- Feedback visual de sucesso/erro
+- Bloqueia navegação até concluir
+
+#### Avisos Inteligentes
+- 🟡 Aviso amarelo 7 dias antes
+- 🔴 Modal bloqueador na expiração
+- ✖️ Botão para dispensar avisos temporariamente
+- 📝 Mensagens contextuais por tipo de expiração
+
+### 🔧 Arquivos Novos
+
+- `includes/class-llrp-password-expiration.php` - Gerencia expiração
+- `docs/PASSWORD_EXPIRATION.md` - Documentação completa
+- `docs/changelog/CHANGELOG_v1.3.0.md` - Detalhes da versão
+
+### 📊 User Meta Adicionados
+
+```php
+_llrp_last_password_change        // Data da última troca de senha
+_llrp_last_login                  // Data do último login
+_llrp_password_warning_dismissed  // Data quando aviso foi dispensado
+```
+
+### 🎯 Casos de Uso Recomendados
+
+- **E-commerce B2C:** 90 dias / 60 dias inatividade
+- **E-commerce B2B:** 60 dias / 30 dias inatividade
+- **Marketplace:** 180 dias / 90 dias inatividade
+- **Dados Sensíveis:** 30 dias / 15 dias inatividade
+
+[📖 Changelog Detalhado v1.3.0](./CHANGELOG_v1.3.0.md)  
+[📚 Documentação Completa](../PASSWORD_EXPIRATION.md)
+
+---
+
 ## 🚀 **Versão 1.2.0** - Otimização e Segurança
 
 ### Data: Dezembro de 2025

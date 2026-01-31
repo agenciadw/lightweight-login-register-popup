@@ -3,7 +3,7 @@
  * Plugin Name: Lightweight Login & Register Popup
  * Plugin URI: https://github.com/agenciadw/lightweight-login-register-popup
  * Description: Popup inteligente para WooCommerce com suporte a checkout de convidado. Inclui login social (Google/Facebook), login com CPF/CNPJ, persistência de carrinho, auto-preenchimento inteligente e compatibilidade total com Fluid Checkout e Brazilian Market. Detecta automaticamente configurações do WooCommerce e se adapta ao comportamento de checkout.
- * Version: 1.2.0
+ * Version: 1.4.1
  * Author: David William da Costa
  * Author URI: https://github.com/agenciadw
  * Requires PHP: 7.4 or higher
@@ -24,7 +24,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 }
 
 // Plugin constants
-define( 'LLRP_VERSION', '1.2.0' );
+define( 'LLRP_VERSION', '1.4.1' );
 define( 'LLRP_PLUGIN_DIR', plugin_dir_path( __FILE__ ) );
 define( 'LLRP_PLUGIN_URL', plugin_dir_url( __FILE__ ) );
 
@@ -83,6 +83,7 @@ function llrp_init() {
     // Include core classes
     require_once LLRP_PLUGIN_DIR . 'includes/class-llrp-frontend.php';
     require_once LLRP_PLUGIN_DIR . 'includes/class-llrp-ajax.php';
+    require_once LLRP_PLUGIN_DIR . 'includes/class-llrp-password-expiration.php';
     
     if ( is_admin() ) {
         require_once LLRP_PLUGIN_DIR . 'includes/class-llrp-admin.php';
@@ -92,6 +93,7 @@ function llrp_init() {
     // Initialize components
     Llrp_Frontend::init();
     Llrp_Ajax::init();
+    Llrp_Password_Expiration::init();
 }
 
 // Declare compatibility before WooCommerce init
